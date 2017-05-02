@@ -20,7 +20,10 @@ library
                      , Torque.Json
                      , Torque.Parser
   build-depends:       base >= 4.7 && < 5
+                     , aeson
+                     , aeson-pretty
                      , attoparsec
+                     , bytestring
                      , containers
                      , parsec
                      , text
@@ -33,7 +36,10 @@ executable hnormalise-exe
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , hnormalise
+                     , aeson
+                     , aeson-pretty
                      , attoparsec
+                     , bytestring
                      , containers
                      , parsec
                      , text

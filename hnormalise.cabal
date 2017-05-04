@@ -16,6 +16,10 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
+                     , Common.Parser
+                     , Lmod.Internal
+                     , Lmod.Json
+                     , Lmod.Parser
                      , Torque.Internal
                      , Torque.Json
                      , Torque.Parser

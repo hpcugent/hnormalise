@@ -45,6 +45,6 @@ parseLmodLoad = do
     return LmodLoad
         { info = info
         , userload = userload
-        , mod = m
+        , modul = m
         , filename = filename
         }

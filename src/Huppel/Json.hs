@@ -2,22 +2,16 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-
-module Lmod.Json where
+module Huppel.Json where
 
 --------------------------------------------------------------------------------
 import Data.Aeson
+
 --------------------------------------------------------------------------------
 
-import Lmod.Internal
+import Huppel.Internal
 --------------------------------------------------------------------------------
 
 
-instance ToJSON LmodInfo where
-    toJSON = genericToJSON defaultOptions
-
-instance ToJSON LmodLoad where
-    toJSON = genericToJSON defaultOptions
-
-instance ToJSON LmodModule where
+instance ToJSON Huppel where
     toJSON = genericToJSON defaultOptions

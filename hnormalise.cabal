@@ -2,13 +2,13 @@ name:                hnormalise
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/githubuser/hnormalise#readme
+homepage:            https://github.com/itkovian/hnormalise#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2017 Author name here
-category:            Web
+author:              Andy Georges
+maintainer:          itkovian@gmail.com
+copyright:           2017 Ghent University
+category:            Command line
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
@@ -17,6 +17,9 @@ library
   hs-source-dirs:      src
   exposed-modules:     Lib
                      , Common.Parser
+                     , Huppel.Internal
+                     , Huppel.Json
+                     , Huppel.Parser
                      , Lmod.Internal
                      , Lmod.Json
                      , Lmod.Parser
@@ -44,6 +47,9 @@ executable hnormalise-exe
                      , aeson-pretty
                      , attoparsec
                      , bytestring
+                     , conduit
+                     , conduit-combinators
+                     , conduit-extra
                      , containers
                      , parsec
                      , text
@@ -55,7 +61,11 @@ test-suite hnormalise-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
+                     , aeson
+                     , attoparsec
+                     , conduit-extra
                      , hnormalise
+                     , hspec
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

@@ -5,8 +5,10 @@
 
 module Lmod.Internal where
 
+--------------------------------------------------------------------------------
 import Data.Text
 import           GHC.Generics           (Generic)
+--------------------------------------------------------------------------------
 
 -- username=vsc41480,
 --cluster=delcatty,
@@ -29,6 +31,6 @@ data LmodInfo = LmodInfo
 data LmodLoad = LmodLoad
     { info :: LmodInfo
     , userload :: Bool
-    , mod :: LmodModule
+    , modul :: LmodModule
     , filename :: Text
     } deriving (Show, Eq, Generic)

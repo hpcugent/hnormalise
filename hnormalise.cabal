@@ -52,7 +52,6 @@ executable hnormalise-exe
                      , conduit-combinators
                      , conduit-extra
                      , containers
-                     , lens-family
                      , parsec
                      , text
                      , word8

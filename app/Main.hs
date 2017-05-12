@@ -1,19 +1,25 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ExistentialQuantification #-}
 
 module Main where
 
 --------------------------------------------------------------------------------
-import Control.Monad.IO.Class ( liftIO )
+import Control.Concurrent.Async ( concurrently, Concurrently(..), runConcurrently)
+import Control.Monad hiding (mapM_)
+import Control.Monad.IO.Class ( liftIO, MonadIO )
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
 import Data.Attoparsec.Text
 import Data.Conduit
-import Data.Conduit.Combinators ( line )
+import Data.Conduit.Combinators ( line, lineAscii, peek, foldMap, mapM_, fold, filterE )
 import qualified Data.Conduit.Binary as CB
 import Data.Conduit.Network
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.ByteString.Char8 as SBS
 import qualified Data.Text.Encoding as TE
+import Prelude hiding (foldMap, mapM_, fold)
+import Data.String (fromString, IsString)
+import Data.Word8 (_cr)
 --------------------------------------------------------------------------------
 
 import Torque.Parser
@@ -43,19 +49,45 @@ doTest _ = do
         Done _ te -> BS.putStrLn $ encodePretty te
         x -> putStr "Failed: " >> print x
 
-tryNormalisation :: Monad m => AppData -> ConduitM SBS.ByteString SBS.ByteString m ()
-tryNormalisation a = loop
+data Normalised = Transformed SBS.ByteString
+                | Original SBS.ByteString
+
+normalise :: SBS.ByteString -> Normalised
+normalise logLine =
+    case parse parseHuppel (TE.decodeUtf8 logLine) of
+        Done _ j -> Transformed $ BS.toStrict $ Data.Aeson.encode j
+        _        -> Original logLine
+
+
+tryNormalisation :: AppData -> ConduitM SBS.ByteString Normalised IO ()
+tryNormalisation appData = loop
   where loop = do
-            msg <- await
+            yield "Hello\n" $$ appSink appData
+            msg <- await -- lineAscii $ filterE (/= _cr) =$= fold
             case msg of
+                Just m -> yield $ normalise m
                 Nothing -> return ()
-                Just l -> do
-                    case parse parseHuppel (TE.decodeUtf8 l) of
-                        Done _ j -> yield $ BS.toStrict $ Data.Aeson.encode j
-                        _        -> yield l
-                    loop
+            loop
+
+mySink success failure = do
+    (liftIO $ putStrLn "ok") $$ appSink success
+    v <- peek
+    case v of
+        Just (Transformed json) -> yield json $$ appSink success
+        Just (Original l)       -> yield l $$ appSink failure
+        Nothing                 -> yield "Nothing" $$ appSink success
+
+putLines :: (MonadIO m) => Consumer SBS.ByteString m ()
+putLines = mapM_ $ liftIO . SBS.putStrLn
 
 main :: IO ()
 main = do
         runTCPServer (serverSettings 4000 "*") $ \appData ->
-               runConduit $ appSource appData .| tryNormalisation appData .| appSink appData
+            --runTCPServer (serverSettings 4017 "*") $ \rsyslogES ->
+            --runTCPServer (serverSettings 4018 "*") $ \rsyslogLT ->
+            --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
+            --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
+             --   void $ runConcurrently $ (,,)
+                    {-}<$> Concurrently-} appSource appData $= tryNormalisation appData $$ mySink appData appData
+              --      <*> Concurrently (appSource rsyslogES $$ putLines)
+               --     <*> Concurrently (appSource rsyslogLT $$ putLines)

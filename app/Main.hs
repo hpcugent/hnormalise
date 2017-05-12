@@ -7,18 +7,19 @@ module Main where
 import Control.Concurrent.Async ( concurrently, Concurrently(..), runConcurrently)
 import Control.Monad hiding (mapM_)
 import Control.Monad.IO.Class ( liftIO, MonadIO )
+import Control.Monad.Trans.Resource (runResourceT)
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
 import Data.Attoparsec.Text
 import Data.Conduit
 import Data.Conduit.Binary (sinkFile)
-import Data.Conduit.Combinators ( line, lineAscii, head, peek, foldMap, mapM_, fold, filterE )
+import qualified Data.Conduit.Combinators as C ( line, lineAscii, head, peek, foldMap, mapM_, fold, filterE, map, takeWhile )
 import qualified Data.Conduit.Binary as CB
 import Data.Conduit.Network
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.ByteString.Char8 as SBS
 import qualified Data.Text.Encoding as TE
-import Prelude hiding (foldMap, mapM_, fold, head)
+import Prelude hiding (foldMap, mapM_, fold, head, map, takeWhile)
 import Data.String (fromString, IsString)
 import Data.Word8 (_cr)
 --------------------------------------------------------------------------------
@@ -60,32 +61,22 @@ normalise logLine =
         _        -> Original logLine
 
 
-tryNormalisation :: AppData -> ConduitM SBS.ByteString Normalised IO ()
-tryNormalisation appData = loop
-  where loop = do
-            msg <- await -- lineAscii $ filterE (/= _cr) =$= fold
-            case msg of
-                Just m -> yield $ normalise m
-                Nothing -> return ()
-            loop
+getLogLine :: ConduitM SBS.ByteString SBS.ByteString IO ()
+getLogLine = do
+    msg <- C.lineAscii $ C.fold
+    yield msg
+    return ()
 
-{-mySink = do
-    v <- head
-    let s = toConsumer (sinkFile "/tmp/hnorm.sink"  :: Sink SBS.ByteString IO ())
-    case v of
-        Just (Transformed json) -> yield json $$ s
-        Just (Original l)       -> yield l $$ s
-        Nothing                 -> yield "Nothing" $$ s
--}
+
 messageSink success failure = do
-    v <- head
+    v <- C.head
     case v of
         Just (Transformed json) -> yield json $$ appSink success
         Just (Original l)       -> yield l $$ appSink failure
         Nothing                 -> yield "Nothing" $$ appSink success
 
 putLines :: (MonadIO m) => Consumer SBS.ByteString m ()
-putLines = mapM_ $ liftIO . SBS.putStrLn
+putLines = C.mapM_ $ liftIO . SBS.putStrLn
 
 main :: IO ()
 main = do
@@ -95,6 +86,8 @@ main = do
             --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
             --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
              --   void $ runConcurrently $ (,,)
-                    {-}<$> Concurrently-} appSource appData $= tryNormalisation appData $$ messageSink appData appData
+                    -- appSource appData $= tryNormalisation appData $$ messageSink appData appData
+            appSource appData $= getLogLine $= C.map normalise $$ messageSink appData appData
+            --runResourceT $ appSource appData $$ sinkFile "/tmp/test"
               --      <*> Concurrently (appSource rsyslogES $$ putLines)
                --     <*> Concurrently (appSource rsyslogLT $$ putLines)

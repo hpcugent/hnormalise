@@ -61,33 +61,23 @@ normalise logLine =
         _        -> Original logLine
 
 
-getLogLine :: ConduitM SBS.ByteString SBS.ByteString IO ()
-getLogLine = do
-    msg <- C.lineAscii $ C.fold
-    yield msg
-    return ()
-
-
-messageSink success failure = do
-    v <- C.head
-    case v of
-        Just (Transformed json) -> yield json $$ appSink success
-        Just (Original l)       -> yield l $$ appSink failure
-        Nothing                 -> yield "Nothing" $$ appSink success
-
-putLines :: (MonadIO m) => Consumer SBS.ByteString m ()
-putLines = C.mapM_ $ liftIO . SBS.putStrLn
+messageSink success failure = loop
+  where loop = do
+            v <- await
+            case v of
+                Just (Transformed json) -> do
+                                             yield (SBS.snoc json '\n') $$ appSink success
+                                             loop
+                Just (Original l)       -> do
+                                             yield (SBS.snoc l '\n') $$ appSink failure
+                                             loop
+                Nothing                 -> return ()
 
 main :: IO ()
 main = do
         runTCPServer (serverSettings 4000 "*") $ \appData ->
             --runTCPServer (serverSettings 4017 "*") $ \rsyslogES ->
             --runTCPServer (serverSettings 4018 "*") $ \rsyslogLT ->
-            --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
-            --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
-             --   void $ runConcurrently $ (,,)
-                    -- appSource appData $= tryNormalisation appData $$ messageSink appData appData
-            appSource appData $= getLogLine $= C.map normalise $$ messageSink appData appData
-            --runResourceT $ appSource appData $$ sinkFile "/tmp/test"
-              --      <*> Concurrently (appSource rsyslogES $$ putLines)
-               --     <*> Concurrently (appSource rsyslogLT $$ putLines)
+            runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
+            runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
+            appSource appData $= CB.lines $= C.map normalise $$ messageSink successServer failServer

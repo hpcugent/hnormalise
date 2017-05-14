@@ -23,6 +23,8 @@ library
                      , Lmod.Internal
                      , Lmod.Json
                      , Lmod.Parser
+                     , Rsyslog.Internal
+                     , Rsyslog.Json
                      , Torque.Internal
                      , Torque.Json
                      , Torque.Parser

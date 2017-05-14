@@ -54,7 +54,8 @@ doTest _ = do
 data Normalised = Transformed SBS.ByteString
                 | Original SBS.ByteString
 
-normalise :: SBS.ByteString -> Normalised
+normalise :: SBS.ByteString  -- information arrives as a string representing JSON information
+          -> Normalised
 normalise logLine =
     case parse parseHuppel (TE.decodeUtf8 logLine) of
         Done _ j -> Transformed $ BS.toStrict $ Data.Aeson.encode j

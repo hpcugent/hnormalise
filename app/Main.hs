@@ -45,10 +45,12 @@ messageSink success failure = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield (SBS.snoc json '\n') $$ appSink success
+                yield json $$ appSink success
+                yield (SBS.pack "\n") $$ appSink success
                 loop
             Just (Original l) -> do
-                yield (SBS.snoc l '\n') $$ appSink failure
+                yield l $$ appSink failure
+                yield (SBS.pack "\n") $$ appSink success
                 loop
             Nothing -> return ()
 

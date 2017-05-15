@@ -5,9 +5,13 @@
 
 module Torque.Json where
 
+--------------------------------------------------------------------------------
 import Data.Aeson
 
+--------------------------------------------------------------------------------
 import Torque.Internal
+
+--------------------------------------------------------------------------------
 
 instance ToJSON TorqueJobShortNode where
     toJSON = genericToJSON defaultOptions

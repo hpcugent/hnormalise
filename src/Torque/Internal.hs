@@ -5,8 +5,12 @@
 
 module Torque.Internal where
 
+--------------------------------------------------------------------------------
 import Data.Text
 import           GHC.Generics           (Generic)
+
+--------------------------------------------------------------------------------
+
 
 data TorqueJobShortNode = TorqueJobShortNode
     { number :: Int

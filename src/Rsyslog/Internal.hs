@@ -30,6 +30,6 @@ data Rsyslog = Rsyslog
     , app_name :: Text
     , procid :: Text
     , msgid :: Text
-    , uuid :: Text
-    , all_json :: Text
+    , uuid :: Maybe Text
+    , all_json :: Maybe Text
     } deriving (Eq, Show, Generic)

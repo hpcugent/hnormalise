@@ -52,11 +52,29 @@ messageSink success failure = loop
                 loop
             Nothing -> return ()
 
+
+mySink p = loop
+  where
+    s = sinkFile p
+    loop = do
+        v <- await
+        case v of
+            Just (Transformed json) -> do
+                yield (SBS.pack "success") $$ s
+                --yield (SBS.snoc json '\n') $$ s
+                loop
+            Just (Original l) -> do
+                yield (SBS.pack "fail") $$ s
+                --yield (SBS.snoc l '\n') $$ s
+                loop
+            Nothing -> return ()
+
+
+
 main :: IO ()
 main = do
         runTCPServer (serverSettings 4000 "*") $ \appData ->
-            --runTCPServer (serverSettings 4017 "*") $ \rsyslogES ->
-            --runTCPServer (serverSettings 4018 "*") $ \rsyslogLT ->
-            runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
-            runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
-            appSource appData $= CB.lines $= C.map normalise $$ messageSink successServer failServer
+            --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
+            --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
+            --appSource appData $= CB.lines $= C.map normalise $$ messageSink successServer failServer
+            runResourceT$ appSource appData $= CB.lines $= C.map normalise $$ mySink "/tmp/test"

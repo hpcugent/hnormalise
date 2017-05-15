@@ -11,7 +11,9 @@ import Data.Attoparsec.Text
 import Data.Attoparsec.Combinator ( lookAhead, manyTill )
 import qualified Data.ByteString.Char8 as SBS
 import qualified Data.ByteString.Lazy.Char8 as BS
-import Data.Text (Text)
+import Data.Text (Text, empty)
+
+import Debug.Trace
 
 --------------------------------------------------------------------------------
 import Huppel.Internal
@@ -47,5 +49,8 @@ parseMessage =
 convertMessage :: Rsyslog -> Maybe SBS.ByteString
 convertMessage l =
     case parse parseMessage (msg l) of
-        Done _ pm -> Just $ BS.toStrict $ Aeson.encode pm
-        _         -> Nothing
+        Done _ pm -> trace (show pm) $ Just $ BS.toStrict $ Aeson.encode pm
+        Partial c -> trace ("partial result") $ case c empty of
+            Done _ pm -> trace (show pm) $ Just $ BS.toStrict $ Aeson.encode pm
+            _ -> trace ("no result after partial continuation") $ Nothing
+        _         -> trace ("no result") $ Nothing

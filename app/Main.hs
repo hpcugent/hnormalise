@@ -40,16 +40,17 @@ normalise logLine =
         Nothing -> Original logLine
 
 messageSink success failure = loop
-  where loop = do
-            v <- await
-            case v of
-                Just (Transformed json) -> do
-                                             yield (SBS.snoc json '\n') $$ appSink success
-                                             loop
-                Just (Original l)       -> do
-                                             yield (SBS.snoc l '\n') $$ appSink failure
-                                             loop
-                Nothing                 -> return ()
+  where
+    loop = do
+        v <- await
+        case v of
+            Just (Transformed json) -> do
+                yield (SBS.snoc json '\n') $$ appSink success
+                loop
+            Just (Original l) -> do
+                yield (SBS.snoc l '\n') $$ appSink failure
+                loop
+            Nothing -> return ()
 
 main :: IO ()
 main = do

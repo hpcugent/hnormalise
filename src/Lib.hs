@@ -1,17 +1,19 @@
 module Lib
-    ( convertMessage
+    ( normaliseRsyslog
     , Rsyslog.Internal.Rsyslog(..)
     ) where
 
 --------------------------------------------------------------------------------
 import Control.Applicative ( (<|>) )
 import Data.Aeson (ToJSON)
+import Data.Aeson.Text (encodeToLazyText)
 import qualified Data.Aeson as Aeson
 import Data.Attoparsec.Text
 import Data.Attoparsec.Combinator ( lookAhead, manyTill )
 import qualified Data.ByteString.Char8 as SBS
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Text (Text, empty)
+import Data.Text.Lazy (toStrict)
 
 import Debug.Trace
 
@@ -23,6 +25,7 @@ import Lmod.Internal
 import Lmod.Json
 import Lmod.Parser
 import Rsyslog.Internal
+import Rsyslog.Json
 import Torque.Internal
 import Torque.Json
 import Torque.Parser
@@ -46,11 +49,17 @@ parseMessage =
     <|> (parseTorqueExit >>= (\v -> return $ PR_T v))
 
 
-convertMessage :: Rsyslog -> Maybe SBS.ByteString
-convertMessage l =
-    case parse parseMessage (msg l) of
-        Done _ pm -> trace (show pm) $ Just $ BS.toStrict $ Aeson.encode pm
+convertMessage :: Text -> Maybe ParseResult
+convertMessage message =
+    case parse parseMessage message of
+        Done _ pm -> trace (show pm) $ Just pm
         Partial c -> trace ("partial result") $ case c empty of
-            Done _ pm -> trace (show pm) $ Just $ BS.toStrict $ Aeson.encode pm
+            Done _ pm -> trace (show pm) $ Just pm
             _ -> trace ("no result after partial continuation") $ Nothing
         _         -> trace ("no result") $ Nothing
+
+normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
+                 -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
+normaliseRsyslog rsyslog = do
+    cm <- convertMessage $ msg rsyslog
+    return $ BS.toStrict $ Aeson.encode $ rsyslog { msg = toStrict $ encodeToLazyText $ cm }

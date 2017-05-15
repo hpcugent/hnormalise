@@ -24,7 +24,7 @@ import Data.String (fromString, IsString)
 import Data.Word8 (_cr)
 --------------------------------------------------------------------------------
 
-import Lib (convertMessage)
+import Lib (normaliseRsyslog)
 import Rsyslog.Json
 
 --------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ data Normalised = Transformed SBS.ByteString
 normalise :: SBS.ByteString  -- information arrives as a string representing JSON information
           -> Normalised
 normalise logLine =
-    case Data.Aeson.decodeStrict logLine >>= convertMessage of
+    case Data.Aeson.decodeStrict logLine >>= normaliseRsyslog of
         Just j  -> Transformed j
         Nothing -> Original logLine
 

@@ -36,3 +36,6 @@ instance FromJSON Rsyslog where
             (v .: "msgid") <*>
             (v .: "uuid") <*>
             (v .: "$!")
+
+instance ToJSON Rsyslog where
+    toJSON = genericToJSON defaultOptions

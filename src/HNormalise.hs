@@ -1,4 +1,4 @@
-module Lib
+module HNormalise
     ( normaliseRsyslog
     , HNormalise.Rsyslog.Internal.Rsyslog(..)
     ) where

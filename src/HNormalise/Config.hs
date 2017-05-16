@@ -3,7 +3,8 @@
 {-# LANGUAGE OverloadedStrings          #-}
 
 module HNormalise.Config
-    (loadConfig
+    ( Config(..)
+    , loadConfig
     ) where
 
 --------------------------------------------------------------------------------
@@ -19,19 +20,21 @@ import           System.Directory
 
 --------------------------------------------------------------------------------
 data Config = Config
-    { listenPort :: !(Maybe Int)
-    , successPort :: !(Maybe Int)
-    , successHost :: !(Maybe Text)
-    , failPort :: !(Maybe Int)
-    , failHost :: !(Maybe Text)
+    { listenPort    :: !(Maybe Int)    -- ^ port for incoming messages
+    , listenHost    :: !(Maybe Text)   -- ^ binding to this host specification (TODO: needs support for HostPreference)
+    , successPort   :: !(Maybe Int)    -- ^ port to send rsyslog with successfully parsed and normalised msg part
+    , successHost   :: !(Maybe Text)   -- ^ host to send normalised data to
+    , failPort      :: !(Maybe Int)    -- ^ port to send rsyslog messges that failed to parse
+    , failHost      :: !(Maybe Text)   -- ^ host to send original data to when parsing failed
     } deriving (Show)
 
 --------------------------------------------------------------------------------
 instance Monoid Config where
     mempty = Config
-                Nothing Nothing Nothing Nothing Nothing
+                Nothing Nothing Nothing Nothing Nothing Nothing
     mappend l r = Config
         { listenPort  = listenPort  l `mplus` listenPort  r
+        , listenHost  = listenHost  l `mplus` listenHost  r
         , successPort = successPort l `mplus` successPort r
         , successHost = successHost l `mplus` successHost r
         , failPort    = failPort    l `mplus` failPort    r
@@ -41,6 +44,7 @@ instance Monoid Config where
 --------------------------------------------------------------------------------
 defaultConfig = Config
     { listenPort = Just 4019
+    , listenHost = Just "localhost"
     , successPort = Just 26002
     , successHost = Just "localhost"
     , failPort = Just 4018

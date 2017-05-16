@@ -18,21 +18,26 @@ import           Data.Conduit.Binary          (sinkFile)
 import qualified Data.Conduit.Combinators     as C
 import qualified Data.Conduit.Binary          as CB
 import           Data.Conduit.Network
+import qualified Data.Conduit.Network         as DCN (HostPreference(..))
+import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  (mempty, (<>))
+import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as TE
 import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
+
 --------------------------------------------------------------------------------
 import HNormalise                             (normaliseRsyslog)
 import HNormalise.Rsyslog.Json
-import HNormalise.Config                      (loadConfig)
+import HNormalise.Config                      (Config(..), loadConfig)
 
 --------------------------------------------------------------------------------
 data Options = Options
     { oConfigFilePath :: !(Maybe FilePath)
-    , oVersion :: !Bool
+    , oVersion        :: !Bool
+    , oTestFilePath   :: !(Maybe FilePath)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -48,6 +53,11 @@ parserOptions = Options
             OA.short 'v' <>
             OA.help "Display version and exit" <>
             OA.hidden)
+    <*> (OA.optional $ OA.strOption $
+            OA.long "test" <>
+            OA.short 't' <>
+            OA.metavar "OUTPUT FILENAME" <>
+            OA.help "run in test modus, sinking output to the given file")
 
 
 --------------------------------------------------------------------------------
@@ -88,22 +98,23 @@ messageSink success failure = loop
 
 
 --------------------------------------------------------------------------------
-mySink p = loop
+-- for testing purposes
+mySink = loop
   where
-    s = sinkFile p
     loop = do
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield (SBS.pack "success") $$ s
-                --yield (SBS.snoc json '\n') $$ s
+                yield (SBS.pack "success: ")
+                yield json
+                yield (SBS.pack "\n")
                 loop
             Just (Original l) -> do
-                yield (SBS.pack "fail") $$ s
-                --yield (SBS.snoc l '\n') $$ s
+                yield (SBS.pack "fail - original: ")
+                yield l
+                yield (SBS.pack "\n")
                 loop
             Nothing -> return ()
-
 
 
 --------------------------------------------------------------------------------
@@ -117,8 +128,22 @@ main = do
 
     config <- loadConfig (oConfigFilePath options)
 
-    runTCPServer (serverSettings 4000 "*") $ \appData ->
-        --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
-        --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
-        --appSource appData $= CB.lines $= C.map normalise $$ messageSink successServer failServer
-        runResourceT$ appSource appData $= CB.lines $= C.map normalise $$ mySink "/tmp/test"
+    let lHost = case listenHost config of
+                    Just h  -> T.unpack h
+                    Nothing -> "*"
+
+    runTCPServer (serverSettings (fromJust $ listenPort config) "*") $ \appData ->
+        case oTestFilePath options of
+            Nothing ->
+                runTCPClient (clientSettings (fromJust $ successPort config) "localhost") $ \successServer ->
+                runTCPClient (clientSettings (fromJust $ failPort config) "localhost") $ \failServer ->
+                    appSource appData
+                        $= CB.lines
+                        $= C.map normalise
+                        $$ messageSink successServer failServer
+            Just testSinkFileName ->
+                runResourceT$ appSource appData
+                    $= CB.lines
+                    $= C.map normalise
+                    $= mySink
+                    $$ sinkFile testSinkFileName

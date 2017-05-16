@@ -1,32 +1,51 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 module Main where
 
 --------------------------------------------------------------------------------
-import Control.Concurrent.Async ( concurrently, Concurrently(..), runConcurrently)
-import Control.Monad hiding (mapM_)
-import Control.Monad.IO.Class ( liftIO, MonadIO )
-import Control.Monad.Trans.Resource (runResourceT)
-import Data.Aeson
-import Data.Aeson.Encode.Pretty
-import Data.Attoparsec.Text
-import Data.Conduit
-import Data.Conduit.Binary (sinkFile)
-import qualified Data.Conduit.Combinators as C ( line, lineAscii, head, peek, foldMap, mapM_, fold, filterE, map, takeWhile )
-import qualified Data.Conduit.Binary as CB
-import Data.Conduit.Network
-import qualified Data.ByteString.Lazy.Char8 as BS
-import qualified Data.ByteString.Char8 as SBS
-import qualified Data.Text.Encoding as TE
-import Prelude hiding (foldMap, mapM_, fold, head, map, takeWhile)
-import Data.String (fromString, IsString)
-import Data.Word8 (_cr)
---------------------------------------------------------------------------------
+import           Control.Applicative          ((<$>), (<*>))
+import           Control.Monad
+import           Control.Monad.IO.Class       ( liftIO, MonadIO )
+import           Control.Monad.Trans.Resource (runResourceT)
+import           Data.Aeson
+import           Data.Aeson.Encode.Pretty
+import           Data.Attoparsec.Text
+import qualified Data.ByteString.Lazy.Char8   as BS
+import qualified Data.ByteString.Char8        as SBS
+import           Data.Conduit
+import           Data.Conduit.Binary          (sinkFile)
+import qualified Data.Conduit.Combinators     as C
+import qualified Data.Conduit.Binary          as CB
+import           Data.Conduit.Network
+import           Data.Monoid                  (mempty, (<>))
+import qualified Data.Text.Encoding           as TE
+import qualified Options.Applicative          as OA
 
+--------------------------------------------------------------------------------
 import Lib (normaliseRsyslog)
 import HNormalise.Rsyslog.Json
 
 --------------------------------------------------------------------------------
+data Options = Options
+    { oConfigFilePath :: !(Maybe FilePath)
+    } deriving (Show)
+
+--------------------------------------------------------------------------------
+parseOptions :: OA.Parser Options
+parseOptions = Options
+    <$> (OA.optional $ OA.strOption $
+            OA.long "configfile" <>
+            OA.short 'c' <>
+            OA.metavar "FILENAME" <>
+            OA.help "configuration file location ")
+
+parserInfo :: OA.ParserInfo Options
+parserInfo = OA.info (OA.helper <*> parseOptions)
+    (OA.fullDesc
+        <> OA.progDesc "Normalise rsyslog messages"
+        <> OA.header "hNormalise"
+    )
 
 data Normalised = Transformed SBS.ByteString
                 | Original SBS.ByteString
@@ -74,7 +93,7 @@ mySink p = loop
 
 main :: IO ()
 main = do
-    config <- loadConfig
+    options <- OA.execParser parserInfo
     runTCPServer (serverSettings 4000 "*") $ \appData ->
         --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
         --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do

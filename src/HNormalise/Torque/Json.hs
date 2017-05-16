@@ -3,13 +3,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 
-module Torque.Json where
+module HNormalise.Torque.Json where
 
 --------------------------------------------------------------------------------
 import Data.Aeson
 
 --------------------------------------------------------------------------------
-import Torque.Internal
+import HNormalise.Torque.Internal
 
 --------------------------------------------------------------------------------
 

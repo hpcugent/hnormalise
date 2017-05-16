@@ -16,27 +16,26 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
-                     , Common.Parser
-                     , Huppel.Internal
-                     , Huppel.Json
-                     , Huppel.Parser
-                     , Lmod.Internal
-                     , Lmod.Json
-                     , Lmod.Parser
-                     , Rsyslog.Internal
-                     , Rsyslog.Json
-                     , Torque.Internal
-                     , Torque.Json
-                     , Torque.Parser
+                     , HNormalise.Common.Parser
+                     , HNormalise.Huppel.Internal
+                     , HNormalise.Huppel.Json
+                     , HNormalise.Huppel.Parser
+                     , HNormalise.Lmod.Internal
+                     , HNormalise.Lmod.Json
+                     , HNormalise.Lmod.Parser
+                     , HNormalise.Rsyslog.Internal
+                     , HNormalise.Rsyslog.Json
+                     , HNormalise.Torque.Internal
+                     , HNormalise.Torque.Json
+                     , HNormalise.Torque.Parser
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , aeson-pretty
                      , attoparsec
                      , bytestring
                      , containers
-                     , parsec
                      , text
-                     , aeson
+                     , yaml
   default-language:    Haskell2010
 
 executable hnormalise-exe
@@ -54,10 +53,10 @@ executable hnormalise-exe
                      , conduit-combinators
                      , conduit-extra
                      , containers
-                     , parsec
                      , resourcet
                      , text
                      , word8
+                     , yaml
   default-language:    Haskell2010
 
 test-suite hnormalise-test

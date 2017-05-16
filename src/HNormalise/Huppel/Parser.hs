@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Huppel.Parser where
+module HNormalise.Huppel.Parser where
 
 --------------------------------------------------------------------------------
 import Control.Applicative ( (<|>) )
@@ -11,8 +11,8 @@ import Data.Attoparsec.Text
 import Data.Attoparsec.Combinator ( lookAhead, manyTill )
 --------------------------------------------------------------------------------
 
-import Common.Parser
-import Huppel.Internal
+import HNormalise.Common.Parser
+import HNormalise.Huppel.Internal
 --------------------------------------------------------------------------------
 
 

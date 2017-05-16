@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Common.Parser where
+module HNormalise.Common.Parser where
 
 --------------------------------------------------------------------------------
 import Control.Applicative ( (<|>) )

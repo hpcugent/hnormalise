@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ExistentialQuantification #-}
 
 module Main where
 
@@ -25,7 +24,7 @@ import Data.Word8 (_cr)
 --------------------------------------------------------------------------------
 
 import Lib (normaliseRsyslog)
-import Rsyslog.Json
+import HNormalise.Rsyslog.Json
 
 --------------------------------------------------------------------------------
 
@@ -75,8 +74,9 @@ mySink p = loop
 
 main :: IO ()
 main = do
-        runTCPServer (serverSettings 4000 "*") $ \appData ->
-            --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
-            --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
-            --appSource appData $= CB.lines $= C.map normalise $$ messageSink successServer failServer
-            runResourceT$ appSource appData $= CB.lines $= C.map normalise $$ mySink "/tmp/test"
+    config <- loadConfig
+    runTCPServer (serverSettings 4000 "*") $ \appData ->
+        --runTCPClient (clientSettings 4017 "localhost") $ \successServer ->
+        --runTCPClient (clientSettings 4018 "localhost") $ \failServer -> do
+        --appSource appData $= CB.lines $= C.map normalise $$ messageSink successServer failServer
+        runResourceT$ appSource appData $= CB.lines $= C.map normalise $$ mySink "/tmp/test"

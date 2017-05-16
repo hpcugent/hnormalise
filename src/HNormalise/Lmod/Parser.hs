@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Lmod.Parser where
+module HNormalise.Lmod.Parser where
 
 --------------------------------------------------------------------------------
 import Control.Applicative ( (<|>) )
@@ -11,8 +11,8 @@ import Data.Attoparsec.Text
 import Data.Attoparsec.Combinator ( lookAhead, manyTill )
 --------------------------------------------------------------------------------
 
-import Common.Parser
-import Lmod.Internal
+import HNormalise.Common.Parser
+import HNormalise.Lmod.Internal
 --------------------------------------------------------------------------------
 
 parseLmodInfo :: Parser LmodInfo

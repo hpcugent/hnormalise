@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Rsyslog.Json where
+module HNormalise.Rsyslog.Json where
 
 --------------------------------------------------------------------------------
 import Control.Monad
@@ -10,7 +10,7 @@ import Data.Aeson
 
 --------------------------------------------------------------------------------
 
-import Rsyslog.Internal
+import HNormalise.Rsyslog.Internal
 --------------------------------------------------------------------------------
 
 

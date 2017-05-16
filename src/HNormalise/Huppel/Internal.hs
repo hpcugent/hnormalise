@@ -1,17 +1,17 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
-module Huppel.Json where
+module HNormalise.Huppel.Internal where
+
 
 --------------------------------------------------------------------------------
-import Data.Aeson
-
---------------------------------------------------------------------------------
-
-import Huppel.Internal
+import Data.Text
+import           GHC.Generics           (Generic)
 --------------------------------------------------------------------------------
 
 
-instance ToJSON Huppel where
-    toJSON = genericToJSON defaultOptions
+
+data Huppel = Huppel
+    { id :: Int } deriving (Eq, Show, Generic)

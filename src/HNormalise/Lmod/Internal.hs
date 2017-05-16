@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Lmod.Internal where
+module HNormalise.Lmod.Internal where
 
 --------------------------------------------------------------------------------
 import Data.Text

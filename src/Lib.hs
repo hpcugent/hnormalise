@@ -1,6 +1,6 @@
 module Lib
     ( normaliseRsyslog
-    , Rsyslog.Internal.Rsyslog(..)
+    , HNormalise.Rsyslog.Internal.Rsyslog(..)
     ) where
 
 --------------------------------------------------------------------------------
@@ -18,17 +18,17 @@ import Data.Text.Lazy (toStrict)
 import Debug.Trace
 
 --------------------------------------------------------------------------------
-import Huppel.Internal
-import Huppel.Json
-import Huppel.Parser
-import Lmod.Internal
-import Lmod.Json
-import Lmod.Parser
-import Rsyslog.Internal
-import Rsyslog.Json
-import Torque.Internal
-import Torque.Json
-import Torque.Parser
+import HNormalise.Huppel.Internal
+import HNormalise.Huppel.Json
+import HNormalise.Huppel.Parser
+import HNormalise.Lmod.Internal
+import HNormalise.Lmod.Json
+import HNormalise.Lmod.Parser
+import HNormalise.Rsyslog.Internal
+import HNormalise.Rsyslog.Json
+import HNormalise.Torque.Internal
+import HNormalise.Torque.Json
+import HNormalise.Torque.Parser
 
 --------------------------------------------------------------------------------
 

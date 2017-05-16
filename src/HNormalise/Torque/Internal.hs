@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Torque.Internal where
+module HNormalise.Torque.Internal where
 
 --------------------------------------------------------------------------------
 import Data.Text

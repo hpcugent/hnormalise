@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Rsyslog.Internal where
+module HNormalise.Rsyslog.Internal where
 
 
 --------------------------------------------------------------------------------

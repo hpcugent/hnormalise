@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Torque.Parser where
+module HNormalise.Torque.Parser where
 
 --------------------------------------------------------------------------------
 import Control.Applicative ( (<|>) )
@@ -15,8 +15,8 @@ import qualified Data.Text as T
 import qualified Data.Map as M
 --------------------------------------------------------------------------------
 
-import Common.Parser
-import Torque.Internal
+import HNormalise.Common.Parser
+import HNormalise.Torque.Internal
 --------------------------------------------------------------------------------
 
 parseTorqueWalltime :: Parser TorqueWalltime

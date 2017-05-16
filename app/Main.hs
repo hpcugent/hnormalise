@@ -1,24 +1,24 @@
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
 import           Control.Monad
-import           Control.Monad.IO.Class       ( liftIO, MonadIO )
+import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Trans.Resource (runResourceT)
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty
 import           Data.Attoparsec.Text
-import qualified Data.ByteString.Lazy.Char8   as BS
 import qualified Data.ByteString.Char8        as SBS
+import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
 import           Data.Conduit.Binary          (sinkFile)
-import qualified Data.Conduit.Combinators     as C
 import qualified Data.Conduit.Binary          as CB
+import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
-import qualified Data.Conduit.Network         as DCN (HostPreference(..))
+import qualified Data.Conduit.Network         as DCN (HostPreference (..))
 import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  (mempty, (<>))
 import qualified Data.Text                    as T
@@ -29,9 +29,9 @@ import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
 
 --------------------------------------------------------------------------------
-import HNormalise                             (normaliseRsyslog)
-import HNormalise.Rsyslog.Json
-import HNormalise.Config                      (Config(..), loadConfig)
+import           HNormalise                   (normaliseRsyslog)
+import           HNormalise.Config            (Config (..), loadConfig)
+import           HNormalise.Rsyslog.Json
 
 --------------------------------------------------------------------------------
 data Options = Options

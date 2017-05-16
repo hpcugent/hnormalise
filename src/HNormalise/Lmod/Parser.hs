@@ -1,18 +1,18 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Lmod.Parser where
 
 --------------------------------------------------------------------------------
-import Control.Applicative ( (<|>) )
-import Data.Attoparsec.Text
-import Data.Attoparsec.Combinator ( lookAhead, manyTill )
+import           Control.Applicative        ((<|>))
+import           Data.Attoparsec.Combinator (lookAhead, manyTill)
+import           Data.Attoparsec.Text
 --------------------------------------------------------------------------------
 
-import HNormalise.Common.Parser
-import HNormalise.Lmod.Internal
+import           HNormalise.Common.Parser
+import           HNormalise.Lmod.Internal
 --------------------------------------------------------------------------------
 
 parseLmodInfo :: Parser LmodInfo

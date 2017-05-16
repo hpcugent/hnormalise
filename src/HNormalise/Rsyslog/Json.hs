@@ -1,16 +1,16 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 module HNormalise.Rsyslog.Json where
 
 --------------------------------------------------------------------------------
-import Control.Monad
-import Data.Aeson
+import           Control.Monad
+import           Data.Aeson
 
 --------------------------------------------------------------------------------
 
-import HNormalise.Rsyslog.Internal
+import           HNormalise.Rsyslog.Internal
 --------------------------------------------------------------------------------
 
 

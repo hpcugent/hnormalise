@@ -1,15 +1,15 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 module HNormalise.Huppel.Json where
 
 --------------------------------------------------------------------------------
-import Data.Aeson
+import           Data.Aeson
 
 --------------------------------------------------------------------------------
 
-import HNormalise.Huppel.Internal
+import           HNormalise.Huppel.Internal
 --------------------------------------------------------------------------------
 
 

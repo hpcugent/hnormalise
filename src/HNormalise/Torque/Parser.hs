@@ -1,22 +1,22 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Torque.Parser where
 
 --------------------------------------------------------------------------------
-import Control.Applicative ( (<|>) )
-import Data.Attoparsec.Text
-import Data.Attoparsec.Combinator ( lookAhead, manyTill )
-import Data.Char ( isDigit )
-import Data.Text ( Text )
-import qualified Data.Text as T
-import qualified Data.Map as M
+import           Control.Applicative        ((<|>))
+import           Data.Attoparsec.Combinator (lookAhead, manyTill)
+import           Data.Attoparsec.Text
+import           Data.Char                  (isDigit)
+import qualified Data.Map                   as M
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
 --------------------------------------------------------------------------------
 
-import HNormalise.Common.Parser
-import HNormalise.Torque.Internal
+import           HNormalise.Common.Parser
+import           HNormalise.Torque.Internal
 --------------------------------------------------------------------------------
 
 parseTorqueWalltime :: Parser TorqueWalltime
@@ -57,7 +57,7 @@ parseTorqueMemory = do
         <|> string "mb"
         <|> string "gb"
     return $ case unit of
-        "b" -> v
+        "b"  -> v
         "kb" -> v * 1024
         "mb" -> v * 1024 * 1024
         "gb" -> v * 1024 * 1024 * 1024

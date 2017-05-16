@@ -1,15 +1,15 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 
 module HNormalise.Lmod.Json where
 
 --------------------------------------------------------------------------------
-import Data.Aeson
+import           Data.Aeson
 --------------------------------------------------------------------------------
 
-import HNormalise.Lmod.Internal
+import           HNormalise.Lmod.Internal
 --------------------------------------------------------------------------------
 
 

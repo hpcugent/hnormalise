@@ -1,14 +1,14 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Huppel.Internal where
 
 
 --------------------------------------------------------------------------------
-import Data.Text
-import           GHC.Generics           (Generic)
+import           Data.Text
+import           GHC.Generics (Generic)
 --------------------------------------------------------------------------------
 
 

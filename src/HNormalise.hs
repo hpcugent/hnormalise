@@ -4,31 +4,31 @@ module HNormalise
     ) where
 
 --------------------------------------------------------------------------------
-import Control.Applicative ( (<|>) )
-import Data.Aeson (ToJSON)
-import Data.Aeson.Text (encodeToLazyText)
-import qualified Data.Aeson as Aeson
-import Data.Attoparsec.Text
-import Data.Attoparsec.Combinator ( lookAhead, manyTill )
-import qualified Data.ByteString.Char8 as SBS
-import qualified Data.ByteString.Lazy.Char8 as BS
-import Data.Text (Text, empty)
-import Data.Text.Lazy (toStrict)
+import           Control.Applicative         ((<|>))
+import           Data.Aeson                  (ToJSON)
+import qualified Data.Aeson                  as Aeson
+import           Data.Aeson.Text             (encodeToLazyText)
+import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
+import           Data.Attoparsec.Text
+import qualified Data.ByteString.Char8       as SBS
+import qualified Data.ByteString.Lazy.Char8  as BS
+import           Data.Text                   (Text, empty)
+import           Data.Text.Lazy              (toStrict)
 
-import Debug.Trace
+import           Debug.Trace
 
 --------------------------------------------------------------------------------
-import HNormalise.Huppel.Internal
-import HNormalise.Huppel.Json
-import HNormalise.Huppel.Parser
-import HNormalise.Lmod.Internal
-import HNormalise.Lmod.Json
-import HNormalise.Lmod.Parser
-import HNormalise.Rsyslog.Internal
-import HNormalise.Rsyslog.Json
-import HNormalise.Torque.Internal
-import HNormalise.Torque.Json
-import HNormalise.Torque.Parser
+import           HNormalise.Huppel.Internal
+import           HNormalise.Huppel.Json
+import           HNormalise.Huppel.Parser
+import           HNormalise.Lmod.Internal
+import           HNormalise.Lmod.Json
+import           HNormalise.Lmod.Parser
+import           HNormalise.Rsyslog.Internal
+import           HNormalise.Rsyslog.Json
+import           HNormalise.Torque.Internal
+import           HNormalise.Torque.Json
+import           HNormalise.Torque.Parser
 
 --------------------------------------------------------------------------------
 data ParseResult = PR_H Huppel

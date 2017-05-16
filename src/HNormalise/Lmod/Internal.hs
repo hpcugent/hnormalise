@@ -1,13 +1,13 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Lmod.Internal where
 
 --------------------------------------------------------------------------------
-import Data.Text
-import           GHC.Generics           (Generic)
+import           Data.Text
+import           GHC.Generics (Generic)
 --------------------------------------------------------------------------------
 
 -- username=vsc41480,
@@ -18,19 +18,19 @@ import           GHC.Generics           (Generic)
 --fn=\/apps\/gent\/CO7\/sandybridge\/modules\/all\/GSL\/2.3-intel-2016b
 
 data LmodModule = LmodModule
-    { name :: Text
+    { name    :: Text
     , version :: Text
     } deriving (Show, Eq, Generic)
 
 data LmodInfo = LmodInfo
     { username :: Text
-    , cluster :: Text
-    , jobid :: Text
+    , cluster  :: Text
+    , jobid    :: Text
     } deriving (Show, Eq, Generic)
 
 data LmodLoad = LmodLoad
-    { info :: LmodInfo
+    { info     :: LmodInfo
     , userload :: Bool
-    , modul :: LmodModule
+    , modul    :: LmodModule
     , filename :: Text
     } deriving (Show, Eq, Generic)

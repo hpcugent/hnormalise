@@ -1,15 +1,15 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Common.Parser where
 
 --------------------------------------------------------------------------------
-import Control.Applicative ( (<|>) )
-import Data.Attoparsec.Text
-import Data.Text ( Text )
-import qualified Data.Text as T
+import           Control.Applicative  ((<|>))
+import           Data.Attoparsec.Text
+import           Data.Text            (Text)
+import qualified Data.Text            as T
 --------------------------------------------------------------------------------
 
 whitespace = many' (char ' ')
@@ -30,7 +30,7 @@ kvYesNoParser key = do
     yn <- asciiCI "yes" <|> asciiCI "no"
     return $ case T.toLower yn of
         "yes" -> True
-        "no" -> False
+        "no"  -> False
 
 maybeOption :: Parser a -> Parser (Maybe a)
 maybeOption p = option Nothing (Just <$> p)

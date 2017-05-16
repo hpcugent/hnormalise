@@ -28,10 +28,12 @@ import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
 
+import Debug.Trace
 --------------------------------------------------------------------------------
 import           HNormalise                   (normaliseRsyslog)
 import           HNormalise.Config            (Config (..), loadConfig)
 import           HNormalise.Rsyslog.Json
+import           HNormalise.Rsyslog.Internal  (Rsyslog (..))
 
 --------------------------------------------------------------------------------
 data Options = Options
@@ -76,7 +78,9 @@ data Normalised = Transformed SBS.ByteString
 normalise :: SBS.ByteString  -- information arrives as a string representing JSON information
           -> Normalised
 normalise logLine =
-    case Data.Aeson.decodeStrict logLine >>= normaliseRsyslog of
+    let d = Data.Aeson.decodeStrict logLine :: Maybe Rsyslog
+    in trace ("Debug decodeStrict: " ++ show d) $
+      case Data.Aeson.decodeStrict logLine >>= normaliseRsyslog of
         Just j  -> Transformed j
         Nothing -> Original logLine
 

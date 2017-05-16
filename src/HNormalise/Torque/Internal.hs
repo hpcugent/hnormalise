@@ -14,7 +14,7 @@ import           GHC.Generics (Generic)
 
 data TorqueJobShortNode = TorqueJobShortNode
     { number :: Int
-    , ppn    :: Int
+    , ppn    :: Maybe Int
     } deriving (Show, Eq, Generic)
 
 data TorqueJobFQNode = TorqueJobFQNode
@@ -37,11 +37,11 @@ data TorqueWalltime = TorqueWalltime
 
 data TorqueResourceRequest = TorqueResourceRequest
     { nodes     :: Either TorqueJobShortNode [TorqueJobFQNode]
-    , walltime  :: TorqueWalltime
     , vmem      :: Integer
     , nodeCount :: Int
     , neednodes :: Either TorqueJobShortNode [TorqueJobFQNode]
     , nice      :: Maybe Int
+    , walltime  :: TorqueWalltime
     } deriving (Show, Eq, Generic)
 
 data TorqueResourceUsage = TorqueResourceUsage
@@ -79,6 +79,7 @@ data TorqueJobExit = TorqueJobExit
 
 data TorqueJobName = TorqueJobName
     { number  :: Integer
+    , array_id :: Maybe Integer
     , master  :: Text
     , cluster :: Text
     } deriving (Show, Eq, Generic)

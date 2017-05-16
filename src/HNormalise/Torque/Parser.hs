@@ -6,19 +6,20 @@
 module HNormalise.Torque.Parser where
 
 --------------------------------------------------------------------------------
-import           Control.Applicative        ((<|>))
-import           Data.Attoparsec.Combinator (lookAhead, manyTill)
+import           Control.Applicative         ((<|>))
+import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
-import           Data.Char                  (isDigit)
-import qualified Data.Map                   as M
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
---------------------------------------------------------------------------------
+import           Data.Char                   (isDigit)
+import qualified Data.Map                    as M
+import           Data.Text                   (Text)
+import qualified Data.Text                   as T
+import           Text.ParserCombinators.Perm ((<$$>), (<||>), permute)
 
+--------------------------------------------------------------------------------
 import           HNormalise.Common.Parser
 import           HNormalise.Torque.Internal
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 parseTorqueWalltime :: Parser TorqueWalltime
 parseTorqueWalltime =
         parseTorqueDays
@@ -49,6 +50,7 @@ parseTorqueSeconds = do
     return TorqueWalltime { days = 0, hours = 0, minutes = 0, seconds = s}
 
 
+--------------------------------------------------------------------------------
 parseTorqueMemory :: Parser Integer
 parseTorqueMemory = do
     v <- decimal
@@ -62,43 +64,49 @@ parseTorqueMemory = do
         "mb" -> v * 1024 * 1024
         "gb" -> v * 1024 * 1024 * 1024
 
+--------------------------------------------------------------------------------
 parseTorqueJobName :: Parser TorqueJobName
 parseTorqueJobName = do
     n <- decimal
+    a <- parseArrayId
     m <- char '.' *> takeTill (== '.')
     c <- char '.' *> takeTill (== '.')
     manyTill anyChar (lookAhead ";") *> char ';'
-    return $ TorqueJobName { number = n, master = m, cluster = c}
+    return $ TorqueJobName { number = n, array_id = a, master = m, cluster = c}
+  where
+    parseArrayId :: Parser (Maybe Integer)
+    parseArrayId = try $ maybeOption $ do
+        char '['
+        i <- decimal
+        char ']'
+        return i
 
+
+--------------------------------------------------------------------------------
 parseTorqueResourceNodeList :: Parser (Either TorqueJobShortNode [TorqueJobFQNode])
 parseTorqueResourceNodeList = do
     c <- peekChar'
     if isDigit c then do
         number <- decimal
-        ppn <- char ':' *> string "ppn=" *> decimal
+        ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
         return $ Left $ TorqueJobShortNode { number = number, ppn = ppn }
     else Right <$> (flip sepBy (char '+') $ do
         fqdn <- Data.Attoparsec.Text.takeWhile (/= ':')
         ppn <- char ':' *> kvNumParser "ppn"
         return TorqueJobFQNode { name = fqdn, ppn = ppn})
 
+--------------------------------------------------------------------------------
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
 parseTorqueResourceRequest = do
-    nodes <- string "Resource_List.nodes=" *> parseTorqueResourceNodeList
-    vmem <- whitespace *> string "Resource_List.vmem=" *> parseTorqueMemory
-    nodect <- whitespace *> kvNumParser "Resource_List.nodect"
-    neednodes <- whitespace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
-    nice <- maybeOption $ whitespace *> kvNumParser "Resource_List.nice"
-    walltime <- whitespace *> string "Resource_List.walltime=" *> parseTorqueWalltime
-    return TorqueResourceRequest
-        { nodes = nodes
-        , vmem = vmem
-        , nodeCount = nodect
-        , neednodes = neednodes
-        , nice = nice
-        , walltime = walltime
-        }
+    permute $ TorqueResourceRequest
+        <$$> whitespace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
+        <||> whitespace *> string "Resource_List.vmem=" *> parseTorqueMemory
+        <||> whitespace *> kvNumParser "Resource_List.nodect"
+        <||> whitespace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
+        <||> maybeOption (whitespace *> kvNumParser "Resource_List.nice")
+        <||> whitespace *> string "Resource_List.walltime=" *> parseTorqueWalltime
 
+--------------------------------------------------------------------------------
 parseTorqueResourceUsage :: Parser TorqueResourceUsage
 parseTorqueResourceUsage = do
     cput <- whitespace *> kvNumParser "resources_used.cput"
@@ -114,15 +122,25 @@ parseTorqueResourceUsage = do
         , walltime = walltime
         }
 
+--------------------------------------------------------------------------------
 parseTorqueHostList :: Parser [TorqueExecHost]
 parseTorqueHostList = flip sepBy (char '+') $ do
-        fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
-        char '/'
-        lower <- decimal
-        char '-'
-        upper <- decimal
-        return $ TorqueExecHost { name = fqdn, lowerCore = lower, upperCore = upper}
+    fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
+    char '/'
+    (lower, upper) <- try parseCoreRange <|> parseSingleCore
+    return $ TorqueExecHost { name = fqdn, lowerCore = lower, upperCore = upper}
+  where parseCoreRange :: Parser (Int, Int)
+        parseCoreRange = do
+            lower <- decimal
+            char '-'
+            upper <- decimal
+            return (lower, upper)
 
+        parseSingleCore = do
+            lower <- decimal
+            return (lower, lower)
+
+--------------------------------------------------------------------------------
 parseTorqueExit :: Parser TorqueJobExit
 parseTorqueExit = do
     _ <- manyTill anyChar (lookAhead ";E;") *> string ";E;"   -- drop the prefix
@@ -138,7 +156,7 @@ parseTorqueExit = do
     start <- whitespace *> kvNumParser "start"
     owner <- whitespace *> kvTextParser "owner"
     exec_host <- whitespace *> parseTorqueHostList
-    request <- whitespace *> parseTorqueResourceRequest
+    request <- parseTorqueResourceRequest
     session <- whitespace *> kvNumParser "session"
     total_execution_slots <- whitespace *> kvNumParser "total_execution_slots"
     unique_node_count <- whitespace *> kvNumParser "unique_node_count"

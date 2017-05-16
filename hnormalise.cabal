@@ -35,6 +35,7 @@ library
                      , attoparsec
                      , bytestring
                      , containers
+                     , directory
                      , text
                      , yaml
   default-language:    Haskell2010
@@ -53,6 +54,7 @@ executable hnormalise-exe
                      , conduit-combinators
                      , conduit-extra
                      , containers
+                     , directory
                      , optparse-applicative
                      , resourcet
                      , text

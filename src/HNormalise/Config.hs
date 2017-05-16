@@ -10,8 +10,12 @@ module HNormalise.Config
 import           Control.Monad          (mplus)
 import           Data.Aeson             (defaultOptions)
 import           Data.Aeson.TH          (deriveJSON)
+import qualified Data.ByteString        as B
+import           Data.Monoid            ((<>))
 import           Data.Text              (Text)
-import qualified Data.Yaml.Config       as YC
+import qualified Data.Yaml              as Y
+import           System.Directory
+
 
 --------------------------------------------------------------------------------
 data Config = Config
@@ -44,13 +48,30 @@ defaultConfig = Config
     }
 
 --------------------------------------------------------------------------------
-defaultConfigFileLocation :: FilePath
-defaultConfigFileLocation = "/etc/hnormalise.yml"
+systemConfigFileLocation :: FilePath
+systemConfigFileLocation = "/etc/hnormalise.yaml"
+
+--------------------------------------------------------------------------------
+readConfig :: FilePath -> IO Config
+readConfig fp = do
+    exists <- doesFileExist fp
+    if exists then do
+        contents <- B.readFile fp
+        case Y.decodeEither contents of
+            Left err -> error $ "HNormalise.Config.readConfig: " ++ err
+            Right config -> return (config :: Config)
+    else
+        return mempty
 
 
 --------------------------------------------------------------------------------
 loadConfig :: Maybe FilePath -> IO Config
-loadConfig fp = undefined
+loadConfig fp = do
+    userConfig <- case fp of
+        Just fp' -> readConfig fp'
+        Nothing -> return mempty
+    systemConfig <- readConfig systemConfigFileLocation
+    return $ userConfig <> systemConfig <> defaultConfig
 
 --------------------------------------------------------------------------------
 $(deriveJSON defaultOptions ''Config)

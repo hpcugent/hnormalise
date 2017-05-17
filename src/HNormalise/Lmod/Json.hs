@@ -14,10 +14,10 @@ import           HNormalise.Lmod.Internal
 
 
 instance ToJSON LmodInfo where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON LmodLoad where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON LmodModule where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions

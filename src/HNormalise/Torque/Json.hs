@@ -14,28 +14,28 @@ import           HNormalise.Torque.Internal
 --------------------------------------------------------------------------------
 
 instance ToJSON TorqueJobShortNode where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueJobFQNode where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueExecHost where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueWalltime where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueResourceRequest where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueResourceUsage where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueJobTime where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueJobExit where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueJobName where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions

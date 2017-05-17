@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -13,73 +14,81 @@ import           GHC.Generics (Generic)
 
 
 data TorqueJobShortNode = TorqueJobShortNode
-    { number :: Int
-    , ppn    :: Maybe Int
+    { number :: !Int
+    , ppn    :: !(Maybe Int)
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueJobFQNode = TorqueJobFQNode
-    { name :: Text
-    , ppn  :: Int
+    { name :: !Text
+    , ppn  :: !Int
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueExecHost = TorqueExecHost
-    { name      :: Text
-    , lowerCore :: Int
-    , upperCore :: Int
+    { name      :: !Text
+    , lowerCore :: !Int
+    , upperCore :: !Int
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueWalltime = TorqueWalltime
-    { days    :: Int
-    , hours   :: Int
-    , minutes :: Int
-    , seconds :: Int
+    { days    :: !Int
+    , hours   :: !Int
+    , minutes :: !Int
+    , seconds :: !Int
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueResourceRequest = TorqueResourceRequest
-    { nodes     :: Either TorqueJobShortNode [TorqueJobFQNode]
-    , vmem      :: Integer
-    , nodeCount :: Int
-    , neednodes :: Either TorqueJobShortNode [TorqueJobFQNode]
-    , nice      :: Maybe Int
-    , walltime  :: TorqueWalltime
+    { nodes     :: !(Either TorqueJobShortNode [TorqueJobFQNode])
+    , vmem      :: !Integer
+    , nodeCount :: !Int
+    , neednodes :: !(Either TorqueJobShortNode [TorqueJobFQNode])
+    , nice      :: !(Maybe Int)
+    , walltime  :: !TorqueWalltime
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueResourceUsage = TorqueResourceUsage
-    { cputime  :: Integer
-    , energy   :: Integer
-    , mem      :: Integer
-    , vmem     :: Integer
-    , walltime :: TorqueWalltime
+    { cputime  :: !Integer
+    , energy   :: !Integer
+    , mem      :: !Integer
+    , vmem     :: !Integer
+    , walltime :: !TorqueWalltime
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueJobTime = TorqueJobTime
-    { ctime     :: Integer
-    , qtime     :: Integer
-    , etime     :: Integer
-    , startTime :: Integer
-    , endTime   :: Integer
+    { ctime     :: !Integer
+    , qtime     :: !Integer
+    , etime     :: !Integer
+    , startTime :: !Integer
+    , endTime   :: !Integer
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueJobExit = TorqueJobExit
-    { name                :: TorqueJobName
-    , user                :: Text
-    , group               :: Text
-    , jobname             :: Text
-    , queue               :: Text
-    , startCount          :: Maybe Int
-    , owner               :: Text
-    , session             :: Integer
-    , times               :: TorqueJobTime
-    , resourceRequest     :: TorqueResourceRequest
-    , resourceUsage       :: TorqueResourceUsage
-    , totalExecutionSlots :: Int
-    , uniqueNodeCount     :: Int
-    , exitStatus          :: Int
+    { name                :: !TorqueJobName
+    , user                :: !Text
+    , group               :: !Text
+    , jobname             :: !Text
+    , queue               :: !Text
+    , startCount          :: !(Maybe Int)
+    , owner               :: !Text
+    , session             :: !Integer
+    , times               :: !TorqueJobTime
+    , resourceRequest     :: !TorqueResourceRequest
+    , resourceUsage       :: !TorqueResourceUsage
+    , totalExecutionSlots :: !Int
+    , uniqueNodeCount     :: !Int
+    , exitStatus          :: !Int
     } deriving (Show, Eq, Generic)
 
+--------------------------------------------------------------------------------
 data TorqueJobName = TorqueJobName
-    { number  :: Integer
-    , array_id :: Maybe Integer
-    , master  :: Text
-    , cluster :: Text
+    { number   :: !Integer
+    , array_id :: !(Maybe Integer)
+    , master   :: !Text
+    , cluster  :: !Text
     } deriving (Show, Eq, Generic)

@@ -16,7 +16,7 @@ import           HNormalise.Rsyslog.Internal
 instance FromJSON Rsyslog where
     parseJSON = withObject "Rsyslog" $ \v -> Rsyslog <$>
             (v .:  "msg")              <*>
-            (v .:  "rawmsg")           <*>
+    --        (v .:  "rawmsg")           <*>
             (v .:  "timereported")     <*>
             (v .:  "hostname")         <*>
             (v .:  "syslogtag")        <*>
@@ -29,15 +29,15 @@ instance FromJSON Rsyslog where
             (v .:  "timegenerated")    <*>
             (v .:  "programname")      <*>
             (v .:  "protocol-version") <*>
-            (v .:  "structured-data")  <*>
+    --        (v .:  "structured-data")  <*>
             (v .:  "app-name")         <*>
-            (v .:  "procid")           <*>
-            (v .:  "msgid")            <*>
-            (v .:? "uuid")             <*>
-            (v .:? "$!")
+            (v .:  "procid")
+    --        (v .:  "msgid")            <*>
+    --        (v .:? "uuid")             <*>
+    --        (v .:? "$!")
 
 instance ToJSON Rsyslog where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions
 
 --------------------------------------------------------------------------------
 instance (ToJSON a) => ToJSON (NormalisedRsyslog a) where

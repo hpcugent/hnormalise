@@ -14,4 +14,4 @@ import           HNormalise.Huppel.Internal
 
 
 instance ToJSON Huppel where
-    toJSON = genericToJSON defaultOptions
+    toEncoding = genericToEncoding defaultOptions

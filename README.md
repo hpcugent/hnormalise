@@ -9,35 +9,43 @@ Features:
 - accepts JSON-style rsyslog data (sent as %jsonmesg% in the rsyslog template)
 - sends out successfull converted results on a TCP port, allowing communication back to a wide range of services,
   including rsyslog, [logstash](http://www.elastic.co/products/logstash), ...
-- sends out original messages to a TCP port n case the parsing failed, allowing other services to process the
+- sends out original messages to a (different) TCP port in case the parsing fails, allowing other services to process the
   information.
 
 
 Parsing
 -------
 
-`hNOrmalise` used the [Attoparsec](https://github.com/bos/attoparsec) package to have fast and efficient parsing.
+`hNormalise` used the [Attoparsec](https://github.com/bos/attoparsec) package to have fast and efficient parsing.
 `Attoparsec` offers a clean and relatively simple DSL that allows getting the relevant data from the message and
 discarding the rest. We also rely on [permute]() to deal with log lines that may contain e.g., key-value pairs in
 no definite ordering. Note that this _will_ slow down the parsing.
 
 
+Caveat: at this point, we do not a priori restrict the possible parsers we unleash on each message. However, if the inbound
+data can be tagged properly, we could reduce the maximal number of parsers tried and avoid extensive backtracking.
+
+
 ### Adding a new parser
 
-To add a new parser for logs from tool `Tool`, you should create a `src/HNormalise/Tool` directory.
-The parser goes in `HNormalise.Tool.Parser`. The corresponding Haskell data structure goes in `HNOrmalise.Tool.Internal`.
+To add a new parser for log lines from tool `Tool`, several actions must be taken:
 
-The conversion of the parser to JSON is defined in `HNormalise.Tool.JSON`.
-
-Next to this, you should add an element to the `ParseResult` ADT in the `HNormalise` module and let getJsonKey know
-what the key should be for this added element.
-
+- A `src/HNormalise/Tool` directory must be created, under which all specific code and data types for the new
+  log lines will reside. Note that `Tool` can provide multiple types of log lines, but they should all be coded under
+  the same location.
+- Define a data type that holds the relevant data from the log line you wish to keep/forward in `HNOrmalise.Tool.Internal`.
+  Make sure that the type derives `Generic` (and add the require language extentions on top of the file).
+- The parser goes in the `HNormalise.Tool.Parser` module.
+- Conversion of the data type that was defined to hold the data to JSON is done in `HNormalise.Tool.JSON`.
+- Finally, the `HNormalise` module defines a sum-type container to which you should add your own entry. Remember to also
+  add a line for the corresponding getJsonKey function, which defines the key under whoch the parsed data will be
+  made available downstream.
 
 
 Example
 -------
 
-The original message sent by rsyslog is
+The original (anonimised) message sent by rsyslog (as JSON) for a Torque job exit event is
 
 ~~~~
 {"msg":"05/14/2017 00:00:02;E;3275189.master.mycluster.mydomain.com;user=someuser group=somegroup jobname=myjob queue=long ctime=1494689613 qtime=1494689613 etime=1494689613 start=1494689684 owner=someuser@login.mycluster.mydomain.com exec_host=mynode.mycluster.mydomain.com/1 Resource_List.neednodes=mynode:ppn=1 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=mynode:ppn=1 Resource_List.vmem=4720302336b Resource_List.walltime=71:59:59 session=102034 total_execution_slots=1 unique_node_count=1 end=1494712802 Exit_status=0 resources_used.cput=23076 resources_used.energy_used=0 resources_used.mem=64480kb resources_used.vmem=314996kb resources_used.walltime=06:25:15", "rawmsg": "redacted", "timereported": "2017-05-15T18:16:16.724002+02:00", "hostname": "master.mydomain.com", "syslogtag": "hnormalise", "inputname": "imfile", "fromhost": "", "fromhost-ip": "", "pri": "133", "syslogfacility": "16", "syslogseverity": "5", "timegenerated": "2017-05-15T18:16:16.724002+02:00", "programname": "hnormalise", "protocol-version": "0", "structured-data": "-", "app-name": "hnormalise", "procid": "-", "msgid": "-", "uuid": null, "$!": null }

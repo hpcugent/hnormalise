@@ -1,0 +1,9 @@
+# Configuraton file for the hnormalise service
+# --------------------------------------------
+
+listenPort: 519
+listenHost: "localhost"
+successPort: 26002
+successHost: "localhost"
+failPort: 518
+failHost: "localhost"

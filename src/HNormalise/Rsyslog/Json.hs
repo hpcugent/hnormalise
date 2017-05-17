@@ -39,12 +39,11 @@ instance FromJSON Rsyslog where
 instance ToJSON Rsyslog where
     toJSON = genericToJSON defaultOptions
 
-
 --------------------------------------------------------------------------------
 instance (ToJSON a) => ToJSON (NormalisedRsyslog a) where
-    toEncoding (NRsyslog r j) =
+    toEncoding (NRsyslog r j (GetJsonKey f)) =
         pairs
         (  "message" .= msg r
         <> "syslog_abspri" .= syslogseverity r
-        <> "json" .= toJSON j
+        <> (f j) .= toJSON j
         )

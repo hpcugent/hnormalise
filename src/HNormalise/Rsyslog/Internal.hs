@@ -6,9 +6,16 @@
 module HNormalise.Rsyslog.Internal where
 
 --------------------------------------------------------------------------------
-import Data.Aeson             (FromJSON, ToJSON)
+import Data.Aeson             (FromJSON, ToJSON, toJSON)
 import Data.Text
 import GHC.Generics           (Generic)
+
+data GetJsonKey a = GetJsonKey
+    { f :: (a -> Text)
+    }
+
+instance (ToJSON a) => ToJSON (GetJsonKey a) where
+    toJSON (GetJsonKey _) = "{}"
 
 --------------------------------------------------------------------------------
 data Rsyslog = Rsyslog
@@ -37,4 +44,5 @@ data Rsyslog = Rsyslog
 data NormalisedRsyslog a = NRsyslog
     { rsyslog          :: Rsyslog
     , normalised       :: a
+    , jsonkey          :: GetJsonKey a
     } deriving (Generic)

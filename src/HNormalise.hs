@@ -1,3 +1,6 @@
+{-# LANGUAGE OverloadedStrings          #-}
+
+
 module HNormalise
     ( normaliseRsyslog
     , HNormalise.Rsyslog.Internal.Rsyslog(..)
@@ -43,6 +46,13 @@ instance ToJSON ParseResult where
     toJSON (PR_T v) = Aeson.toJSON v
 
 --------------------------------------------------------------------------------
+getJsonKey :: ParseResult -> Text
+getJsonKey (PR_H _) = "huppel"
+getJsonKey (PR_L _) = "lmod"
+getJsonKey (PR_T _) = "torque"
+
+
+--------------------------------------------------------------------------------
 parseMessage :: Parser ParseResult
 parseMessage =
         (parseHuppel >>= (\v -> return $ PR_H v))
@@ -64,5 +74,5 @@ normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
                  -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
 normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
-    let nrsyslog = NRsyslog { rsyslog = rsyslog, normalised = cm }
+    let nrsyslog = NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = GetJsonKey getJsonKey }
     return $ BS.toStrict $ Aeson.encode $ nrsyslog

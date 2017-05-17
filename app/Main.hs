@@ -10,7 +10,7 @@ import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Trans.Resource (runResourceT)
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty
-import           Data.Attoparsec.Text
+import           Data.Attoparsec.ByteString.Char8
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
@@ -32,12 +32,14 @@ import Debug.Trace
 --------------------------------------------------------------------------------
 import           HNormalise                   (normaliseRsyslog)
 import           HNormalise.Config            (Config (..), loadConfig)
-import           HNormalise.Rsyslog.Json
 import           HNormalise.Rsyslog.Internal  (Rsyslog (..))
+import           HNormalise.Rsyslog.Json
+import           HNormalise.Rsyslog.Parser    (parseRsyslogLogstashString)
 
 --------------------------------------------------------------------------------
 data Options = Options
     { oConfigFilePath :: !(Maybe FilePath)
+    , oJsonInput      :: !Bool
     , oVersion        :: !Bool
     , oTestFilePath   :: !(Maybe FilePath)
     } deriving (Show)
@@ -50,6 +52,10 @@ parserOptions = Options
             OA.short 'c' <>
             OA.metavar "FILENAME" <>
             OA.help "configuration file location ")
+    <*> (OA.switch $
+            OA.long "jsoninput" <>
+            OA.short 'j' <>
+            OA.help "Input will be delivered as JSON (slower)")
     <*> (OA.switch $
             OA.long "version" <>
             OA.short 'v' <>
@@ -75,12 +81,21 @@ data Normalised = Transformed SBS.ByteString
                 | Original SBS.ByteString
 
 --------------------------------------------------------------------------------
-normalise :: SBS.ByteString  -- information arrives as a string representing JSON information
-          -> Normalised
-normalise logLine =
+normalise :: Bool            -- ^ Is the input a JSON string?
+          -> SBS.ByteString  -- ^ Input
+          -> Normalised      -- ^ Transformed or Original result
+normalise jsonInput logLine =
     --let d = Data.Aeson.decodeStrict logLine :: Maybe Rsyslog
     --in trace ("Debug decodeStrict: " ++ show d) $
-      case Data.Aeson.decodeStrict logLine >>= normaliseRsyslog of
+    let n = if not jsonInput then
+                case parse parseRsyslogLogstashString logLine of
+                        Done _ r  -> (Just r) >>= normaliseRsyslog
+                        Partial c -> case c SBS.empty of
+                            Done _ r -> (Just r) >>= normaliseRsyslog
+                            _        -> Nothing
+                        _         -> Nothing
+            else Data.Aeson.decodeStrict logLine >>= normaliseRsyslog
+    in case n of
         Just j  -> Transformed j
         Nothing -> Original logLine
 
@@ -143,11 +158,11 @@ main = do
                 runTCPClient (clientSettings (fromJust $ failPort config) "localhost") $ \failServer ->
                     appSource appData
                         $= CB.lines
-                        $= C.map normalise
+                        $= C.map (normalise $ oJsonInput options)
                         $$ messageSink successServer failServer
             Just testSinkFileName ->
                 runResourceT$ appSource appData
                     $= CB.lines
-                    $= C.map normalise
+                    $= C.map (normalise $ oJsonInput options)
                     $= mySink
                     $$ sinkFile testSinkFileName

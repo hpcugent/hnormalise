@@ -10,10 +10,14 @@ import Data.Aeson             (FromJSON, ToJSON, toJSON)
 import Data.Text
 import GHC.Generics           (Generic)
 
+
+--------------------------------------------------------------------------------
 data GetJsonKey a = GetJsonKey
     { f :: (a -> Text)
     }
 
+-- We really do not use this, but something should satify the ToJSON constraint of the NRSyslog type as well as
+-- make sure we can avoid circular imports to get the JSON key for storing the parsed data.
 instance (ToJSON a) => ToJSON (GetJsonKey a) where
     toJSON (GetJsonKey _) = "{}"
 
@@ -41,6 +45,8 @@ data Rsyslog = Rsyslog
     , all_json         :: Maybe Text
     } deriving (Eq, Show, Generic)
 
+    
+--------------------------------------------------------------------------------
 data NormalisedRsyslog a = NRsyslog
     { rsyslog          :: Rsyslog
     , normalised       :: a

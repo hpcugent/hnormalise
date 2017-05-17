@@ -12,6 +12,16 @@ Features:
 - sends out original messages to a (different) TCP port in case the parsing fails, allowing other services to process the
   information.
 
+Usage and configuration
+-----------------------
+
+To run and build `hNormalise`, clone this repository and run `stack build` followed by `stack install` inside it.
+To start just run `hnormalise`. If you need help, use the `-h` flag.
+
+Ports and machines can be tweaked through a configuration file. See `data/hnormalise.yaml` for an example.
+
+Testing the actual setup can be done trivially via `nc`, provided you have data to throw at `hNormalise`. A test example
+is also provided below.
 
 Parsing
 -------

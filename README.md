@@ -55,7 +55,7 @@ To add a new parser for log lines from tool `Tool`, several actions must be take
 Example
 -------
 
-The original (anonimised) message sent by rsyslog (as JSON) for a Torque job exit event is
+The original (anonymised) message sent by rsyslog (as JSON) for a Torque job exit event is
 
 ~~~~
 {"msg":"05/14/2017 00:00:02;E;3275189.master.mycluster.mydomain.com;user=someuser group=somegroup jobname=myjob queue=long ctime=1494689613 qtime=1494689613 etime=1494689613 start=1494689684 owner=someuser@login.mycluster.mydomain.com exec_host=mynode.mycluster.mydomain.com/1 Resource_List.neednodes=mynode:ppn=1 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=mynode:ppn=1 Resource_List.vmem=4720302336b Resource_List.walltime=71:59:59 session=102034 total_execution_slots=1 unique_node_count=1 end=1494712802 Exit_status=0 resources_used.cput=23076 resources_used.energy_used=0 resources_used.mem=64480kb resources_used.vmem=314996kb resources_used.walltime=06:25:15", "rawmsg": "redacted", "timereported": "2017-05-15T18:16:16.724002+02:00", "hostname": "master.mydomain.com", "syslogtag": "hnormalise", "inputname": "imfile", "fromhost": "", "fromhost-ip": "", "pri": "133", "syslogfacility": "16", "syslogseverity": "5", "timegenerated": "2017-05-15T18:16:16.724002+02:00", "programname": "hnormalise", "protocol-version": "0", "structured-data": "-", "app-name": "hnormalise", "procid": "-", "msgid": "-", "uuid": null, "$!": null }

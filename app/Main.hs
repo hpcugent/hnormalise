@@ -78,8 +78,8 @@ data Normalised = Transformed SBS.ByteString
 normalise :: SBS.ByteString  -- information arrives as a string representing JSON information
           -> Normalised
 normalise logLine =
-    let d = Data.Aeson.decodeStrict logLine :: Maybe Rsyslog
-    in trace ("Debug decodeStrict: " ++ show d) $
+    --let d = Data.Aeson.decodeStrict logLine :: Maybe Rsyslog
+    --in trace ("Debug decodeStrict: " ++ show d) $
       case Data.Aeson.decodeStrict logLine >>= normaliseRsyslog of
         Just j  -> Transformed j
         Nothing -> Original logLine

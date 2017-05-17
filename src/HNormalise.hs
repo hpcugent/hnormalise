@@ -53,15 +53,16 @@ parseMessage =
 convertMessage :: Text -> Maybe ParseResult
 convertMessage message =
     case parse parseMessage message of
-        Done _ pm -> trace (show pm) $ Just pm
-        Partial c -> trace ("partial result") $ case c empty of
-            Done _ pm -> trace (show pm) $ Just pm
-            _ -> trace ("no result after partial continuation") $ Nothing
-        _         -> trace ("no result") $ Nothing
+        Done _ pm -> {-trace (show pm) $-} Just pm
+        Partial c -> {-trace ("partial result") $ -}case c empty of
+            Done _ pm -> {-trace (show pm) $-} Just pm
+            _ -> {-trace ("no result after partial continuation") $-} Nothing
+        _         -> {-trace ("no result") $-} Nothing
 
 --------------------------------------------------------------------------------
 normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
                  -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
 normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
-    return $ BS.toStrict $ Aeson.encode $ rsyslog { msg = toStrict $ encodeToLazyText $ cm }
+    let nrsyslog = NRsyslog { rsyslog = rsyslog, normalised = cm }
+    return $ BS.toStrict $ Aeson.encode $ nrsyslog

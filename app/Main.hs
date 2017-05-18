@@ -77,24 +77,21 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
     )
 
 --------------------------------------------------------------------------------
-data Normalised = Transformed SBS.ByteString
-                | Original SBS.ByteString
+data Normalised = Transformed !SBS.ByteString
+                | Original !SBS.ByteString
 
 --------------------------------------------------------------------------------
 normalise :: Bool            -- ^ Is the input a JSON string?
           -> SBS.ByteString  -- ^ Input
           -> Normalised      -- ^ Transformed or Original result
 normalise jsonInput logLine =
-    --let d = Data.Aeson.decodeStrict logLine :: Maybe Rsyslog
-    --in trace ("Debug decodeStrict: " ++ show d) $
-    let n = if not jsonInput then
-                case parse parseRsyslogLogstashString logLine of
-                        Done _ r  -> (Just r) >>= normaliseRsyslog
-                        Partial c -> case c SBS.empty of
-                            Done _ r -> (Just r) >>= normaliseRsyslog
-                            _        -> Nothing
-                        _         -> Nothing
-            else Data.Aeson.decodeStrict logLine >>= normaliseRsyslog
+    let n = if jsonInput then Data.Aeson.decodeStrict logLine >>= normaliseRsyslog
+            else case parse parseRsyslogLogstashString logLine of
+                    Done _ r    -> (Just r) >>= normaliseRsyslog
+                    Partial c   -> case c SBS.empty of
+                                        Done _ r -> (Just r) >>= normaliseRsyslog
+                                        _        -> Nothing
+                    _           -> Nothing
     in case n of
         Just j  -> Transformed j
         Nothing -> Original logLine

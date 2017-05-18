@@ -18,5 +18,5 @@ import           HNormalise.Huppel.Internal
 
 parseHuppel :: Parser Huppel
 parseHuppel = do
-    i <- string "huppel" *> whitespace *> decimal
+    i <- string "huppel" *> skipSpace *> decimal
     return $ Huppel { id = i }

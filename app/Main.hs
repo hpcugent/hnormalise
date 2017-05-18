@@ -9,8 +9,7 @@ import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Trans.Resource (runResourceT)
 import           Data.Aeson
-import           Data.Aeson.Encode.Pretty
-import           Data.Attoparsec.ByteString.Char8
+import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
@@ -19,6 +18,7 @@ import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
 import qualified Data.Conduit.Network         as DCN (HostPreference (..))
+import qualified Data.Conduit.Text            as DCT
 import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  (mempty, (<>))
 import qualified Data.Text                    as T
@@ -32,9 +32,9 @@ import Debug.Trace
 --------------------------------------------------------------------------------
 import           HNormalise                   (normaliseRsyslog)
 import           HNormalise.Config            (Config (..), loadConfig)
-import           HNormalise.Rsyslog.Internal  (Rsyslog (..))
-import           HNormalise.Rsyslog.Json
-import           HNormalise.Rsyslog.Parser    (parseRsyslogLogstashString)
+import           HNormalise.Internal  (Rsyslog (..))
+import           HNormalise.Json
+import           HNormalise.Parser    (parseRsyslogLogstashString)
 
 --------------------------------------------------------------------------------
 data Options = Options
@@ -82,19 +82,20 @@ data Normalised = Transformed !SBS.ByteString
 
 --------------------------------------------------------------------------------
 normalise :: Bool            -- ^ Is the input a JSON string?
-          -> SBS.ByteString  -- ^ Input
+          -> T.Text          -- ^ Input
           -> Normalised      -- ^ Transformed or Original result
 normalise jsonInput logLine =
-    let n = if jsonInput then Data.Aeson.decodeStrict logLine >>= normaliseRsyslog
-            else case parse parseRsyslogLogstashString logLine of
-                    Done _ r    -> (Just r) >>= normaliseRsyslog
-                    Partial c   -> case c SBS.empty of
-                                        Done _ r -> (Just r) >>= normaliseRsyslog
+    let n = --if jsonInput then Data.Aeson.decodeStrict logLine >>= normaliseRsyslog
+            --else
+            case parse parseRsyslogLogstashString logLine of
+                    Done _ r    -> Just r
+                    Partial c   -> case c T.empty of
+                                        Done _ r -> Just r
                                         _        -> Nothing
                     _           -> Nothing
     in case n of
         Just j  -> Transformed j
-        Nothing -> Original logLine
+        Nothing -> Original $ BS.toStrict $ encode $ logLine
 
 --------------------------------------------------------------------------------
 messageSink success failure = loop
@@ -154,12 +155,14 @@ main = do
                 runTCPClient (clientSettings (fromJust $ successPort config) "localhost") $ \successServer ->
                 runTCPClient (clientSettings (fromJust $ failPort config) "localhost") $ \failServer ->
                     appSource appData
-                        $= CB.lines
+                        $= DCT.decode DCT.utf8
+                        $= DCT.lines
                         $= C.map (normalise $ oJsonInput options)
                         $$ messageSink successServer failServer
             Just testSinkFileName ->
                 runResourceT$ appSource appData
-                    $= CB.lines
+                    $= DCT.decode DCT.utf8
+                    $= DCT.lines
                     $= C.map (normalise $ oJsonInput options)
                     $= mySink
                     $$ sinkFile testSinkFileName

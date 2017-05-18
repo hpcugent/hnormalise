@@ -17,6 +17,9 @@ library
   hs-source-dirs:      src
   exposed-modules:     HNormalise
                      , HNormalise.Config
+                     , HNormalise.Internal
+                     , HNormalise.Json
+                     , HNormalise.Parser
                      , HNormalise.Common.Parser
                      , HNormalise.Huppel.Internal
                      , HNormalise.Huppel.Json
@@ -24,9 +27,6 @@ library
                      , HNormalise.Lmod.Internal
                      , HNormalise.Lmod.Json
                      , HNormalise.Lmod.Parser
-                     , HNormalise.Rsyslog.Internal
-                     , HNormalise.Rsyslog.Json
-                     , HNormalise.Rsyslog.Parser
                      , HNormalise.Torque.Internal
                      , HNormalise.Torque.Json
                      , HNormalise.Torque.Parser
@@ -45,7 +45,7 @@ library
 executable hnormalise
   hs-source-dirs:      app
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -O2
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -O2 -funbox-strict-fields -optc-O2
   build-depends:       base
                      , hnormalise
                      , aeson

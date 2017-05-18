@@ -3,7 +3,8 @@
 
 module HNormalise
     ( normaliseRsyslog
-    , HNormalise.Rsyslog.Internal.Rsyslog(..)
+    , parseMessage
+    , HNormalise.Internal.Rsyslog(..)
     ) where
 
 --------------------------------------------------------------------------------
@@ -21,29 +22,15 @@ import           Data.Text.Lazy              (toStrict)
 import           Debug.Trace
 
 --------------------------------------------------------------------------------
+import           HNormalise.Internal
+import           HNormalise.Json
+import           HNormalise.Parser
 import           HNormalise.Huppel.Internal
 import           HNormalise.Huppel.Json
-import           HNormalise.Huppel.Parser
 import           HNormalise.Lmod.Internal
 import           HNormalise.Lmod.Json
-import           HNormalise.Lmod.Parser
-import           HNormalise.Rsyslog.Internal
-import           HNormalise.Rsyslog.Json
 import           HNormalise.Torque.Internal
 import           HNormalise.Torque.Json
-import           HNormalise.Torque.Parser
-
---------------------------------------------------------------------------------
-data ParseResult = PR_H Huppel
-                 | PR_L LmodLoad
-                 | PR_T TorqueJobExit
-                 deriving  (Show, Eq)
-
---------------------------------------------------------------------------------
-instance ToJSON ParseResult where
-    toJSON (PR_H v) = Aeson.toJSON v
-    toJSON (PR_L v) = Aeson.toJSON v
-    toJSON (PR_T v) = Aeson.toJSON v
 
 --------------------------------------------------------------------------------
 getJsonKey :: ParseResult -> Text
@@ -51,12 +38,6 @@ getJsonKey (PR_H _) = "huppel"
 getJsonKey (PR_L _) = "lmod"
 getJsonKey (PR_T _) = "torque"
 
-
---------------------------------------------------------------------------------
-parseMessage :: Parser ParseResult
-parseMessage =
-        (parseLmodLoad >>= (\v -> return $ PR_L v))
-    <|> (parseTorqueExit >>= (\v -> return $ PR_T v))
 
 --------------------------------------------------------------------------------
 convertMessage :: Text -> Maybe ParseResult
@@ -69,10 +50,12 @@ convertMessage message =
         _         -> {-trace ("no result") $-} Nothing
 
 --------------------------------------------------------------------------------
-normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
+normaliseRsyslog rsyslog = undefined
+{-normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
                  -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
 normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
     return $ BS.toStrict
            $ Aeson.encode
            $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = GetJsonKey getJsonKey }
+       -}

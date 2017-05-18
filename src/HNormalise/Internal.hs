@@ -4,16 +4,23 @@
 {-# LANGUAGE ExistentialQuantification  #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
-module HNormalise.Rsyslog.Internal where
+module HNormalise.Internal where
 
 --------------------------------------------------------------------------------
-import Data.Aeson             (FromJSON, ToJSON, toJSON)
+import Data.Aeson             (FromJSON, ToJSON, toJSON, toEncoding)
 import Data.Text
 import GHC.Generics           (Generic)
 
+--------------------------------------------------------------------------------
+import HNormalise.Huppel.Internal (Huppel)
+import HNormalise.Huppel.Json
+import HNormalise.Lmod.Internal   (LmodLoad)
+import HNormalise.Lmod.Json
+import HNormalise.Torque.Internal (TorqueJobExit)
+import HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
-data GetJsonKey a = GetJsonKey
+{-data GetJsonKey a = GetJsonKey
     { f :: (a -> Text)
     }
 
@@ -21,10 +28,22 @@ data GetJsonKey a = GetJsonKey
 -- make sure we can avoid circular imports to get the JSON key for storing the parsed data.
 instance (ToJSON a) => ToJSON (GetJsonKey a) where
     toJSON (GetJsonKey _) = "{}"
+-}
+--------------------------------------------------------------------------------
+data ParseResult = PR_H Huppel
+                 | PR_L LmodLoad
+                 | PR_T TorqueJobExit
+                 deriving  (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+instance ToJSON ParseResult where
+    toEncoding (PR_H v) = toEncoding v
+    toEncoding (PR_L v) = toEncoding v
+    toEncoding (PR_T v) = toEncoding v
 
 --------------------------------------------------------------------------------
 data Rsyslog = Rsyslog
-    { msg              :: !Text
+    { msg              :: !ParseResult
     --, rawmsg           :: !Text
     , timereported     :: !Text
     , hostname         :: !Text
@@ -48,8 +67,8 @@ data Rsyslog = Rsyslog
 
 
 --------------------------------------------------------------------------------
-data NormalisedRsyslog a = NRsyslog
+data NormalisedRsyslog = NRsyslog
     { rsyslog          :: Rsyslog
-    , normalised       :: a
-    , jsonkey          :: GetJsonKey a
-    } deriving (Generic)
+    --, normalised       :: a
+    , jsonkey          :: Text
+    } deriving (Eq, Show, Generic)

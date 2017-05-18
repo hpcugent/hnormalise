@@ -86,7 +86,7 @@ parseTorqueJobName = do
 parseTorqueResourceNodeList :: Parser (Either TorqueJobShortNode [TorqueJobFQNode])
 parseTorqueResourceNodeList = do
     c <- peekChar'
-    if isDigit c then do
+    if Data.Char.isDigit c then do
         number <- decimal
         ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
         return $ Left $ TorqueJobShortNode { number = number, ppn = ppn }

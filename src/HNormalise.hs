@@ -55,8 +55,7 @@ getJsonKey (PR_T _) = "torque"
 --------------------------------------------------------------------------------
 parseMessage :: Parser ParseResult
 parseMessage =
-        (parseHuppel >>= (\v -> return $ PR_H v))
-    <|> (parseLmodLoad >>= (\v -> return $ PR_L v))
+        (parseLmodLoad >>= (\v -> return $ PR_L v))
     <|> (parseTorqueExit >>= (\v -> return $ PR_T v))
 
 --------------------------------------------------------------------------------
@@ -74,5 +73,6 @@ normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
                  -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
 normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
-    let nrsyslog = NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = GetJsonKey getJsonKey }
-    return $ BS.toStrict $ Aeson.encode $ nrsyslog
+    return $ BS.toStrict
+           $ Aeson.encode
+           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = GetJsonKey getJsonKey }

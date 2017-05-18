@@ -54,10 +54,10 @@ parseTorqueSeconds = do
 parseTorqueMemory :: Parser Integer
 parseTorqueMemory = do
     v <- decimal
-    unit <- string "b"
-        <|> string "kb"
-        <|> string "mb"
-        <|> string "gb"
+    unit <- asciiCI "b"
+        <|> asciiCI "kb"
+        <|> asciiCI "mb"
+        <|> asciiCI "gb"
     return $ case unit of
         "b"  -> v
         "kb" -> v * 1024
@@ -99,21 +99,21 @@ parseTorqueResourceNodeList = do
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
 parseTorqueResourceRequest = do
     permute $ TorqueResourceRequest
-        <$$> whitespace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
-        <||> whitespace *> string "Resource_List.vmem=" *> parseTorqueMemory
-        <||> whitespace *> kvNumParser "Resource_List.nodect"
-        <||> whitespace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
-        <||> maybeOption (whitespace *> kvNumParser "Resource_List.nice")
-        <||> whitespace *> string "Resource_List.walltime=" *> parseTorqueWalltime
+        <$$> skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
+        <||> skipSpace *> string "Resource_List.vmem=" *> parseTorqueMemory
+        <||> skipSpace *> kvNumParser "Resource_List.nodect"
+        <||> skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
+        <||> maybeOption (skipSpace *> kvNumParser "Resource_List.nice")
+        <||> skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
 
 --------------------------------------------------------------------------------
 parseTorqueResourceUsage :: Parser TorqueResourceUsage
 parseTorqueResourceUsage = do
-    cput <- whitespace *> kvNumParser "resources_used.cput"
-    energy <- whitespace *> kvNumParser "resources_used.energy_used"
-    mem <- whitespace *> string "resources_used.mem=" *> parseTorqueMemory
-    vmem <- whitespace *> string "resources_used.vmem=" *> parseTorqueMemory
-    walltime <- whitespace *> string "resources_used.walltime=" *> parseTorqueWalltime
+    cput <- skipSpace *> kvNumParser "resources_used.cput"
+    energy <- skipSpace *> kvNumParser "resources_used.energy_used"
+    mem <- skipSpace *> string "resources_used.mem=" *> parseTorqueMemory
+    vmem <- skipSpace *> string "resources_used.vmem=" *> parseTorqueMemory
+    walltime <- skipSpace *> string "resources_used.walltime=" *> parseTorqueWalltime
     return $ TorqueResourceUsage
         { cputime = cput
         , energy = energy
@@ -143,26 +143,26 @@ parseTorqueHostList = flip sepBy (char '+') $ do
 --------------------------------------------------------------------------------
 parseTorqueExit :: Parser TorqueJobExit
 parseTorqueExit = do
-    _ <- manyTill anyChar (lookAhead ";E;") *> string ";E;"   -- drop the prefix
+    takeTill (== ';') *> string ";E;"   -- drop the prefix
     name <- parseTorqueJobName
     user <- kvTextParser "user"
-    group <- whitespace *> kvTextParser "group"
-    jobname <- whitespace *> kvTextParser "jobname"
-    queue <- whitespace *> kvTextParser "queue"
-    start_count <- maybeOption $ whitespace *> kvNumParser "start_count"
-    ctime <- whitespace *> kvNumParser "ctime"
-    qtime <- whitespace *> kvNumParser "qtime"
-    etime <- whitespace *> kvNumParser "etime"
-    start <- whitespace *> kvNumParser "start"
-    owner <- whitespace *> kvTextParser "owner"
-    exec_host <- whitespace *> parseTorqueHostList
+    group <- skipSpace *> kvTextParser "group"
+    jobname <- skipSpace *> kvTextParser "jobname"
+    queue <- skipSpace *> kvTextParser "queue"
+    start_count <- maybeOption $ skipSpace *> kvNumParser "start_count"
+    ctime <- skipSpace *> kvNumParser "ctime"
+    qtime <- skipSpace *> kvNumParser "qtime"
+    etime <- skipSpace *> kvNumParser "etime"
+    start <- skipSpace *> kvNumParser "start"
+    owner <- skipSpace *> kvTextParser "owner"
+    exec_host <- skipSpace *> parseTorqueHostList
     request <- parseTorqueResourceRequest
-    session <- whitespace *> kvNumParser "session"
-    total_execution_slots <- whitespace *> kvNumParser "total_execution_slots"
-    unique_node_count <- whitespace *> kvNumParser "unique_node_count"
-    end <- whitespace *> kvNumParser "end"
-    exit_status <- whitespace *> kvNumParser "Exit_status"
-    usage <- whitespace *> parseTorqueResourceUsage
+    session <- skipSpace *> kvNumParser "session"
+    total_execution_slots <- skipSpace *> kvNumParser "total_execution_slots"
+    unique_node_count <- skipSpace *> kvNumParser "unique_node_count"
+    end <- skipSpace *> kvNumParser "end"
+    exit_status <- skipSpace *> kvNumParser "Exit_status"
+    usage <- skipSpace *> parseTorqueResourceUsage
 
     return $ TorqueJobExit
         { name = name

@@ -26,6 +26,7 @@ library
                      , HNormalise.Lmod.Parser
                      , HNormalise.Rsyslog.Internal
                      , HNormalise.Rsyslog.Json
+                     , HNormalise.Rsyslog.Parser
                      , HNormalise.Torque.Internal
                      , HNormalise.Torque.Json
                      , HNormalise.Torque.Parser

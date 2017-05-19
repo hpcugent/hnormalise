@@ -53,7 +53,7 @@ parseRsyslogLogstashString = do
     return $ let jsonkey = getJsonKey msg
              in BS.toStrict $ encode $ NRsyslog
                     { rsyslog = Rsyslog
-                        { msg              = msg
+                        { msg              = T.empty
                         , timereported     = T.empty
                         , hostname         = hostname
                         , syslogtag        = syslogtag
@@ -69,5 +69,6 @@ parseRsyslogLogstashString = do
                         , app_name         = appname
                         , procid           = T.empty
                         }
+                    , normalised = msg
                     , jsonkey = jsonkey
                     }

@@ -32,12 +32,6 @@ import           HNormalise.Lmod.Json
 import           HNormalise.Torque.Internal
 import           HNormalise.Torque.Json
 
---------------------------------------------------------------------------------
-getJsonKey :: ParseResult -> Text
-getJsonKey (PR_H _) = "huppel"
-getJsonKey (PR_L _) = "lmod"
-getJsonKey (PR_T _) = "torque"
-
 
 --------------------------------------------------------------------------------
 convertMessage :: Text -> Maybe ParseResult
@@ -50,12 +44,10 @@ convertMessage message =
         _         -> {-trace ("no result") $-} Nothing
 
 --------------------------------------------------------------------------------
-normaliseRsyslog rsyslog = undefined
-{-normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
+normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
                  -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
 normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
     return $ BS.toStrict
            $ Aeson.encode
-           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = GetJsonKey getJsonKey }
-       -}
+           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm }

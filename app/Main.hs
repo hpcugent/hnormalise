@@ -81,21 +81,25 @@ data Normalised = Transformed !SBS.ByteString
                 | Original !SBS.ByteString
 
 --------------------------------------------------------------------------------
-normalise :: Bool            -- ^ Is the input a JSON string?
-          -> T.Text          -- ^ Input
-          -> Normalised      -- ^ Transformed or Original result
-normalise jsonInput logLine =
-    let n = --if jsonInput then Data.Aeson.decodeStrict logLine >>= normaliseRsyslog
-            --else
-            case parse parseRsyslogLogstashString logLine of
-                    Done _ r    -> Just r
-                    Partial c   -> case c T.empty of
-                                        Done _ r -> Just r
-                                        _        -> Nothing
-                    _           -> Nothing
-    in case n of
+normaliseJsonInput :: SBS.ByteString    -- ^ Input
+                   -> Normalised        -- ^ Transformed or Original result
+normaliseJsonInput logLine =
+    case (Data.Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= normaliseRsyslog of
         Just j  -> Transformed j
-        Nothing -> Original $ BS.toStrict $ encode $ logLine
+        Nothing -> Original logLine
+
+--------------------------------------------------------------------------------
+normaliseText :: T.Text          -- ^ Input
+              -> Normalised      -- ^ Transformed or Original result
+normaliseText logLine =
+    case parse parseRsyslogLogstashString logLine of
+        Done _ r    -> Transformed r
+        Partial c   -> case c T.empty of
+                            Done _ r -> Transformed r
+                            _        -> original
+        _           -> original
+  where
+    original = Original $ BS.toStrict $ encode $ logLine
 
 --------------------------------------------------------------------------------
 messageSink success failure = loop
@@ -149,20 +153,27 @@ main = do
                     Just h  -> T.unpack h
                     Nothing -> "*"
 
-    runTCPServer (serverSettings (fromJust $ listenPort config) "*") $ \appData ->
+
+    runTCPServer (serverSettings (fromJust $ listenPort config) "*") $ \appData -> do
+
         case oTestFilePath options of
             Nothing ->
                 runTCPClient (clientSettings (fromJust $ successPort config) "localhost") $ \successServer ->
                 runTCPClient (clientSettings (fromJust $ failPort config) "localhost") $ \failServer ->
-                    appSource appData
-                        $= DCT.decode DCT.utf8
-                        $= DCT.lines
-                        $= C.map (normalise $ oJsonInput options)
-                        $$ messageSink successServer failServer
+                    case oJsonInput options of
+                        True  -> appSource appData
+                                    $= CB.lines
+                                    $= C.map normaliseJsonInput
+                                    $$ messageSink successServer failServer
+                        False -> appSource appData
+                                    $= DCT.decode DCT.utf8
+                                    $= DCT.lines
+                                    $= C.map normaliseText
+                                    $$ messageSink successServer failServer
             Just testSinkFileName ->
-                runResourceT$ appSource appData
-                    $= DCT.decode DCT.utf8
-                    $= DCT.lines
-                    $= C.map (normalise $ oJsonInput options)
+                runResourceT $ appSource appData
+                    $= (case oJsonInput options of
+                        True  -> CB.lines $= C.map normaliseJsonInput
+                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map normaliseText)
                     $= mySink
                     $$ sinkFile testSinkFileName

@@ -43,7 +43,7 @@ instance ToJSON ParseResult where
 
 --------------------------------------------------------------------------------
 data Rsyslog = Rsyslog
-    { msg              :: !ParseResult
+    { msg              :: !Text
     --, rawmsg           :: !Text
     , timereported     :: !Text
     , hostname         :: !Text
@@ -69,6 +69,6 @@ data Rsyslog = Rsyslog
 --------------------------------------------------------------------------------
 data NormalisedRsyslog = NRsyslog
     { rsyslog          :: Rsyslog
-    --, normalised       :: a
+    , normalised       :: ParseResult
     , jsonkey          :: Text
     } deriving (Eq, Show, Generic)

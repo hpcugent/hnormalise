@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 
 module HNormalise
@@ -8,27 +8,27 @@ module HNormalise
     ) where
 
 --------------------------------------------------------------------------------
-import           Control.Applicative         ((<|>))
-import           Data.Aeson                  (ToJSON)
-import qualified Data.Aeson                  as Aeson
-import           Data.Aeson.Text             (encodeToLazyText)
-import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
+import           Control.Applicative        ((<|>))
+import           Data.Aeson                 (ToJSON)
+import qualified Data.Aeson                 as Aeson
+import           Data.Aeson.Text            (encodeToLazyText)
+import           Data.Attoparsec.Combinator (lookAhead, manyTill)
 import           Data.Attoparsec.Text
-import qualified Data.ByteString.Char8       as SBS
-import qualified Data.ByteString.Lazy.Char8  as BS
-import           Data.Text                   (Text, empty)
-import           Data.Text.Lazy              (toStrict)
+import qualified Data.ByteString.Char8      as SBS
+import qualified Data.ByteString.Lazy.Char8 as BS
+import           Data.Text                  (Text, empty)
+import           Data.Text.Lazy             (toStrict)
 
 import           Debug.Trace
 
 --------------------------------------------------------------------------------
-import           HNormalise.Internal
-import           HNormalise.Json
-import           HNormalise.Parser
 import           HNormalise.Huppel.Internal
 import           HNormalise.Huppel.Json
+import           HNormalise.Internal
+import           HNormalise.Json
 import           HNormalise.Lmod.Internal
 import           HNormalise.Lmod.Json
+import           HNormalise.Parser
 import           HNormalise.Torque.Internal
 import           HNormalise.Torque.Json
 

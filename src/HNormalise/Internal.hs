@@ -1,23 +1,23 @@
-{-# LANGUAGE BangPatterns               #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE DuplicateRecordFields      #-}
-{-# LANGUAGE ExistentialQuantification  #-}
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE DeriveGeneric             #-}
+{-# LANGUAGE DuplicateRecordFields     #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE OverloadedStrings         #-}
 
 module HNormalise.Internal where
 
 --------------------------------------------------------------------------------
-import Data.Aeson             (FromJSON, ToJSON, toJSON, toEncoding)
-import Data.Text
-import GHC.Generics           (Generic)
+import           Data.Aeson                 (FromJSON, ToJSON, toEncoding,
+                                             toJSON)
+import           Data.Text
+import           GHC.Generics               (Generic)
 
 --------------------------------------------------------------------------------
-import HNormalise.Huppel.Internal (Huppel)
-import HNormalise.Huppel.Json
-import HNormalise.Lmod.Internal   (LmodLoad)
-import HNormalise.Lmod.Json
-import HNormalise.Torque.Internal (TorqueJobExit)
-import HNormalise.Torque.Json
+import           HNormalise.Huppel.Internal (Huppel)
+import           HNormalise.Huppel.Json
+import           HNormalise.Lmod.Internal   (LmodLoad)
+import           HNormalise.Lmod.Json
+import           HNormalise.Torque.Internal (TorqueJobExit)
+import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
 {-data GetJsonKey a = GetJsonKey
@@ -68,7 +68,7 @@ data Rsyslog = Rsyslog
 
 --------------------------------------------------------------------------------
 data NormalisedRsyslog = NRsyslog
-    { rsyslog          :: Rsyslog
-    , normalised       :: ParseResult
-    , jsonkey          :: Text
+    { rsyslog    :: Rsyslog
+    , normalised :: ParseResult
+    , jsonkey    :: Text
     } deriving (Eq, Show, Generic)

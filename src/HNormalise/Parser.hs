@@ -1,26 +1,25 @@
-{-# LANGUAGE BangPatterns               #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE DuplicateRecordFields      #-}
-{-# LANGUAGE ExistentialQuantification  #-}
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE DeriveGeneric             #-}
+{-# LANGUAGE DuplicateRecordFields     #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE OverloadedStrings         #-}
 
 module HNormalise.Parser where
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative         ((<|>))
-import           Data.Aeson                  (encode)
+import           Control.Applicative        ((<|>))
+import           Data.Aeson                 (encode)
 import           Data.Attoparsec.Text
-import qualified Data.ByteString.Char8       as SBS
-import qualified Data.ByteString.Lazy.Char8  as BS
+import qualified Data.ByteString.Char8      as SBS
+import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Char
-import           Data.Text                   (Text, empty)
-import qualified Data.Text                   as T
-import qualified Data.Text.Encoding          as TE
+import           Data.Text                  (Text, empty)
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as TE
 --------------------------------------------------------------------------------
+import           HNormalise.Huppel.Parser
 import           HNormalise.Internal
 import           HNormalise.Json
-import           HNormalise.Huppel.Parser
 import           HNormalise.Lmod.Parser
 import           HNormalise.Torque.Parser
 --------------------------------------------------------------------------------

@@ -17,7 +17,6 @@ import           Data.Conduit.Binary          (sinkFile)
 import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
-import qualified Data.Conduit.Network         as DCN (HostPreference (..))
 import qualified Data.Conduit.Text            as DCT
 import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  (mempty, (<>))

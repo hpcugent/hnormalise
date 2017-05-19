@@ -6,7 +6,6 @@ module HNormalise
     , normaliseJsonInput
     , normaliseText
     , parseMessage
-    , HNormalise.Internal.Rsyslog(..)
     , Normalised (..)
     ) where
 

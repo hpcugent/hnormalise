@@ -3,8 +3,11 @@
 
 module HNormalise
     ( normaliseRsyslog
+    , normaliseJsonInput
+    , normaliseText
     , parseMessage
     , HNormalise.Internal.Rsyslog(..)
+    , Normalised (..)
     ) where
 
 --------------------------------------------------------------------------------
@@ -31,6 +34,31 @@ import           HNormalise.Lmod.Json
 import           HNormalise.Parser
 import           HNormalise.Torque.Internal
 import           HNormalise.Torque.Json
+
+--------------------------------------------------------------------------------
+data Normalised = Transformed !SBS.ByteString
+                | Original !SBS.ByteString
+
+--------------------------------------------------------------------------------
+normaliseJsonInput :: SBS.ByteString    -- ^ Input
+                   -> Normalised        -- ^ Transformed or Original result
+normaliseJsonInput logLine =
+    case (Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= normaliseRsyslog of
+        Just j  -> Transformed j
+        Nothing -> Original logLine
+
+--------------------------------------------------------------------------------
+normaliseText :: Text          -- ^ Input
+              -> Normalised      -- ^ Transformed or Original result
+normaliseText logLine =
+    case parse parseRsyslogLogstashString logLine of
+        Done _ r    -> Transformed r
+        Partial c   -> case c empty of
+                            Done _ r -> Transformed r
+                            _        -> original
+        _           -> original
+  where
+    original = Original $ BS.toStrict $ Aeson.encode $ logLine
 
 
 --------------------------------------------------------------------------------

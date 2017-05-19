@@ -27,13 +27,12 @@ import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
 
-import Debug.Trace
+import           Debug.Trace
 --------------------------------------------------------------------------------
-import           HNormalise                   (normaliseRsyslog)
+import           HNormalise
 import           HNormalise.Config            (Config (..), loadConfig)
-import           HNormalise.Internal  (Rsyslog (..))
+import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
-import           HNormalise.Parser    (parseRsyslogLogstashString)
 
 --------------------------------------------------------------------------------
 data Options = Options
@@ -74,31 +73,6 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
         <> OA.progDesc "Normalise rsyslog messages"
         <> OA.header ("hNormalise v" <> showVersion Paths_hnormalise.version)
     )
-
---------------------------------------------------------------------------------
-data Normalised = Transformed !SBS.ByteString
-                | Original !SBS.ByteString
-
---------------------------------------------------------------------------------
-normaliseJsonInput :: SBS.ByteString    -- ^ Input
-                   -> Normalised        -- ^ Transformed or Original result
-normaliseJsonInput logLine =
-    case (Data.Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= normaliseRsyslog of
-        Just j  -> Transformed j
-        Nothing -> Original logLine
-
---------------------------------------------------------------------------------
-normaliseText :: T.Text          -- ^ Input
-              -> Normalised      -- ^ Transformed or Original result
-normaliseText logLine =
-    case parse parseRsyslogLogstashString logLine of
-        Done _ r    -> Transformed r
-        Partial c   -> case c T.empty of
-                            Done _ r -> Transformed r
-                            _        -> original
-        _           -> original
-  where
-    original = Original $ BS.toStrict $ encode $ logLine
 
 --------------------------------------------------------------------------------
 messageSink success failure = loop

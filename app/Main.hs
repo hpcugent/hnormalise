@@ -9,8 +9,7 @@ import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Trans.Resource (runResourceT)
 import           Data.Aeson
-import           Data.Aeson.Encode.Pretty
-import           Data.Attoparsec.ByteString.Char8
+import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
@@ -18,7 +17,7 @@ import           Data.Conduit.Binary          (sinkFile)
 import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
-import qualified Data.Conduit.Network         as DCN (HostPreference (..))
+import qualified Data.Conduit.Text            as DCT
 import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  (mempty, (<>))
 import qualified Data.Text                    as T
@@ -28,13 +27,12 @@ import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
 
-import Debug.Trace
+import           Debug.Trace
 --------------------------------------------------------------------------------
-import           HNormalise                   (normaliseRsyslog)
+import           HNormalise
 import           HNormalise.Config            (Config (..), loadConfig)
-import           HNormalise.Rsyslog.Internal  (Rsyslog (..))
-import           HNormalise.Rsyslog.Json
-import           HNormalise.Rsyslog.Parser    (parseRsyslogLogstashString)
+import           HNormalise.Internal          (Rsyslog (..))
+import           HNormalise.Json
 
 --------------------------------------------------------------------------------
 data Options = Options
@@ -75,26 +73,6 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
         <> OA.progDesc "Normalise rsyslog messages"
         <> OA.header ("hNormalise v" <> showVersion Paths_hnormalise.version)
     )
-
---------------------------------------------------------------------------------
-data Normalised = Transformed !SBS.ByteString
-                | Original !SBS.ByteString
-
---------------------------------------------------------------------------------
-normalise :: Bool            -- ^ Is the input a JSON string?
-          -> SBS.ByteString  -- ^ Input
-          -> Normalised      -- ^ Transformed or Original result
-normalise jsonInput logLine =
-    let n = if jsonInput then Data.Aeson.decodeStrict logLine >>= normaliseRsyslog
-            else case parse parseRsyslogLogstashString logLine of
-                    Done _ r    -> (Just r) >>= normaliseRsyslog
-                    Partial c   -> case c SBS.empty of
-                                        Done _ r -> (Just r) >>= normaliseRsyslog
-                                        _        -> Nothing
-                    _           -> Nothing
-    in case n of
-        Just j  -> Transformed j
-        Nothing -> Original logLine
 
 --------------------------------------------------------------------------------
 messageSink success failure = loop
@@ -148,18 +126,27 @@ main = do
                     Just h  -> T.unpack h
                     Nothing -> "*"
 
-    runTCPServer (serverSettings (fromJust $ listenPort config) "*") $ \appData ->
+
+    runTCPServer (serverSettings (fromJust $ listenPort config) "*") $ \appData -> do
+
         case oTestFilePath options of
             Nothing ->
                 runTCPClient (clientSettings (fromJust $ successPort config) "localhost") $ \successServer ->
                 runTCPClient (clientSettings (fromJust $ failPort config) "localhost") $ \failServer ->
-                    appSource appData
-                        $= CB.lines
-                        $= C.map (normalise $ oJsonInput options)
-                        $$ messageSink successServer failServer
+                    case oJsonInput options of
+                        True  -> appSource appData
+                                    $= CB.lines
+                                    $= C.map normaliseJsonInput
+                                    $$ messageSink successServer failServer
+                        False -> appSource appData
+                                    $= DCT.decode DCT.utf8
+                                    $= DCT.lines
+                                    $= C.map normaliseText
+                                    $$ messageSink successServer failServer
             Just testSinkFileName ->
-                runResourceT$ appSource appData
-                    $= CB.lines
-                    $= C.map (normalise $ oJsonInput options)
+                runResourceT $ appSource appData
+                    $= (case oJsonInput options of
+                        True  -> CB.lines $= C.map normaliseJsonInput
+                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map normaliseText)
                     $= mySink
                     $$ sinkFile testSinkFileName

@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module HNormalise.Rsyslog.Json where
+module HNormalise.Json where
 
 --------------------------------------------------------------------------------
 import           Control.Monad
@@ -10,11 +10,12 @@ import           Data.Aeson
 import           Data.Monoid
 
 --------------------------------------------------------------------------------
-import           HNormalise.Rsyslog.Internal
+import           HNormalise.Internal
 
 --------------------------------------------------------------------------------
 instance FromJSON Rsyslog where
-    parseJSON = withObject "Rsyslog" $ \v -> Rsyslog <$>
+    parseJSON = withObject "Rsyslog" $ \v ->
+        Rsyslog <$>
             (v .:  "msg")              <*>
     --        (v .:  "rawmsg")           <*>
             (v .:  "timereported")     <*>
@@ -36,14 +37,15 @@ instance FromJSON Rsyslog where
     --        (v .:? "uuid")             <*>
     --        (v .:? "$!")
 
+--------------------------------------------------------------------------------
 instance ToJSON Rsyslog where
     toEncoding = genericToEncoding defaultOptions
 
 --------------------------------------------------------------------------------
-instance (ToJSON a) => ToJSON (NormalisedRsyslog a) where
-    toEncoding (NRsyslog r j (GetJsonKey f)) =
+instance ToJSON NormalisedRsyslog where
+    toEncoding (NRsyslog r n k) =
         pairs
-            (  "message" .= msg r
-            <> "syslog_abspri" .= syslogseverity r
-            <> (f j) .= j
+            ( --"message" .= msg r
+              "syslog_abspri" .= syslogseverity r
+            <> k .= n
             )

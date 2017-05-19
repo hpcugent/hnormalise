@@ -18,8 +18,8 @@ import           HNormalise.Lmod.Internal
 parseLmodInfo :: Parser LmodInfo
 parseLmodInfo = do
     username <- kvTextDelimParser "username" ","
-    cluster <- char ',' *> whitespace *> kvTextDelimParser "cluster" ","
-    jobid <- char ',' *> whitespace *> kvTextDelimParser "jobid" ","
+    cluster <- char ',' *> skipSpace *> kvTextDelimParser "cluster" ","
+    jobid <- char ',' *> skipSpace *> kvTextDelimParser "jobid" ","
     return LmodInfo
         { username = username
         , cluster = cluster
@@ -38,10 +38,10 @@ parseLmodModule = do
 parseLmodLoad :: Parser LmodLoad
 parseLmodLoad = do
     string "lmod::"
-    info <- whitespace *> parseLmodInfo
-    userload <- char ',' *> whitespace *> kvYesNoParser "userload"
-    m <- char ',' *> whitespace *> parseLmodModule
-    filename <- char ',' *> whitespace *> kvTextParser "fn"
+    info <- skipSpace *> parseLmodInfo
+    userload <- char ',' *> skipSpace *> kvYesNoParser "userload"
+    m <- char ',' *> skipSpace *> parseLmodModule
+    filename <- char ',' *> skipSpace *> kvTextParser "fn"
     return LmodLoad
         { info = info
         , userload = userload

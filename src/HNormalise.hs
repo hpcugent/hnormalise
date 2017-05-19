@@ -1,62 +1,64 @@
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 
 module HNormalise
     ( normaliseRsyslog
-    , HNormalise.Rsyslog.Internal.Rsyslog(..)
+    , normaliseJsonInput
+    , normaliseText
+    , parseMessage
+    , Normalised (..)
     ) where
 
 --------------------------------------------------------------------------------
-import           Control.Applicative         ((<|>))
-import           Data.Aeson                  (ToJSON)
-import qualified Data.Aeson                  as Aeson
-import           Data.Aeson.Text             (encodeToLazyText)
-import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
+import           Control.Applicative        ((<|>))
+import           Data.Aeson                 (ToJSON)
+import qualified Data.Aeson                 as Aeson
+import           Data.Aeson.Text            (encodeToLazyText)
+import           Data.Attoparsec.Combinator (lookAhead, manyTill)
 import           Data.Attoparsec.Text
-import qualified Data.ByteString.Char8       as SBS
-import qualified Data.ByteString.Lazy.Char8  as BS
-import           Data.Text                   (Text, empty)
-import           Data.Text.Lazy              (toStrict)
+import qualified Data.ByteString.Char8      as SBS
+import qualified Data.ByteString.Lazy.Char8 as BS
+import           Data.Text                  (Text, empty)
+import           Data.Text.Lazy             (toStrict)
 
 import           Debug.Trace
 
 --------------------------------------------------------------------------------
 import           HNormalise.Huppel.Internal
 import           HNormalise.Huppel.Json
-import           HNormalise.Huppel.Parser
+import           HNormalise.Internal
+import           HNormalise.Json
 import           HNormalise.Lmod.Internal
 import           HNormalise.Lmod.Json
-import           HNormalise.Lmod.Parser
-import           HNormalise.Rsyslog.Internal
-import           HNormalise.Rsyslog.Json
+import           HNormalise.Parser
 import           HNormalise.Torque.Internal
 import           HNormalise.Torque.Json
-import           HNormalise.Torque.Parser
 
 --------------------------------------------------------------------------------
-data ParseResult = PR_H Huppel
-                 | PR_L LmodLoad
-                 | PR_T TorqueJobExit
-                 deriving  (Show, Eq)
+data Normalised = Transformed !SBS.ByteString
+                | Original !SBS.ByteString
 
 --------------------------------------------------------------------------------
-instance ToJSON ParseResult where
-    toJSON (PR_H v) = Aeson.toJSON v
-    toJSON (PR_L v) = Aeson.toJSON v
-    toJSON (PR_T v) = Aeson.toJSON v
+normaliseJsonInput :: SBS.ByteString    -- ^ Input
+                   -> Normalised        -- ^ Transformed or Original result
+normaliseJsonInput logLine =
+    case (Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= normaliseRsyslog of
+        Just j  -> Transformed j
+        Nothing -> Original logLine
 
 --------------------------------------------------------------------------------
-getJsonKey :: ParseResult -> Text
-getJsonKey (PR_H _) = "huppel"
-getJsonKey (PR_L _) = "lmod"
-getJsonKey (PR_T _) = "torque"
+normaliseText :: Text          -- ^ Input
+              -> Normalised      -- ^ Transformed or Original result
+normaliseText logLine =
+    case parse parseRsyslogLogstashString logLine of
+        Done _ r    -> Transformed r
+        Partial c   -> case c empty of
+                            Done _ r -> Transformed r
+                            _        -> original
+        _           -> original
+  where
+    original = Original $ BS.toStrict $ Aeson.encode $ logLine
 
-
---------------------------------------------------------------------------------
-parseMessage :: Parser ParseResult
-parseMessage =
-        (parseLmodLoad >>= (\v -> return $ PR_L v))
-    <|> (parseTorqueExit >>= (\v -> return $ PR_T v))
 
 --------------------------------------------------------------------------------
 convertMessage :: Text -> Maybe ParseResult
@@ -75,4 +77,4 @@ normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
     return $ BS.toStrict
            $ Aeson.encode
-           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = GetJsonKey getJsonKey }
+           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm }

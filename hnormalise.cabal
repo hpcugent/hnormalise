@@ -27,6 +27,9 @@ library
                      , HNormalise.Lmod.Internal
                      , HNormalise.Lmod.Json
                      , HNormalise.Lmod.Parser
+                     , HNormalise.Shorewall.Internal
+                     , HNormalise.Shorewall.Json
+                     , HNormalise.Shorewall.Parser
                      , HNormalise.Torque.Internal
                      , HNormalise.Torque.Json
                      , HNormalise.Torque.Parser

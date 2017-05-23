@@ -7,6 +7,8 @@ structured log messages, i.e., turning the `msg` payload into (a nested) JSON ob
 Features:
 
 - accepts JSON-style rsyslog data (sent as %jsonmesg% in the rsyslog template)
+- accepts legacy encoded rsyslog data (currently sent with the fixed template
+  <%PRI%>1 %TIMEGENERATED% %HOSTNAME% %SYSLOGTAG% - %APPNAME%: %msg%)
 - sends out successfull converted results on a TCP port, allowing communication back to a wide range of services,
   including rsyslog, [logstash](http://www.elastic.co/products/logstash), ...
 - sends out original messages to a (different) TCP port in case the parsing fails, allowing other services to process the
@@ -16,17 +18,19 @@ Usage and configuration
 -----------------------
 
 To run and build `hNormalise`, clone this repository and run `stack build` followed by `stack install` inside it.
-To start just run `hnormalise`. If you need help, use the `-h` flag.
+To start just run `hnormalise`. If you need help, use the `-h` flag. To run the included tests, run `stack test`.
+To run the included benchmarks, run `stack bench` (with the `--output target.html` flag to get a nice web page with
+the results).
 
 Ports and machines can be tweaked through a configuration file. See `data/hnormalise.yaml` for an example.
 
 Testing the actual setup can be done trivially via `nc`, provided you have data to throw at `hNormalise`. A test example
-is also provided below.
+is also provided below, or you can get useful examples from the tests, under `test/HNormalise/*/ParserSpec.hs`
 
 Parsing
 -------
 
-`hNormalise` used the [Attoparsec](https://github.com/bos/attoparsec) package to have fast and efficient parsing.
+`hNormalise` uses the [Attoparsec](https://github.com/bos/attoparsec) package to have fast and efficient parsing.
 `Attoparsec` offers a clean and relatively simple DSL that allows getting the relevant data from the message and
 discarding the rest. We also rely on [permute]() to deal with log lines that may contain e.g., key-value pairs in
 no definite ordering. Note that this _will_ slow down the parsing.
@@ -35,6 +39,22 @@ no definite ordering. Note that this _will_ slow down the parsing.
 Caveat: at this point, we do not a priori restrict the possible parsers we unleash on each message. However, if the inbound
 data can be tagged properly, we could reduce the maximal number of parsers tried and avoid extensive backtracking.
 
+Supported log messages
+----------------------
+
+Currently, hNormalise supports several log messages out of the box (i.e., the ones we need :)
+- [Torque](http://www.adaptivecomputing.com/products/open-source/torque/) accounting logs for a job exit.
+- [Shorewall](http://shorewall.org) firewall log messages for TCP, UDP and ICMP connections
+- [Lmod](https://www.tacc.utexas.edu/research-development/tacc-projects/lmod) module load messages
+
+More are forthcoming soon, e.g., (in no particular order)
+- GPFS
+- Icinga
+- NFS
+- OpenNebula
+- SSH
+- Snoopy
+- Jube
 
 ### Adding a new parser
 
@@ -50,6 +70,10 @@ To add a new parser for log lines from tool `Tool`, several actions must be take
 - Finally, the `HNormalise` module defines a sum-type container to which you should add your own entry. Remember to also
   add a line for the corresponding getJsonKey function, which defines the key under whoch the parsed data will be
   made available downstream.
+- Add tests with relevant cases under `test/HNormalise/Tool/ParserSpec.hs`. The framework should pick these up
+automagically.
+- Add en entry for your test cases to the set of benchmarks, so we can have a reasonable estimate on how your parser is
+  performing. Update the HTML page under `benchmarks` with the complete set of tests you ran.
 
 
 Example

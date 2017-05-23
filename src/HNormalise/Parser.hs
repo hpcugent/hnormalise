@@ -21,6 +21,7 @@ import           HNormalise.Huppel.Parser
 import           HNormalise.Internal
 import           HNormalise.Json
 import           HNormalise.Lmod.Parser
+import           HNormalise.Shorewall.Parser
 import           HNormalise.Torque.Parser
 --------------------------------------------------------------------------------
 rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %syslogtag% - %APP-NAME%: %msg:::drop-last-lf%\n"
@@ -29,6 +30,7 @@ rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %s
 parseMessage :: Parser ParseResult
 parseMessage =
         (parseLmodLoad >>= (\v -> return $ PR_L v))
+    <|> (parseShorewall >>= (\v -> return $ PR_S v))
     <|> (parseTorqueExit >>= (\v -> return $ PR_T v))
 
 --------------------------------------------------------------------------------
@@ -36,6 +38,7 @@ getJsonKey :: ParseResult -> Text
 getJsonKey (PR_H _) = "huppel"
 getJsonKey (PR_L _) = "lmod"
 getJsonKey (PR_T _) = "torque"
+getJsonKey (PR_S _) = "shorewall"
 
 
 --------------------------------------------------------------------------------

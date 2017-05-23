@@ -20,6 +20,7 @@ library
                      , HNormalise.Internal
                      , HNormalise.Json
                      , HNormalise.Parser
+                     , HNormalise.Common.Json
                      , HNormalise.Common.Parser
                      , HNormalise.Common.Internal
                      , HNormalise.Huppel.Internal
@@ -74,6 +75,10 @@ test-suite hnormalise-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
+  other-modules:     HNormalise.Common.ParserSpec
+                     , HNormalise.Lmod.ParserSpec
+                     , HNormalise.Shorewall.ParserSpec
+                     , HNormalise.Torque.ParserSpec
   build-depends:       base
                      , aeson
                      , attoparsec

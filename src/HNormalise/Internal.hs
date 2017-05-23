@@ -16,22 +16,15 @@ import           HNormalise.Huppel.Internal (Huppel)
 import           HNormalise.Huppel.Json
 import           HNormalise.Lmod.Internal   (LmodLoad)
 import           HNormalise.Lmod.Json
+import           HNormalise.Shorewall.Internal (Shorewall)
+import           HNormalise.Shorewall.Json
 import           HNormalise.Torque.Internal (TorqueJobExit)
 import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
-{-data GetJsonKey a = GetJsonKey
-    { f :: (a -> Text)
-    }
-
--- We really do not use this, but something should satify the ToJSON constraint of the NRSyslog type as well as
--- make sure we can avoid circular imports to get the JSON key for storing the parsed data.
-instance (ToJSON a) => ToJSON (GetJsonKey a) where
-    toJSON (GetJsonKey _) = "{}"
--}
---------------------------------------------------------------------------------
 data ParseResult = PR_H Huppel
                  | PR_L LmodLoad
+                 | PR_S Shorewall
                  | PR_T TorqueJobExit
                  deriving  (Show, Eq, Generic)
 
@@ -39,6 +32,7 @@ data ParseResult = PR_H Huppel
 instance ToJSON ParseResult where
     toEncoding (PR_H v) = toEncoding v
     toEncoding (PR_L v) = toEncoding v
+    toEncoding (PR_S v) = toEncoding v
     toEncoding (PR_T v) = toEncoding v
 
 --------------------------------------------------------------------------------

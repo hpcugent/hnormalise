@@ -19,4 +19,3 @@ data Host = Hostname Text        -- hostname
           | IPv4 Net.IPv4
           | IPv6 Net.IPv6
           deriving (Show, Eq, Generic)
-          

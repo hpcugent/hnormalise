@@ -1,3 +1,4 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Torque.ParserSpec (main, spec) where
@@ -93,3 +94,12 @@ spec = do
         it "parse memory value in bytes (uppercase)" $ do
             let s = "123GB" :: Text
             s ~> parseTorqueMemory `shouldParse` (123 * 1024 * 1024 * 1024)
+
+    describe "parseTorqueJobName" $ do
+        it "parse regular torque job name" $ do
+            let s = "123456789.master.mycluster.mydomain;" :: Text
+            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456789, array_id = Nothing, master = "master", cluster = "mycluster" }
+
+        it "parse array torque job name" $ do
+            let s = "123456[789].master.mycluster.mydomain;" :: Text
+            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456, array_id = Just 789, master = "master", cluster = "mycluster" }

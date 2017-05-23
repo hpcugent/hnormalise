@@ -18,7 +18,7 @@ import           HNormalise.Shorewall.Internal
 --------------------------------------------------------------------------------
 parseShorewallTCP :: Parser Shorewall
 parseShorewallTCP = do
-    string "kernel:: Shorewall:"
+    string " - kernel:: Shorewall:"
     fwrule <- takeTill (== ':')
     fwtarget <- char ':' *> takeTill (== ':')
     fwin <- char ':' *> kvTextParser "IN"
@@ -52,15 +52,15 @@ parseShorewallTCP = do
 --------------------------------------------------------------------------------
 parseShorewallUDP :: Parser Shorewall
 parseShorewallUDP = do
-    string "kernel:: Shorewall:"
+    string " - kernel:: Shorewall:"
     fwrule <- takeTill (== ':')
     fwtarget <- char ':' *> takeTill (== ':')
     fwin <- char ':' *> kvTextParser "IN"
     fwout <- skipSpace *> kvTextParser "OUT"
     fwsrc <- skipSpace *> kvHostOrIPParser "SRC"
     fwdst <- skipSpace *> kvHostOrIPParser "DST"
-    manyTill anyChar (lookAhead $ string " PROTO=")
-    string " PROTO=UDP"
+    manyTill anyChar (lookAhead $ string "PROTO=")
+    string "PROTO=UDP"
     fwspt <- skipSpace *> kvNumParser "SPT"
     fwdpt <- skipSpace *> kvNumParser "DPT"
     takeText
@@ -87,7 +87,7 @@ parseShorewallUDP = do
 --------------------------------------------------------------------------------
 parseShorewallICMP :: Parser Shorewall
 parseShorewallICMP = do
-    string "kernel:: Shorewall:"
+    string " - kernel:: Shorewall:"
     fwrule <- takeTill (== ':')
     fwtarget <- char ':' *> takeTill (== ':')
     fwin <- char ':' *> kvTextParser "IN"
@@ -96,8 +96,6 @@ parseShorewallICMP = do
     fwdst <- skipSpace *> kvHostOrIPParser "DST"
     manyTill anyChar (lookAhead $ string " PROTO=")
     string " PROTO=ICMP"
-    fwspt <- skipSpace *> kvNumParser "SPT"
-    fwdpt <- skipSpace *> kvNumParser "DPT"
     takeText
     return $ Shorewall
         { fwrule = fwrule
@@ -108,8 +106,8 @@ parseShorewallICMP = do
         , fwsrc = fwsrc
         , fwdst = fwdst
         , fwproto = ICMP
-        , fwspt = Just fwspt
-        , fwdpt = Just fwdpt
+        , fwspt = Nothing
+        , fwdpt = Nothing
         }
 
 parseShorewall :: Parser Shorewall

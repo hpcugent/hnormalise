@@ -13,3 +13,5 @@ import           Data.Monoid
 import           HNormalise.Shorewall.Internal
 
 --------------------------------------------------------------------------------
+instance ToJSON Shorewall where
+    toEncoding = genericToEncoding defaultOptions

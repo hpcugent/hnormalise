@@ -103,3 +103,60 @@ spec = do
         it "parse array torque job name" $ do
             let s = "123456[789].master.mycluster.mydomain;" :: Text
             s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456, array_id = Just 789, master = "master", cluster = "mycluster" }
+
+    describe "parseTorqueExit" $ do
+        it "parse job exit log line" $ do
+            let s = "04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0-1+node2803.banette.gent.vsc/0-1 Resource_List.nodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
+            s ~> parseTorqueExit `shouldParse` TorqueJobExit
+                { name = TorqueJobName { number = 45, array_id = Nothing, master = "master23", cluster = "banette" }
+                , user = "vsc40075"
+                , group = "vsc40075"
+                , jobname = "STDIN"
+                , queue = "short"
+                , startCount = Nothing
+                , owner = "vsc40075@gligar01.gligar.gent.vsc"
+                , session = 15273
+                , times = TorqueJobTime
+                    { ctime = 1491390300
+                    , qtime = 1491390300
+                    , etime = 1491390300
+                    , startTime = 1491390307
+                    , endTime = 1491390413
+                    }
+                , resourceRequest = TorqueResourceRequest
+                    { nodes = Right
+                        [ TorqueJobFQNode
+                            { name = "node2801.banette.gent.vsc"
+                            , ppn  = 2
+                            }
+                        , TorqueJobFQNode
+                            { name = "node2803.banette.gent.vsc"
+                            , ppn  = 2
+                            }
+                        ]
+                    , vmem = 1 * 1024 * 1024 * 1024
+                    , nodeCount = 2
+                    , neednodes = Right
+                        [ TorqueJobFQNode
+                            { name = "node2801.banette.gent.vsc"
+                            , ppn  = 2
+                            }
+                        , TorqueJobFQNode
+                            { name = "node2803.banette.gent.vsc"
+                            , ppn  = 2
+                            }
+                        ]
+                    , nice      = Just 0
+                    , walltime  = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0}
+                    }
+                , resourceUsage = TorqueResourceUsage
+                    { cputime = 0
+                    , energy = 0
+                    , mem = 55048 * 1024
+                    , vmem = 92488 * 1024
+                    , walltime = TorqueWalltime { days = 0, hours = 0, minutes = 1, seconds = 44 }
+                    }
+                , totalExecutionSlots = 4
+                , uniqueNodeCount = 2
+                , exitStatus = 0
+                }

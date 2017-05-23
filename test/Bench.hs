@@ -9,6 +9,7 @@ import           Criterion.Main
 import qualified Data.Attoparsec.Text      as AT
 import           Data.Text                 (Text)
 --------------------------------------------------------------------------------
+import qualified HNormalise.Lmod.Parser  as LmodP
 import qualified HNormalise.Torque.Parser  as TorqueP
 
 
@@ -18,12 +19,17 @@ torqueJobExitInput2 = "04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=v
 
 torqueJobExitFailInput1 = "04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short HUPPEL"
 
+lmodLoadInput1 = "lmod::  username=myuser, cluster=mycluster, jobid=3230905.master.mycluster.mydomain, userload=yes, module=GSL/2.3-intel-2016b, fn=/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b" :: Text
+
 --------------------------------------------------------------------------------
 main :: IO ()
 main = defaultMain
     [ bgroup "torque"
-        [ bench "jobexit full resource node list"  $ nf (AT.parse TorqueP.parseTorqueExit) torqueJobExitInput1
-        , bench "jobexit short resource node number"  $ nf (AT.parse TorqueP.parseTorqueExit) torqueJobExitInput1
-        , bench "jobexit borked input"  $ nf (AT.parse TorqueP.parseTorqueExit) torqueJobExitFailInput1
+        [ bench "jobexit full resource node list"  $ whnf (AT.parse TorqueP.parseTorqueExit) torqueJobExitInput1
+        , bench "jobexit short resource node number"  $ whnf (AT.parse TorqueP.parseTorqueExit) torqueJobExitInput1
+        , bench "jobexit borked input"  $ whnf (AT.parse TorqueP.parseTorqueExit) torqueJobExitFailInput1
+        ]
+    , bgroup "lmod"
+        [ bench "lmod successfull module load parse" $ whnf (AT.parse LmodP.parseLmodLoad) lmodLoadInput1
         ]
     ]

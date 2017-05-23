@@ -58,7 +58,7 @@ parseTorqueMemory = do
         <|> asciiCI "kb"
         <|> asciiCI "mb"
         <|> asciiCI "gb"
-    return $ case unit of
+    return $ case T.toLower unit of
         "b"  -> v
         "kb" -> v * 1024
         "mb" -> v * 1024 * 1024

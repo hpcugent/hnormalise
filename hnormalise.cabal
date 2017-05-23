@@ -21,6 +21,7 @@ library
                      , HNormalise.Json
                      , HNormalise.Parser
                      , HNormalise.Common.Parser
+                     , HNormalise.Common.Internal
                      , HNormalise.Huppel.Internal
                      , HNormalise.Huppel.Json
                      , HNormalise.Huppel.Parser
@@ -40,6 +41,7 @@ library
                      , bytestring
                      , containers
                      , directory
+                     , ip
                      , permute
                      , text
                      , yaml
@@ -60,6 +62,7 @@ executable hnormalise
                      , conduit-extra
                      , containers
                      , directory
+                     , ip
                      , optparse-applicative
                      , resourcet
                      , text

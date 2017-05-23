@@ -23,19 +23,22 @@ import           Data.Text
 import           GHC.Generics               (Generic)
 
 --------------------------------------------------------------------------------
+import           HNormalise.Common.Internal
+
+--------------------------------------------------------------------------------
 data ShorewallType = TCP | UDP | ICMP deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
-data Shorewall = ShoreWall
+data Shorewall = Shorewall
     { fwtype :: ShorewallType
     , fwrule :: !Text
     , fwtarget :: !Text
     , fwin :: !Text
     , fwout :: !(Maybe Text)
-    , fwsrc :: !Text
-    , fwdst :: !Text
-    , fwproto :: !Text
     , fwmac :: !(Maybe Text)
-    , fwspt :: !(Maybe Text)
-    , fwdpt :: !(Maybe Text)
+    , fwsrc :: !Host
+    , fwdst :: !Host
+    , fwproto :: !Text
+    , fwspt :: !(Maybe Integer)
+    , fwdpt :: !(Maybe Integer)
     } deriving (Show, Eq, Generic)

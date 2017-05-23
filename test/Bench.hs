@@ -10,6 +10,7 @@ import qualified Data.Attoparsec.Text      as AT
 import           Data.Text                 (Text)
 --------------------------------------------------------------------------------
 import qualified HNormalise.Lmod.Parser  as LmodP
+import qualified HNormalise.Shorewall.Parser  as ShorewallP
 import qualified HNormalise.Torque.Parser  as TorqueP
 
 
@@ -21,6 +22,10 @@ torqueJobExitFailInput1 = "04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;us
 
 lmodLoadInput1 = "lmod::  username=myuser, cluster=mycluster, jobid=3230905.master.mycluster.mydomain, userload=yes, module=GSL/2.3-intel-2016b, fn=/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b" :: Text
 
+shorewallTCPInput = " - kernel:: Shorewall:ext2fw:REJECT:IN=em3 OUT= MAC=aa:aa:bb:ff:88:bc:bc:15:80:8b:f8:f8:80:00 SRC=78.0.0.1 DST=150.0.0.1 LEN=52 TOS=0x00 PREC=0x00 TTL=117 ID=7564 DF PROTO=TCP SPT=60048 DPT=22 WINDOW=65535 RES=0x00 SYN URGP=0"
+shorewallUDPInput = " - kernel:: Shorewall:ipmi2int:REJECT:IN=em4 OUT=em1 SRC=10.0.0.2 DST=10.0.0.1 LEN=57 TOS=0x00 PREC=0x00 TTL=63 ID=62392 PROTO=UDP SPT=57002 DPT=53 LEN=37"
+shorewallICMPInput = " - kernel:: Shorewall:ipmi2ext:REJECT:IN=em4 OUT=em3 SRC=10.0.0.2 DST=10.0.0.1 LEN=28 TOS=0x00 PREC=0x00 TTL=63 ID=36216 PROTO=ICMP TYPE=8 CODE=0 ID=0 SEQ=1421"
+
 --------------------------------------------------------------------------------
 main :: IO ()
 main = defaultMain
@@ -31,5 +36,10 @@ main = defaultMain
         ]
     , bgroup "lmod"
         [ bench "lmod successfull module load parse" $ whnf (AT.parse LmodP.parseLmodLoad) lmodLoadInput1
+        ]
+    , bgroup "shorewall"
+        [ bench "tcp successfull input" $ whnf (AT.parse ShorewallP.parseShorewallTCP) shorewallTCPInput
+        , bench "udp successfull input" $ whnf (AT.parse ShorewallP.parseShorewallUDP) shorewallUDPInput
+        , bench "icmp successfull input" $ whnf (AT.parse ShorewallP.parseShorewallICMP) shorewallICMPInput
         ]
     ]

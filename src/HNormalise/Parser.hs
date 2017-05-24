@@ -53,7 +53,7 @@ parseRsyslogLogstashString = do
     syslogtag <- skipSpace *> takeTill isSpace  -- FIXME: this might be incorrect
     skipSpace *> char '-'
     appname <- skipSpace *> takeTill (== ':')
-    (original, parsed) <- match $ char ':' *> skipSpace *> parseMessage
+    (original, parsed) <- match $ char ':' *> skipSpace *> char '-' *> skipSpace *> parseMessage
     return $ let jsonkey = getJsonKey parsed
              in BS.toStrict $ encode $ NRsyslog
                     { rsyslog = Rsyslog

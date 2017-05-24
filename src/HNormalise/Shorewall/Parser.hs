@@ -18,7 +18,7 @@ import           HNormalise.Shorewall.Internal
 --------------------------------------------------------------------------------
 parseShorewallTCP :: Parser Shorewall
 parseShorewallTCP = do
-    string " - kernel:: Shorewall:"
+    string "kernel:: Shorewall:"
     fwrule <- takeTill (== ':')
     fwtarget <- char ':' *> takeTill (== ':')
     fwin <- char ':' *> kvTextParser "IN"

@@ -21,8 +21,6 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Text                  (Text, empty)
 import           Data.Text.Lazy             (toStrict)
 
-import           Debug.Trace
-
 --------------------------------------------------------------------------------
 import           HNormalise.Huppel.Internal
 import           HNormalise.Huppel.Json
@@ -35,11 +33,16 @@ import           HNormalise.Torque.Internal
 import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
-data Normalised = Transformed !SBS.ByteString
-                | Original !SBS.ByteString
+data Normalised
+    -- | A `Transformed` message contains the JSON normalised representation as a `ByteString`
+    = Transformed !SBS.ByteString
+    -- | An 'Original' messge contains the unaltered incoming message as a 'ByteString'
+    | Original !SBS.ByteString
 
 --------------------------------------------------------------------------------
-normaliseJsonInput :: SBS.ByteString    -- ^ Input
+-- | The 'normaliseJsonInput' function converts a `ByteString` to a normalised message or keeps the original if
+-- the conversion (parsing) fails.
+normaliseJsonInput :: SBS.ByteString    -- ^ Input representing an rsyslog message in JSON format
                    -> Normalised        -- ^ Transformed or Original result
 normaliseJsonInput logLine =
     case (Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= normaliseRsyslog of
@@ -47,8 +50,10 @@ normaliseJsonInput logLine =
         Nothing -> Original logLine
 
 --------------------------------------------------------------------------------
+-- | The 'normaliseText' function converts a 'Text' to a normalised message or keeps the original (in 'ByteString')
+-- format if the conversion fails
 normaliseText :: Text          -- ^ Input
-              -> Normalised      -- ^ Transformed or Original result
+              -> Normalised    -- ^ Transformed or Original result
 normaliseText logLine =
     case parse parseRsyslogLogstashString logLine of
         Done _ r    -> Transformed r
@@ -59,18 +64,21 @@ normaliseText logLine =
   where
     original = Original $ BS.toStrict $ Aeson.encode $ logLine
 
-
 --------------------------------------------------------------------------------
+-- | The 'convertMessage' function transforms the actual message to a 'Maybe' 'ParseResult'. If parsing fails,
+-- the result is 'Nothing'.
 convertMessage :: Text -> Maybe ParseResult
 convertMessage message =
     case parse parseMessage message of
-        Done _ pm -> {-trace (show pm) $-} Just pm
-        Partial c -> {-trace ("partial result") $ -}case c empty of
-            Done _ pm -> {-trace (show pm) $-} Just pm
-            _ -> {-trace ("no result after partial continuation") $-} Nothing
-        _         -> {-trace ("no result") $-} Nothing
+        Done _ pm -> Just pm
+        Partial c -> case c empty of
+            Done _ pm -> Just pm
+            _ -> Nothing
+        _         -> Nothing
 
 --------------------------------------------------------------------------------
+-- | The 'normaliseRsyslog' function returns an 'NRSyslog' structure tranformed to a 'ByteString' or 'Nothing'
+-- when parsing fails
 normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
                  -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
 normaliseRsyslog rsyslog = do

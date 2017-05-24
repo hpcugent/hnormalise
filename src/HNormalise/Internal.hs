@@ -22,11 +22,16 @@ import           HNormalise.Torque.Internal (TorqueJobExit)
 import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
-data ParseResult = PR_H Huppel
-                 | PR_L LmodLoad
-                 | PR_S Shorewall
-                 | PR_T TorqueJobExit
-                 deriving  (Show, Eq, Generic)
+data ParseResult
+    -- | 'Huppel' Result for testing purposes, should you want to check the pipeline works without pushing in actual data
+    = PR_H Huppel
+    -- | Represents a parsed 'LmodLoad' message
+    | PR_L LmodLoad
+    -- | Represents a parsed 'Shorewall' message
+    | PR_S Shorewall
+    -- | Represents a parsed 'TorqueJobExit' message
+    | PR_T TorqueJobExit
+    deriving  (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 instance ToJSON ParseResult where
@@ -59,10 +64,9 @@ data Rsyslog = Rsyslog
     --, all_json         :: !(Maybe Text)
     } deriving (Eq, Show, Generic)
 
-
 --------------------------------------------------------------------------------
 data NormalisedRsyslog = NRsyslog
-    { rsyslog    :: Rsyslog
-    , normalised :: ParseResult
-    , jsonkey    :: Text
+    { rsyslog    :: Rsyslog            -- ^ The original rsyslog message in a parsed form
+    , normalised :: ParseResult        -- ^ The normalised message
+    , jsonkey    :: Text               -- ^ The key under which the normalised info will appear in the JSON result
     } deriving (Eq, Show, Generic)

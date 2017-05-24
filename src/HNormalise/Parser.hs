@@ -5,7 +5,6 @@
 
 module HNormalise.Parser where
 
-
 --------------------------------------------------------------------------------
 import           Control.Applicative        ((<|>))
 import           Data.Aeson                 (encode)
@@ -27,6 +26,7 @@ import           HNormalise.Torque.Parser
 rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %syslogtag% - %APP-NAME%: %msg:::drop-last-lf%\n"
 
 --------------------------------------------------------------------------------
+-- | The 'parseMessage' function will try and use each configured parser to normalise the input it's given
 parseMessage :: Parser ParseResult
 parseMessage =
         (parseLmodLoad >>= (\v -> return $ PR_L v))
@@ -34,14 +34,16 @@ parseMessage =
     <|> (parseTorqueExit >>= (\v -> return $ PR_T v))
 
 --------------------------------------------------------------------------------
+-- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced
 getJsonKey :: ParseResult -> Text
 getJsonKey (PR_H _) = "huppel"
 getJsonKey (PR_L _) = "lmod"
 getJsonKey (PR_T _) = "torque"
 getJsonKey (PR_S _) = "shorewall"
 
-
 --------------------------------------------------------------------------------
+-- | The 'parseRsyslogLogstashString' currently is a placeholder function that will convert the incoming rsyslog message
+-- if it is encoded as expected in a plain string format
 parseRsyslogLogstashString :: Parser SBS.ByteString
 parseRsyslogLogstashString = do
     pri <- char '<' *> takeTill (== '>')

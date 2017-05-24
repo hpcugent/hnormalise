@@ -9,6 +9,7 @@ module HNormalise.Internal where
 import           Data.Aeson                 (FromJSON, ToJSON, toEncoding,
                                              toJSON)
 import           Data.Text
+import           Data.Time.LocalTime
 import           GHC.Generics               (Generic)
 
 --------------------------------------------------------------------------------
@@ -44,16 +45,16 @@ instance ToJSON ParseResult where
 data Rsyslog = Rsyslog
     { msg              :: !Text
     --, rawmsg           :: !Text
-    , timereported     :: !Text
+    , timereported     :: !(Maybe ZonedTime)
     , hostname         :: !Text
     , syslogtag        :: !Text  -- Could be a list?
     , inputname        :: !Text
     , fromhost         :: !Text
     , fromhost_ip      :: !Text
-    , pri              :: !Text
+    , pri              :: !(Maybe Int)
     , syslogfacility   :: !Text
     , syslogseverity   :: !Text
-    , timegenerated    :: !Text
+    , timegenerated    :: !ZonedTime
     , programname      :: !Text
     , protocol_version :: !Text
     --, structured_data  :: !Text
@@ -62,11 +63,11 @@ data Rsyslog = Rsyslog
     --, msgid            :: !Text
     --, uuid             :: !(Maybe Text)
     --, all_json         :: !(Maybe Text)
-    } deriving (Eq, Show, Generic)
+    } deriving (Show, Generic)
 
 --------------------------------------------------------------------------------
 data NormalisedRsyslog = NRsyslog
     { rsyslog    :: Rsyslog            -- ^ The original rsyslog message in a parsed form
     , normalised :: ParseResult        -- ^ The normalised message
     , jsonkey    :: Text               -- ^ The key under which the normalised info will appear in the JSON result
-    } deriving (Eq, Show, Generic)
+    } deriving (Show, Generic)

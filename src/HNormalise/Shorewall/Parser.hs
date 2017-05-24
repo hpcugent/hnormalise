@@ -9,7 +9,7 @@ module HNormalise.Shorewall.Parser where
 import           Control.Applicative        ((<|>))
 import           Data.Attoparsec.Combinator (lookAhead, manyTill)
 import           Data.Attoparsec.Text
-import qualified Data.Text                  as T
+import           Data.Text                  (Text)
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Parser
@@ -18,7 +18,7 @@ import           HNormalise.Shorewall.Internal
 --------------------------------------------------------------------------------
 parseShorewallTCP :: Parser Shorewall
 parseShorewallTCP = do
-    string " - kernel:: Shorewall:"
+    string "kernel:: Shorewall:"
     fwrule <- takeTill (== ':')
     fwtarget <- char ':' *> takeTill (== ':')
     fwin <- char ':' *> kvTextParser "IN"
@@ -52,7 +52,7 @@ parseShorewallTCP = do
 --------------------------------------------------------------------------------
 parseShorewallUDP :: Parser Shorewall
 parseShorewallUDP = do
-    string " - kernel:: Shorewall:"
+    string "kernel:: Shorewall:"
     fwrule <- takeTill (== ':')
     fwtarget <- char ':' *> takeTill (== ':')
     fwin <- char ':' *> kvTextParser "IN"
@@ -87,7 +87,7 @@ parseShorewallUDP = do
 --------------------------------------------------------------------------------
 parseShorewallICMP :: Parser Shorewall
 parseShorewallICMP = do
-    string " - kernel:: Shorewall:"
+    string "kernel:: Shorewall:"
     fwrule <- takeTill (== ':')
     fwtarget <- char ':' *> takeTill (== ':')
     fwin <- char ':' *> kvTextParser "IN"
@@ -110,8 +110,9 @@ parseShorewallICMP = do
         , fwdpt = Nothing
         }
 
-parseShorewall :: Parser Shorewall
-parseShorewall =
-        parseShorewallTCP
-    <|> parseShorewallUDP
-    <|> parseShorewallICMP
+parseShorewall :: Parser (Text, Shorewall)
+parseShorewall = do
+    s <-    parseShorewallTCP
+        <|> parseShorewallUDP
+        <|> parseShorewallICMP
+    return ("kernel", s)

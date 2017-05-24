@@ -141,7 +141,7 @@ parseTorqueHostList = flip sepBy (char '+') $ do
             return (lower, lower)
 
 --------------------------------------------------------------------------------
-parseTorqueExit :: Parser TorqueJobExit
+parseTorqueExit :: Parser (Text, TorqueJobExit)
 parseTorqueExit = do
     takeTill (== ';') *> string ";E;"   -- drop the prefix
     name <- parseTorqueJobName
@@ -164,7 +164,7 @@ parseTorqueExit = do
     exit_status <- skipSpace *> kvNumParser "Exit_status"
     usage <- skipSpace *> parseTorqueResourceUsage
 
-    return $ TorqueJobExit
+    return $ ("torque", TorqueJobExit
         { name = name
         , user = user
         , group = group
@@ -185,4 +185,4 @@ parseTorqueExit = do
         , totalExecutionSlots = total_execution_slots
         , uniqueNodeCount = unique_node_count
         , exitStatus = exit_status
-        }
+        })

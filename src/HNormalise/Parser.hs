@@ -9,6 +9,7 @@ module HNormalise.Parser where
 import           Control.Applicative        ((<|>))
 import           Data.Aeson                 (encode)
 import           Data.Attoparsec.Text
+import           Data.Attoparsec.Time
 import qualified Data.ByteString.Char8      as SBS
 import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Char
@@ -16,6 +17,7 @@ import           Data.Text                  (Text, empty)
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as TE
 --------------------------------------------------------------------------------
+import           HNormalise.Common.Parser
 import           HNormalise.Huppel.Parser
 import           HNormalise.Internal
 import           HNormalise.Json
@@ -27,11 +29,11 @@ rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %s
 
 --------------------------------------------------------------------------------
 -- | The 'parseMessage' function will try and use each configured parser to normalise the input it's given
-parseMessage :: Parser ParseResult
+parseMessage :: Parser (Text, ParseResult)
 parseMessage =
-        (parseLmodLoad >>= (\v -> return $ PR_L v))
-    <|> (parseShorewall >>= (\v -> return $ PR_S v))
-    <|> (parseTorqueExit >>= (\v -> return $ PR_T v))
+        (parseLmodLoad >>= (\(a, v) -> return $ (a, PR_L v)))
+    <|> (parseShorewall >>= (\(a, v) -> return $ (a, PR_S v)))
+    <|> (parseTorqueExit >>= (\(a, v) -> return $ (a, PR_T v)))
 
 --------------------------------------------------------------------------------
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced
@@ -44,27 +46,33 @@ getJsonKey (PR_S _) = "shorewall"
 --------------------------------------------------------------------------------
 -- | The 'parseRsyslogLogstashString' currently is a placeholder function that will convert the incoming rsyslog message
 -- if it is encoded as expected in a plain string format
+-- <%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %syslogtag% - %APP-NAME%: %msg%
 parseRsyslogLogstashString :: Parser SBS.ByteString
 parseRsyslogLogstashString = do
-    pri <- char '<' *> takeTill (== '>')
-    char '>' *> decimal
-    timegenerated <- skipSpace *> takeTill isSpace
+    abspri <- maybeOption $ do
+        char '<'
+        p <- decimal
+        char '>'
+        v <- maybeOption $ decimal
+        return (p, v)
+    timegenerated <- skipSpace *> zonedTime
     hostname <- skipSpace *> takeTill isSpace
     syslogtag <- skipSpace *> takeTill isSpace  -- FIXME: this might be incorrect
-    skipSpace *> char '-'
-    appname <- skipSpace *> takeTill (== ':')
-    (original, parsed) <- match $ char ':' *> skipSpace *> parseMessage
+    skipSpace *> char '-' *> skipSpace
+    (original, (appname, parsed)) <- match parseMessage
     return $ let jsonkey = getJsonKey parsed
              in BS.toStrict $ encode $ NRsyslog
                     { rsyslog = Rsyslog
                         { msg              = original
-                        , timereported     = T.empty
+                        , timereported     = Nothing
                         , hostname         = hostname
                         , syslogtag        = syslogtag
                         , inputname        = T.empty
                         , fromhost         = T.empty
                         , fromhost_ip      = T.empty
-                        , pri              = pri
+                        , pri              = case abspri of
+                                Just (p, _) -> Just p
+                                Nothing     -> Nothing
                         , syslogfacility   = T.empty
                         , syslogseverity   = T.empty
                         , timegenerated    = timegenerated

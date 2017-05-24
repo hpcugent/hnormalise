@@ -39,12 +39,14 @@ library
                      , aeson
                      , aeson-pretty
                      , attoparsec
+                     , attoparsec-iso8601
                      , bytestring
                      , containers
                      , directory
                      , ip
                      , permute
                      , text
+                     , time
                      , yaml
   default-language:    Haskell2010
 
@@ -57,6 +59,7 @@ executable hnormalise
                      , aeson
                      , aeson-pretty
                      , attoparsec
+                     , attoparsec-iso8601
                      , bytestring
                      , conduit
                      , conduit-combinators
@@ -67,6 +70,7 @@ executable hnormalise
                      , optparse-applicative
                      , resourcet
                      , text
+                     , time
                      , word8
                      , yaml
   default-language:    Haskell2010
@@ -82,6 +86,7 @@ test-suite hnormalise-test
   build-depends:       base
                      , aeson
                      , attoparsec
+                     , attoparsec-iso8601
                      , conduit-extra
                      , hnormalise
                      , hspec
@@ -90,6 +95,7 @@ test-suite hnormalise-test
                      , hspec-attoparsec
                      , ip
                      , text
+                     , time
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

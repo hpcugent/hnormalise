@@ -70,9 +70,9 @@ normaliseText logLine =
 convertMessage :: Text -> Maybe ParseResult
 convertMessage message =
     case parse parseMessage message of
-        Done _ pm -> Just pm
+        Done _ (_, pm) -> Just pm
         Partial c -> case c empty of
-            Done _ pm -> Just pm
+            Done _ (_, pm) -> Just pm
             _ -> Nothing
         _         -> Nothing
 

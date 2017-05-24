@@ -9,6 +9,7 @@ module HNormalise.Lmod.Parser where
 import           Control.Applicative        ((<|>))
 import           Data.Attoparsec.Combinator (lookAhead, manyTill)
 import           Data.Attoparsec.Text
+import           Data.Text                  (Text)
 --------------------------------------------------------------------------------
 
 import           HNormalise.Common.Parser
@@ -35,16 +36,16 @@ parseLmodModule = do
         , version = version
         }
 
-parseLmodLoad :: Parser LmodLoad
+parseLmodLoad :: Parser (Text, LmodLoad)
 parseLmodLoad = do
     string "lmod::"
     info <- skipSpace *> parseLmodInfo
     userload <- char ',' *> skipSpace *> kvYesNoParser "userload"
     m <- char ',' *> skipSpace *> parseLmodModule
     filename <- char ',' *> skipSpace *> kvTextParser "fn"
-    return LmodLoad
+    return ("lmod", LmodLoad
         { info = info
         , userload = userload
         , modul = m
         , filename = filename
-        }
+        })

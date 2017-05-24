@@ -47,5 +47,6 @@ instance ToJSON NormalisedRsyslog where
         pairs
             (  "message" .= msg r
             <> "syslog_abspri" .= syslogseverity r
+            <> "program" .= app_name r
             <> k .= n
             )

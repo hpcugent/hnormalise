@@ -29,18 +29,6 @@ Ports and machines can be tweaked through a configuration file. See `data/hnorma
 Testing the actual setup can be done trivially via `nc`, provided you have data to throw at `hNormalise`. A test example
 is also provided below, or you can get useful examples from the tests, under `test/HNormalise/*/ParserSpec.hs`
 
-Parsing
--------
-
-`hNormalise` uses the [Attoparsec](https://github.com/bos/attoparsec) package to have fast and efficient parsing.
-`Attoparsec` offers a clean and relatively simple DSL that allows getting the relevant data from the message and
-discarding the rest. We also rely on [permute]() to deal with log lines that may contain e.g., key-value pairs in
-no definite ordering. Note that this _will_ slow down the parsing.
-
-
-Caveat: at this point, we do not a priori restrict the possible parsers we unleash on each message. However, if the inbound
-data can be tagged properly, we could reduce the maximal number of parsers tried and avoid extensive backtracking.
-
 Supported log messages
 ----------------------
 
@@ -57,6 +45,18 @@ More are forthcoming soon, e.g., (in no particular order)
 - SSH
 - Snoopy
 - Jube
+
+Parsing
+-------
+
+`hNormalise` uses the [Attoparsec](https://github.com/bos/attoparsec) package to have fast and efficient parsing.
+`Attoparsec` offers a clean and relatively simple DSL that allows getting the relevant data from the message and
+discarding the rest. We also rely on [permute]() to deal with log lines that may contain e.g., key-value pairs in
+no definite ordering. Note that this _will_ slow down the parsing.
+
+
+Caveat: at this point, we do not a priori restrict the possible parsers we unleash on each message. However, if the inbound
+data can be tagged properly, we could reduce the maximal number of parsers tried and avoid extensive backtracking.
 
 ### Adding a new parser
 

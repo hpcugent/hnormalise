@@ -11,8 +11,6 @@ import           Data.Text
 import           GHC.Generics (Generic)
 
 --------------------------------------------------------------------------------
-
-
 data TorqueJobShortNode = TorqueJobShortNode
     { number :: !Int
     , ppn    :: !(Maybe Int)
@@ -41,12 +39,20 @@ data TorqueWalltime = TorqueWalltime
 
 --------------------------------------------------------------------------------
 data TorqueResourceRequest = TorqueResourceRequest
-    { nodes     :: !(Either TorqueJobShortNode [TorqueJobFQNode])
-    , vmem      :: !Integer
-    , nodeCount :: !Int
-    , neednodes :: !(Either TorqueJobShortNode [TorqueJobFQNode])
-    , nice      :: !(Maybe Int)
-    , walltime  :: !TorqueWalltime
+    { mem           :: !(Maybe Integer)
+    , advres        :: !(Maybe Text)
+    , naccesspolicy :: !(Maybe Text)
+    , ncpus         :: !(Maybe Int)
+    , neednodes     :: !(Either TorqueJobShortNode [TorqueJobFQNode])
+    , nice          :: !(Maybe Int)
+    , nodeCount     :: !Int
+    , nodes         :: !(Either TorqueJobShortNode [TorqueJobFQNode])
+    , select        :: !(Maybe Text)
+    , qos           :: !(Maybe Text)
+    , pmem          :: !(Maybe Integer)
+    , vmem          :: !(Maybe Integer)
+    , pvmem         :: !(Maybe Integer)
+    , walltime      :: !TorqueWalltime
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------

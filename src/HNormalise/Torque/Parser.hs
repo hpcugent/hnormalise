@@ -13,7 +13,7 @@ import           Data.Char                   (isDigit)
 import qualified Data.Map                    as M
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
-import           Text.ParserCombinators.Perm ((<$$>), (<||>), permute)
+import           Text.ParserCombinators.Perm ((<$$>), (<||>), (<$?>), (<|?>), permute)
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Parser
@@ -96,14 +96,38 @@ parseTorqueResourceNodeList = do
         return TorqueJobFQNode { name = fqdn, ppn = ppn})
 
 --------------------------------------------------------------------------------
+{- Examples found in the 2016 logs
+Resource_List.advres Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.mem Resource_List.ncpus Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.mem Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.qos Resource_List.vmem Resource_List.walltime
+Resource_List.mem Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.mem Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.walltime
+Resource_List.naccesspolicy Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.ncpus Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.nodeset Resource_List.vmem Resource_List.walltime
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.pmem Resource_List.vmem Resource_List.walltime
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.pmem Resource_List.walltime
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.pvmem Resource_List.vmem Resource_List.walltime
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.qos Resource_List.vmem Resource_List.walltime
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.walltime
+-}
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
 parseTorqueResourceRequest = do
     permute $ TorqueResourceRequest
-        <$$> skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
-        <||> skipSpace *> string "Resource_List.vmem=" *> parseTorqueMemory
-        <||> skipSpace *> kvNumParser "Resource_List.nodect"
+        <$?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mem=" *> parseTorqueMemory))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.advres"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.naccesspolicy"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.ncpus"))
         <||> skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
-        <||> maybeOption (skipSpace *> kvNumParser "Resource_List.nice")
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.nice"))
+        <||> skipSpace *> kvNumParser "Resource_List.nodect"
+        <||> skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.qos"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.select"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pmem=" *> parseTorqueMemory))
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pvmem=" *> parseTorqueMemory))
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.vmem=" *> parseTorqueMemory))
         <||> skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
 
 --------------------------------------------------------------------------------
@@ -149,10 +173,10 @@ parseTorqueExit = do
     group <- skipSpace *> kvTextParser "group"
     jobname <- skipSpace *> kvTextParser "jobname"
     queue <- skipSpace *> kvTextParser "queue"
-    start_count <- maybeOption $ skipSpace *> kvNumParser "start_count"
     ctime <- skipSpace *> kvNumParser "ctime"
     qtime <- skipSpace *> kvNumParser "qtime"
     etime <- skipSpace *> kvNumParser "etime"
+    start_count <- maybeOption $ skipSpace *> kvNumParser "start_count"
     start <- skipSpace *> kvNumParser "start"
     owner <- skipSpace *> kvTextParser "owner"
     exec_host <- skipSpace *> parseTorqueHostList

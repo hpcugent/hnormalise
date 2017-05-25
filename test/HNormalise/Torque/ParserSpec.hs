@@ -104,9 +104,55 @@ spec = do
             let s = "123456[789].master.mycluster.mydomain;" :: Text
             s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456, array_id = Just 789, master = "master", cluster = "mycluster" }
 
+    describe "parseTorqueResourceRequest" $ do
+        it "parse mandatory fields in expected order" $ do
+            let s = "Resource_List.neednodes=1:ppn=1 Resource_List.nodect=1 Resource_List.nodes=1:ppn=1 Resource_List.walltime=01:00:00" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem           = Nothing
+                , advres        = Nothing
+                , naccesspolicy = Nothing
+                , ncpus         = Nothing
+                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nice          = Nothing
+                , nodeCount     = 1
+                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , select        = Nothing
+                , qos           = Nothing
+                , pmem          = Nothing
+                , vmem          = Nothing
+                , pvmem         = Nothing
+                , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
+                }
+
+        it "parse mandatory fields in reverse order" $ do
+            let s = "Resource_List.walltime=01:00:00 Resource_List.nodes=1:ppn=1 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem           = Nothing
+                , advres        = Nothing
+                , naccesspolicy = Nothing
+                , ncpus         = Nothing
+                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nice          = Nothing
+                , nodeCount     = 1
+                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , select        = Nothing
+                , qos           = Nothing
+                , pmem          = Nothing
+                , vmem          = Nothing
+                , pvmem         = Nothing
+                , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
+                }
+
+
+
+
+
+
+
+
     describe "parseTorqueExit" $ do
         it "parse job exit log line" $ do
-            let s = "04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0-1+node2803.banette.gent.vsc/0-1 Resource_List.nodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
+            let s = "torque: 04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0-1+node2803.banette.gent.vsc/0-1 Resource_List.nodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
             s ~> parseTorqueExit `shouldParse` ("torque", TorqueJobExit
                 { name = TorqueJobName { number = 45, array_id = Nothing, master = "master23", cluster = "banette" }
                 , user = "vsc40075"
@@ -124,18 +170,10 @@ spec = do
                     , endTime = 1491390413
                     }
                 , resourceRequest = TorqueResourceRequest
-                    { nodes = Right
-                        [ TorqueJobFQNode
-                            { name = "node2801.banette.gent.vsc"
-                            , ppn  = 2
-                            }
-                        , TorqueJobFQNode
-                            { name = "node2803.banette.gent.vsc"
-                            , ppn  = 2
-                            }
-                        ]
-                    , vmem = 1 * 1024 * 1024 * 1024
-                    , nodeCount = 2
+                    { mem           = Nothing
+                    , advres        = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus         = Nothing
                     , neednodes = Right
                         [ TorqueJobFQNode
                             { name = "node2801.banette.gent.vsc"
@@ -147,6 +185,22 @@ spec = do
                             }
                         ]
                     , nice      = Just 0
+                    , nodeCount = 2
+                    , nodes = Right
+                        [ TorqueJobFQNode
+                            { name = "node2801.banette.gent.vsc"
+                            , ppn  = 2
+                            }
+                        , TorqueJobFQNode
+                            { name = "node2803.banette.gent.vsc"
+                            , ppn  = 2
+                            }
+                        ]
+                    , select        = Nothing
+                    , qos           = Nothing
+                    , vmem = Just $ 1 * 1024 * 1024 * 1024
+                    , pmem = Nothing
+                    , pvmem = Nothing
                     , walltime  = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0}
                     }
                 , resourceUsage = TorqueResourceUsage

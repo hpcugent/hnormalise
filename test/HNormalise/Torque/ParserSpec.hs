@@ -143,12 +143,62 @@ spec = do
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
+        it "parse mandatory fields plus mem fields" $ do
+            let s = "Resource_List.vmem=1mb Resource_List.walltime=01:00:00 Resource_List.pvmem=400kb Resource_List.pmem=200kB Resource_List.nodes=1:ppn=1 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem           = Nothing
+                , advres        = Nothing
+                , naccesspolicy = Nothing
+                , ncpus         = Nothing
+                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nice          = Nothing
+                , nodeCount     = 1
+                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , select        = Nothing
+                , qos           = Nothing
+                , pmem          = Just $ 200 * 1024
+                , vmem          = Just $ 1 * 1024 * 1024
+                , pvmem         = Just $ 400 * 1024
+                , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
+                }
 
+        it "parse mandatory fields plus reservation field" $ do
+            let s = "Resource_List.walltime=01:00:00 Resource_List.advres=myreservation.1 Resource_List.nodes=1:ppn=1 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem           = Nothing
+                , advres        = Just "myreservation.1"
+                , naccesspolicy = Nothing
+                , ncpus         = Nothing
+                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nice          = Nothing
+                , nodeCount     = 1
+                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , select        = Nothing
+                , qos           = Nothing
+                , pmem          = Nothing
+                , vmem          = Nothing
+                , pvmem         = Nothing
+                , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
+                }
 
-
-
-
-
+        it "parse mandatory fields plus qos field" $ do
+            let s = "Resource_List.walltime=01:00:00 Resource_List.nodes=1:ppn=1 Resource_List.qos=someqos Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem           = Nothing
+                , advres        = Nothing
+                , naccesspolicy = Nothing
+                , ncpus         = Nothing
+                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nice          = Nothing
+                , nodeCount     = 1
+                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , select        = Nothing
+                , qos           = Just "someqos"
+                , pmem          = Nothing
+                , vmem          = Nothing
+                , pvmem         = Nothing
+                , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
+                }
 
     describe "parseTorqueExit" $ do
         it "parse job exit log line" $ do

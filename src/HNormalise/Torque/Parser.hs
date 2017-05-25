@@ -123,8 +123,8 @@ parseTorqueResourceRequest = do
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.nice"))
         <||> skipSpace *> kvNumParser "Resource_List.nodect"
         <||> skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
-        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.qos"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.select"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.qos"))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pmem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.vmem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pvmem=" *> parseTorqueMemory))

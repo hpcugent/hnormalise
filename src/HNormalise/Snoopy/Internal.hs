@@ -22,6 +22,6 @@ data Snoopy = Snoopy
     , sid        :: !Int
     , tty        :: !Text
     , cwd        :: !Text
-    , filename   :: !Text
+    , executable :: !Text
     , command    :: !Text
     } deriving (Show, Eq, Generic)

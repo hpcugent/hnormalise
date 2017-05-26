@@ -28,7 +28,7 @@ parseSnoopy = do
     sid <- skipSpace *> string "sid:" *> decimal
     tty <- skipSpace *> string "tty:" *> takeTill isSpace
     cwd <- skipSpace *> string "cwd:" *> takeTill isSpace
-    filename <- skipSpace *> "filename:" *> takeTill ( == ']')
+    executable <- skipSpace *> "filename:" *> takeTill ( == ']')
     string "]:"
     command <- skipSpace *> takeText
     return $ ("snoopy", Snoopy
@@ -38,6 +38,6 @@ parseSnoopy = do
         , sid = sid
         , tty = tty
         , cwd = cwd
-        , filename = filename
+        , executable = executable
         , command = command
         })

@@ -23,6 +23,7 @@ import           HNormalise.Internal
 import           HNormalise.Json
 import           HNormalise.Lmod.Parser
 import           HNormalise.Shorewall.Parser
+import           HNormalise.Snoopy.Parser
 import           HNormalise.Torque.Parser
 --------------------------------------------------------------------------------
 rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %syslogtag% - %APP-NAME%: %msg:::drop-last-lf%\n"
@@ -31,17 +32,19 @@ rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %s
 -- | The 'parseMessage' function will try and use each configured parser to normalise the input it's given
 parseMessage :: Parser (Text, ParseResult)
 parseMessage =
-        (parseLmodLoad >>= (\(a, v) -> return $ (a, PR_L v)))
-    <|> (parseShorewall >>= (\(a, v) -> return $ (a, PR_S v)))
-    <|> (parseTorqueExit >>= (\(a, v) -> return $ (a, PR_T v)))
+        (parseLmodLoad   >>= (\(a, v) -> return $ (a, PR_Lmod v)))
+    <|> (parseShorewall  >>= (\(a, v) -> return $ (a, PR_Shorewall v)))
+    <|> (parseSnoopy     >>= (\(a, v) -> return $ (a, PR_Snoopy v)))
+    <|> (parseTorqueExit >>= (\(a, v) -> return $ (a, PR_Torque v)))
 
 --------------------------------------------------------------------------------
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced
 getJsonKey :: ParseResult -> Text
-getJsonKey (PR_H _) = "huppel"
-getJsonKey (PR_L _) = "lmod"
-getJsonKey (PR_T _) = "torque"
-getJsonKey (PR_S _) = "shorewall"
+getJsonKey (PR_Huppel _) = "huppel"
+getJsonKey (PR_Lmod _) = "lmod"
+getJsonKey (PR_Torque _) = "torque"
+getJsonKey (PR_Shorewall _) = "shorewall"
+getJsonKey (PR_Snoopy _) = "shorewall"
 
 --------------------------------------------------------------------------------
 -- | The 'parseRsyslogLogstashString' currently is a placeholder function that will convert the incoming rsyslog message

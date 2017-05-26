@@ -12,3 +12,7 @@ import           Data.Monoid
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Json
 import           HNormalise.Snoopy.Internal
+
+--------------------------------------------------------------------------------
+instance ToJSON Snoopy where
+    toEncoding = genericToEncoding defaultOptions

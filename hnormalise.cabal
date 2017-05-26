@@ -32,6 +32,8 @@ library
                      , HNormalise.Shorewall.Internal
                      , HNormalise.Shorewall.Json
                      , HNormalise.Shorewall.Parser
+                     , HNormalise.Snoopy.Internal
+                     , HNormalise.Snoopy.Parser
                      , HNormalise.Torque.Internal
                      , HNormalise.Torque.Json
                      , HNormalise.Torque.Parser
@@ -79,7 +81,7 @@ test-suite hnormalise-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  other-modules:     HNormalise.Common.ParserSpec
+  other-modules:       HNormalise.Common.ParserSpec
                      , HNormalise.Lmod.ParserSpec
                      , HNormalise.Shorewall.ParserSpec
                      , HNormalise.Torque.ParserSpec

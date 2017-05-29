@@ -109,8 +109,10 @@ benchmark hnormalise-bench
   hs-source-dirs:      test
   main-is:             Bench.hs
   build-depends:       base
+                     , aeson
                      , attoparsec
                      , criterion
+                     , deepseq
                      , hnormalise
                      , random
                      , text

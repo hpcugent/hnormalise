@@ -34,4 +34,4 @@ spec = do
 
         it "snoopy with process ID" $ do
             let s = "<86>1 2017-05-29T16:40:48.275334+02:00 master23 snoopy[28949]: - snoopy[28949]::  [uid:992 username:nrpe sid:11542 tty:(none) cwd:/ filename:/usr/bin/which]: which python" :: Text
-            s ~> parseRsyslogLogstashString `shouldParse` "{\"message\":\"snoopy[28949]::  [uid:992 username:nrpe sid:11542 tty:(none) cwd:/ filename:/usr/bin/which]: which python\",\"syslog_abspri\":\"\",\"program\":\"snoopy\",\"shorewall\":{\"pid\":28949,\"uid\":992,\"username\":\"nrpe\",\"sid\":11542,\"tty\":\"(none)\",\"cwd\":\"/\",\"executable\":\"/usr/bin/which\",\"command\":\"which python\"}}"
+            s ~> parseRsyslogLogstashString `shouldParse` "{\"message\":\"snoopy[28949]::  [uid:992 username:nrpe sid:11542 tty:(none) cwd:/ filename:/usr/bin/which]: which python\",\"syslog_abspri\":\"\",\"program\":\"snoopy\",\"snoopy\":{\"pid\":28949,\"uid\":992,\"username\":\"nrpe\",\"sid\":11542,\"tty\":\"(none)\",\"cwd\":\"/\",\"executable\":\"/usr/bin/which\",\"command\":\"which python\"}}"

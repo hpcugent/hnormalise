@@ -24,7 +24,7 @@ parseSnoopy = do
     pid <- decimal
     takeTill ( == '[') *> char '['
     uid <- string "uid:" *> decimal
-    username <- maybeOption $ string "username:" *> takeTill isSpace
+    username <- maybeOption $ skipSpace *> string "username:" *> takeTill isSpace
     sid <- skipSpace *> string "sid:" *> decimal
     tty <- skipSpace *> string "tty:" *> takeTill isSpace
     cwd <- skipSpace *> string "cwd:" *> takeTill isSpace

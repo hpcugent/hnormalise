@@ -47,3 +47,16 @@ spec = do
                 , executable = "/usr/bin/qsub"
                 , command = "qsub -l walltime=72:00:00 job7_21293_30000_doit"
                 })
+
+        it "failing" $ do
+            let s = "snoopy[28949]::  [uid:992 username:nrpe sid:11542 tty:(none) cwd:/ filename:/usr/bin/which]: which python" :: Text
+            s ~> parseSnoopy `shouldParse` ("snoopy", Snoopy
+                { pid = 28949
+                , uid = 992
+                , username = Just "nrpe"
+                , sid = 11542
+                , tty = "(none)"
+                , cwd = "/"
+                , executable = "/usr/bin/which"
+                , command = "which python"
+                })

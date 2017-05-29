@@ -86,7 +86,7 @@ messageSink success failure = loop
                 loop
             Just (Original l) -> do
                 yield l $$ appSink failure
-                yield (SBS.pack "\n") $$ appSink success
+                yield (SBS.pack "\n") $$ appSink failure
                 loop
             Nothing -> return ()
 

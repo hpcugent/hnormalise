@@ -19,6 +19,7 @@ import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8      as SBS
 import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Text                  (Text, empty)
+import           Data.Text.Encoding         (encodeUtf8)
 import           Data.Text.Lazy             (toStrict)
 
 --------------------------------------------------------------------------------
@@ -62,7 +63,7 @@ normaliseText logLine =
                             _        -> original
         _           -> original
   where
-    original = Original $ BS.toStrict $ Aeson.encode $ logLine
+    original = Original $ encodeUtf8 $ logLine
 
 --------------------------------------------------------------------------------
 -- | The 'convertMessage' function transforms the actual message to a 'Maybe' 'ParseResult'. If parsing fails,

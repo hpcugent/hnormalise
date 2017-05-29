@@ -44,7 +44,7 @@ getJsonKey (PR_Huppel _) = "huppel"
 getJsonKey (PR_Lmod _) = "lmod"
 getJsonKey (PR_Torque _) = "torque"
 getJsonKey (PR_Shorewall _) = "shorewall"
-getJsonKey (PR_Snoopy _) = "shorewall"
+getJsonKey (PR_Snoopy _) = "snoopy"
 
 --------------------------------------------------------------------------------
 -- | The 'parseRsyslogLogstashString' currently is a placeholder function that will convert the incoming rsyslog message

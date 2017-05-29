@@ -19,27 +19,32 @@ import           HNormalise.Lmod.Internal   (LmodLoad)
 import           HNormalise.Lmod.Json
 import           HNormalise.Shorewall.Internal (Shorewall)
 import           HNormalise.Shorewall.Json
+import           HNormalise.Snoopy.Internal (Snoopy)
+import           HNormalise.Snoopy.Json
 import           HNormalise.Torque.Internal (TorqueJobExit)
 import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
 data ParseResult
     -- | 'Huppel' Result for testing purposes, should you want to check the pipeline works without pushing in actual data
-    = PR_H Huppel
+    = PR_Huppel Huppel
     -- | Represents a parsed 'LmodLoad' message
-    | PR_L LmodLoad
+    | PR_Lmod LmodLoad
     -- | Represents a parsed 'Shorewall' message
-    | PR_S Shorewall
+    | PR_Shorewall Shorewall
+    -- | Represents a parsed 'Snoopy' message
+    | PR_Snoopy Snoopy
     -- | Represents a parsed 'TorqueJobExit' message
-    | PR_T TorqueJobExit
+    | PR_Torque TorqueJobExit
     deriving  (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 instance ToJSON ParseResult where
-    toEncoding (PR_H v) = toEncoding v
-    toEncoding (PR_L v) = toEncoding v
-    toEncoding (PR_S v) = toEncoding v
-    toEncoding (PR_T v) = toEncoding v
+    toEncoding (PR_Huppel v) = toEncoding v
+    toEncoding (PR_Lmod v) = toEncoding v
+    toEncoding (PR_Shorewall v) = toEncoding v
+    toEncoding (PR_Snoopy v) = toEncoding v
+    toEncoding (PR_Torque v) = toEncoding v
 
 --------------------------------------------------------------------------------
 data Rsyslog = Rsyslog

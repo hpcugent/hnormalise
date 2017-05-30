@@ -4,6 +4,7 @@
 
 module HNormalise.Config
     ( Config(..)
+    , PortConfig(..)
     , loadConfig
     ) where
 
@@ -19,7 +20,7 @@ import           System.Directory
 
 
 --------------------------------------------------------------------------------
-data Config = Config
+data PortConfig = PortConfig
     { listenPort  :: !(Maybe Int)    -- ^ port for incoming messages
     , listenHost  :: !(Maybe Text)   -- ^ binding to this host specification (TODO: needs support for HostPreference)
     , successPort :: !(Maybe Int)    -- ^ port to send rsyslog with successfully parsed and normalised msg part
@@ -29,10 +30,10 @@ data Config = Config
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-instance Monoid Config where
-    mempty = Config
+instance Monoid PortConfig where
+    mempty = PortConfig
                 Nothing Nothing Nothing Nothing Nothing Nothing
-    mappend l r = Config
+    mappend l r = PortConfig
         { listenPort  = listenPort  l `mplus` listenPort  r
         , listenHost  = listenHost  l `mplus` listenHost  r
         , successPort = successPort l `mplus` successPort r
@@ -42,13 +43,32 @@ instance Monoid Config where
         }
 
 --------------------------------------------------------------------------------
-defaultConfig = Config
+defaultPortConfig = PortConfig
     { listenPort = Just 4019
     , listenHost = Just "localhost"
     , successPort = Just 26002
     , successHost = Just "localhost"
     , failPort = Just 4018
     , failHost = Just "localhost"
+    }
+
+--------------------------------------------------------------------------------
+data Config = Config
+    { ports :: !(Maybe PortConfig)
+    , fields :: !(Maybe [(Text, Text)])
+    } deriving (Show)
+
+--------------------------------------------------------------------------------
+instance Monoid Config where
+    mempty = Config Nothing Nothing
+    mappend l r = Config
+        { ports = ports l `mplus` ports r
+        , fields = fields l `mplus` fields r
+        }
+
+defaultConfig = Config
+    { ports = Just defaultPortConfig
+    , fields = Nothing
     }
 
 --------------------------------------------------------------------------------
@@ -78,4 +98,5 @@ loadConfig fp = do
     return $ userConfig <> systemConfig <> defaultConfig
 
 --------------------------------------------------------------------------------
+$(deriveJSON defaultOptions ''PortConfig)
 $(deriveJSON defaultOptions ''Config)

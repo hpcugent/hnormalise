@@ -47,17 +47,16 @@ instance ToJSON Rsyslog where
 --------------------------------------------------------------------------------
 instance ToJSON NormalisedRsyslog where
     toEncoding (NRsyslog r n k fs) =
-        if null fs then
-            -- default
-            pairs
-                (  "message" .= msg r
-                <> "syslog_abspri" .= pri r
-                <> "syslog_version" .= version r
-                <> "program" .= app_name r
-                <> "@source_host" .= hostname r          -- the host in ES will likely be set to the machine sending the data to logstash
-                <> k .= n
-                )
-        else
-            case toJSON r of
-                Object syslog -> pairs $ foldl (\v (key, fieldname) -> v <> key .= (M.lookupDefault Null fieldname syslog)) (k .= n) fs
-                _ -> pairs (k .= n)
+        case fs of
+            -- this is the default
+            Nothing -> pairs
+                        (  "message" .= msg r
+                        <> "syslog_abspri" .= pri r
+                        <> "syslog_version" .= version r
+                        <> "program" .= app_name r
+                        <> "@source_host" .= hostname r          -- the host in ES will likely be set to the machine sending the data to logstash
+                        <> k .= n
+                        )
+            Just fs' -> case toJSON r of
+                            Object syslog -> pairs $ foldl (\v (key, fieldname) -> v <> key .= (M.lookupDefault Null fieldname syslog)) (k .= n) fs'
+                            _ -> pairs (k .= n) -- FIXME: this should never happen

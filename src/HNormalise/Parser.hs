@@ -86,5 +86,5 @@ parseRsyslogLogstashString = do
                         }
                     , normalised = parsed
                     , jsonkey = jsonkey
-                    , fields = []
+                    , fields = Nothing
                     }

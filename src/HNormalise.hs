@@ -87,4 +87,4 @@ normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
     return $ BS.toStrict
            $ Aeson.encode
-           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm }
+           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm, fields = [] }

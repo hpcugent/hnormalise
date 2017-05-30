@@ -23,7 +23,7 @@ instance ToJSON TorqueExecHost where
     toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueWalltime where
-    toEncoding = genericToEncoding defaultOptions
+    toEncoding (TorqueWalltime d h m s) = toEncoding $ (((d * 24 + h) * 60) + m) * 60 + s
 
 instance ToJSON TorqueResourceRequest where
     toEncoding = genericToEncoding defaultOptions

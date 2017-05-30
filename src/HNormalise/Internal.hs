@@ -49,16 +49,17 @@ instance ToJSON ParseResult where
 data Rsyslog = Rsyslog
     { msg              :: !Text
     --, rawmsg           :: !Text
-    , timereported     :: !(Maybe ZonedTime)
+    , timereported     :: !ZonedTime
     , hostname         :: !Text
     , syslogtag        :: !Text  -- Could be a list?
     , inputname        :: !Text
     , fromhost         :: !Text
     , fromhost_ip      :: !Text
     , pri              :: !(Maybe Int)
+    , version          :: !(Maybe Int)
     , syslogfacility   :: !Text
     , syslogseverity   :: !Text
-    , timegenerated    :: !ZonedTime
+    , timegenerated    :: !(Maybe ZonedTime)
     , programname      :: !Text
     , protocol_version :: !Text
     --, structured_data  :: !Text

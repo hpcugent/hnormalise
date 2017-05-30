@@ -59,7 +59,7 @@ parseRsyslogLogstashString = do
         char '>'
         v <- maybeOption $ decimal
         return (p, v)
-    timegenerated <- skipSpace *> zonedTime
+    timereported <- skipSpace *> zonedTime
     hostname <- skipSpace *> takeTill isSpace
     syslogtag <- skipSpace *> takeTill isSpace  -- FIXME: this might be incorrect
     skipSpace *> char '-' *> skipSpace
@@ -68,18 +68,17 @@ parseRsyslogLogstashString = do
              in BS.toStrict $ encode $ NRsyslog
                     { rsyslog = Rsyslog
                         { msg              = original
-                        , timereported     = Nothing
+                        , timereported     = timereported
                         , hostname         = hostname
                         , syslogtag        = syslogtag
                         , inputname        = T.empty
                         , fromhost         = T.empty
                         , fromhost_ip      = T.empty
-                        , pri              = case abspri of
-                                Just (p, _) -> Just p
-                                Nothing     -> Nothing
+                        , pri              = abspri >>= \(p, _) -> return p
+                        , version          = abspri >>= \(_, v) -> v
                         , syslogfacility   = T.empty
                         , syslogseverity   = T.empty
-                        , timegenerated    = timegenerated
+                        , timegenerated    = Nothing
                         , programname      = T.empty
                         , protocol_version = T.empty
                         , app_name         = appname

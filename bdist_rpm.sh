@@ -10,19 +10,19 @@ mkdir -p ~/rpmbuild/SRPMS
 
 
 
-rm -rf ${TARBALL_DIR}
+rm -rf "${TARBALL_DIR}"
 
 stack build
 stack install
 
-mkdir -p ${TARBALL_DIR}/usr/bin
-mkdir -p ${TARBALL_DIR}/etc/hnormalise
+mkdir -p "${TARBALL_DIR}"/usr/bin
+mkdir -p "${TARBALL_DIR}"/etc/hnormalise
 
-cp ~/.local/bin/hnormalise ${TARBALL_DIR}/usr/bin/
-cp data/hnormalise.yaml ${TARBALL_DIR}/etc/hnormalise/
+cp ~/.local/bin/hnormalise "${TARBALL_DIR}"/usr/bin/
+cp data/hnormalise.yaml "${TARBALL_DIR}"/etc/hnormalise/
 
-tar zcvf hnormalise-${VERSION}.tar.gz ${TARBALL_DIR}
-cp hnormalise-${VERSION}.tar.gz ~/rpmbuild/SOURCES
+tar zcvf hnormalise-"${VERSION}".tar.gz "${TARBALL_DIR}"
+cp hnormalise-"${VERSION}".tar.gz ~/rpmbuild/SOURCES
 cp hnormalise.spec ~/rpmbuild/SPECS
 
 ls -l ~/rpmbuild/SPECS

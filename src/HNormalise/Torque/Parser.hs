@@ -3,9 +3,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module HNormalise.Torque.Parser
-    ( parseTorqueExit
-    ) where
+module HNormalise.Torque.Parser where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative         ((<|>))

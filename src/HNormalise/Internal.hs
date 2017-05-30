@@ -75,4 +75,5 @@ data NormalisedRsyslog = NRsyslog
     { rsyslog    :: Rsyslog            -- ^ The original rsyslog message in a parsed form
     , normalised :: ParseResult        -- ^ The normalised message
     , jsonkey    :: Text               -- ^ The key under which the normalised info will appear in the JSON result
+    , fields     :: [(Text, Text)]     -- ^ The fields we need to output when creating the JSON encoding as (key, fieldname)
     } deriving (Show, Generic)

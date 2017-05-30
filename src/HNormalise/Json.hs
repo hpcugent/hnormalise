@@ -44,7 +44,7 @@ instance ToJSON Rsyslog where
 
 --------------------------------------------------------------------------------
 instance ToJSON NormalisedRsyslog where
-    toEncoding (NRsyslog r n k) =
+    toEncoding (NRsyslog r n k f) =
         pairs
             (  "message" .= msg r
             <> "syslog_abspri" .= pri r

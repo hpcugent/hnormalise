@@ -1,27 +1,26 @@
 {-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE DuplicateRecordFields     #-}
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings         #-}
 
 module HNormalise.Internal where
 
 --------------------------------------------------------------------------------
-import           Data.Aeson                 (FromJSON, ToJSON, toEncoding,
-                                             toJSON)
-import           Data.Text
-import           Data.Time.LocalTime
-import           GHC.Generics               (Generic)
+import           Data.Aeson                    (FromJSON, ToJSON, toEncoding,
+                                                toJSON)
+import           Data.Text                     (Text)
+import           Data.Time.LocalTime           (ZonedTime)
+import           GHC.Generics                  (Generic)
 
 --------------------------------------------------------------------------------
-import           HNormalise.Huppel.Internal (Huppel)
+import           HNormalise.Huppel.Internal    (Huppel)
 import           HNormalise.Huppel.Json
-import           HNormalise.Lmod.Internal   (LmodLoad)
+import           HNormalise.Lmod.Internal      (LmodLoad)
 import           HNormalise.Lmod.Json
 import           HNormalise.Shorewall.Internal (Shorewall)
 import           HNormalise.Shorewall.Json
-import           HNormalise.Snoopy.Internal (Snoopy)
+import           HNormalise.Snoopy.Internal    (Snoopy)
 import           HNormalise.Snoopy.Json
-import           HNormalise.Torque.Internal (TorqueJobExit)
+import           HNormalise.Torque.Internal    (TorqueJobExit)
 import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------

@@ -3,7 +3,9 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module HNormalise.Torque.Parser where
+module HNormalise.Torque.Parser
+    ( parseTorqueExit
+    ) where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative         ((<|>))
@@ -20,6 +22,7 @@ import           HNormalise.Common.Parser
 import           HNormalise.Torque.Internal
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueWalltime' parses [[[DD:]HH:]MM:]SS strings representing walltime
 parseTorqueWalltime :: Parser TorqueWalltime
 parseTorqueWalltime =
         parseTorqueDays
@@ -51,6 +54,7 @@ parseTorqueSeconds = do
 
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueMemory' parses an decimal followed by a memory unit and return the memory in bytes
 parseTorqueMemory :: Parser Integer
 parseTorqueMemory = do
     v <- decimal
@@ -65,6 +69,7 @@ parseTorqueMemory = do
         "gb" -> v * 1024 * 1024 * 1024
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueJobName' splits the job name in its components, i.e., ID, [ array ID,] master and cluster
 parseTorqueJobName :: Parser TorqueJobName
 parseTorqueJobName = do
     n <- decimal
@@ -83,6 +88,7 @@ parseTorqueJobName = do
 
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueResourceNodeList' parses a list of FQDN nodes and their ppn or a nodecount and its ppn
 parseTorqueResourceNodeList :: Parser (Either TorqueJobShortNode [TorqueJobFQNode])
 parseTorqueResourceNodeList = do
     c <- peekChar'
@@ -112,6 +118,9 @@ Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.no
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.walltime
 -}
+-- | 'parseTorqueResourceRequest' parses all key value pairs denoting resources requested.
+-- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur, the last
+-- 1.5 years of data we have were used to make an educated guess as to which keys might appear and in what order
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
 parseTorqueResourceRequest = do
     permute $ TorqueResourceRequest
@@ -131,6 +140,7 @@ parseTorqueResourceRequest = do
         <||> skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueResourceUsage' parses all the key value pairs denoting used resources.
 parseTorqueResourceUsage :: Parser TorqueResourceUsage
 parseTorqueResourceUsage = do
     cput <- skipSpace *> kvNumParser "resources_used.cput"
@@ -147,6 +157,7 @@ parseTorqueResourceUsage = do
         }
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueHostList' parses a '+' separated list of hostname/coreranges
 parseTorqueHostList :: Parser [TorqueExecHost]
 parseTorqueHostList = flip sepBy (char '+') $ do
     fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
@@ -165,6 +176,7 @@ parseTorqueHostList = flip sepBy (char '+') $ do
             return (lower, lower)
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
 parseTorqueExit :: Parser (Text, TorqueJobExit)
 parseTorqueExit = do
     takeTill (== ';') *> string ";E;"   -- drop the prefix

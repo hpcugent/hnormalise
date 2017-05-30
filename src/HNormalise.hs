@@ -68,7 +68,8 @@ normaliseText logLine =
 --------------------------------------------------------------------------------
 -- | The 'convertMessage' function transforms the actual message to a 'Maybe' 'ParseResult'. If parsing fails,
 -- the result is 'Nothing'.
-convertMessage :: Text -> Maybe ParseResult
+convertMessage :: Text               -- ^ The actual message part of the incoming JSON payload
+               -> Maybe ParseResult  -- ^ The resulting Haskell data structure wrapped in a ParseResult
 convertMessage message =
     case parse parseMessage message of
         Done _ (_, pm) -> Just pm
@@ -81,7 +82,7 @@ convertMessage message =
 -- | The 'normaliseRsyslog' function returns an 'NRSyslog' structure tranformed to a 'ByteString' or 'Nothing'
 -- when parsing fails
 normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
-                 -> Maybe SBS.ByteString  -- ^ IF the conversion succeeded the JSON encoded rsyslog message to forward
+                 -> Maybe SBS.ByteString  -- ^ If the conversion succeeded the JSON encoded rsyslog message to forward
 normaliseRsyslog rsyslog = do
     cm <- convertMessage $ msg rsyslog
     return $ BS.toStrict

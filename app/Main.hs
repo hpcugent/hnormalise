@@ -75,6 +75,7 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
     )
 
 --------------------------------------------------------------------------------
+-- | 'messageSink' yields the parsed JSON downstream, or if parsing fails, yields the original message downstream
 messageSink success failure = loop
   where
     loop = do
@@ -92,6 +93,7 @@ messageSink success failure = loop
 
 
 --------------------------------------------------------------------------------
+-- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure
 -- for testing purposes
 mySink = loop
   where
@@ -112,6 +114,8 @@ mySink = loop
 
 
 --------------------------------------------------------------------------------
+-- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
+-- for the pipeline.
 main :: IO ()
 main = do
     options <- OA.execParser parserInfo

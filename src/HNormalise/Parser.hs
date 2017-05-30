@@ -39,7 +39,8 @@ parseMessage =
 
 --------------------------------------------------------------------------------
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced
-getJsonKey :: ParseResult -> Text
+getJsonKey :: ParseResult  -- ^ Wrapped result for which we need to get a key
+           -> Text         -- ^ Key for use in the JSON encoding of the result
 getJsonKey (PR_Huppel _) = "huppel"
 getJsonKey (PR_Lmod _) = "lmod"
 getJsonKey (PR_Torque _) = "torque"

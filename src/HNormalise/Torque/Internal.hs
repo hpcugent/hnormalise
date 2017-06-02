@@ -25,8 +25,7 @@ data TorqueJobFQNode = TorqueJobFQNode
 --------------------------------------------------------------------------------
 data TorqueExecHost = TorqueExecHost
     { name      :: !Text
-    , lowerCore :: !Int
-    , upperCore :: !Int
+    , cores     :: ![Int]
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -84,6 +83,7 @@ data TorqueJobExit = TorqueJobExit
     , owner               :: !Text
     , session             :: !Integer
     , times               :: !TorqueJobTime
+    , execHost            :: ![TorqueExecHost]
     , resourceRequest     :: !TorqueResourceRequest
     , resourceUsage       :: !TorqueResourceUsage
     , totalExecutionSlots :: !Int

@@ -156,22 +156,26 @@ parseTorqueResourceUsage = do
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueHostList' parses a '+' separated list of hostname/coreranges
+-- A core range can be of the form 1,3,5-7,9
 parseTorqueHostList :: Parser [TorqueExecHost]
 parseTorqueHostList = flip sepBy (char '+') $ do
     fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
     char '/'
-    (lower, upper) <- try parseCoreRange <|> parseSingleCore
-    return $ TorqueExecHost { name = fqdn, lowerCore = lower, upperCore = upper}
-  where parseCoreRange :: Parser (Int, Int)
-        parseCoreRange = do
+    cores <- parseCores
+    return $ TorqueExecHost { name = fqdn, cores = cores}
+  where parseCores :: Parser [Int]
+        parseCores = do
+            cores <- flip sepBy1' (char ',') $ try parseRange <|> parseSingle
+            return $ concat cores
+        parseRange = do
             lower <- decimal
             char '-'
             upper <- decimal
-            return (lower, upper)
+            return [lower .. upper]
+        parseSingle = do
+            c <- decimal
+            return [c]
 
-        parseSingleCore = do
-            lower <- decimal
-            return (lower, lower)
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
@@ -214,6 +218,7 @@ parseTorqueExit = do
             , startTime = start
             , endTime = end
             }
+        , execHost = exec_host
         , resourceRequest = request
         , resourceUsage = usage
         , totalExecutionSlots = total_execution_slots

@@ -57,7 +57,7 @@ main = defaultMain
     , bgroup "parse snoopy"
         [ bench "successfull input" $ whnf (AT.parse SnoopyP.parseSnoopy) snoopyInput]
     , bgroup "normaliseText"
-        [ bench "snoopy" $ nf H.normaliseText fullSnoopyInput
-        , bench "lmod" $ nf H.normaliseText fullLmodInput
+        [ bench "snoopy" $ nf (H.normaliseText Nothing) fullSnoopyInput
+        , bench "lmod" $ nf (H.normaliseText Nothing) fullLmodInput
         ]
     ]

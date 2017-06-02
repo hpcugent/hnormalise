@@ -251,7 +251,16 @@ spec = do
                     , startTime = 1491390307
                     , endTime = 1491390413
                     }
-                , execHost = []
+                , execHost =
+                    [ TorqueExecHost
+                        { name = "exec_host=node2801.banette.gent.vsc"
+                        , cores = [0,1]
+                        }
+                    , TorqueExecHost
+                        { name = "node2803.banette.gent.vsc"
+                        , cores = [0,1]
+                        }
+                    ]
                 , resourceRequest = TorqueResourceRequest
                     { mem           = Nothing
                     , advres        = Nothing

@@ -125,12 +125,13 @@ main = do
         exitSuccess
 
     config <- loadConfig (oConfigFilePath options)
+    trace (show config) $ return ()
 
     let lHost = case ports config >>= listenHost of
                     Just h  -> T.unpack h
                     Nothing -> "*"
 
-    trace (show config) $ return ()
+    let fs = fields config
 
     runTCPServer (serverSettings (fromJust $ (ports config >>= listenPort)) "*") $ \appData -> do
 
@@ -141,17 +142,17 @@ main = do
                     case oJsonInput options of
                         True  -> appSource appData
                                     $= CB.lines
-                                    $= C.map normaliseJsonInput
+                                    $= C.map (normaliseJsonInput fs)
                                     $$ messageSink successServer failServer
                         False -> appSource appData
                                     $= DCT.decode DCT.utf8
                                     $= DCT.lines
-                                    $= C.map normaliseText
+                                    $= C.map (normaliseText fs)
                                     $$ messageSink successServer failServer
             Just testSinkFileName ->
                 runResourceT $ appSource appData
                     $= (case oJsonInput options of
-                        True  -> CB.lines $= C.map normaliseJsonInput
-                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map normaliseText)
+                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs))
                     $= mySink
                     $$ sinkFile testSinkFileName

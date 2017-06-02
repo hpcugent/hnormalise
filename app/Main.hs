@@ -30,7 +30,7 @@ import           System.Exit                  (exitFailure, exitSuccess)
 import           Debug.Trace
 --------------------------------------------------------------------------------
 import           HNormalise
-import           HNormalise.Config            (Config (..), loadConfig)
+import           HNormalise.Config            (Config (..), PortConfig(..), loadConfig)
 import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
 
@@ -125,32 +125,34 @@ main = do
         exitSuccess
 
     config <- loadConfig (oConfigFilePath options)
+    trace (show config) $ return ()
 
-    let lHost = case listenHost config of
+    let lHost = case ports config >>= listenHost of
                     Just h  -> T.unpack h
                     Nothing -> "*"
 
+    let fs = fields config
 
-    runTCPServer (serverSettings (fromJust $ listenPort config) "*") $ \appData -> do
+    runTCPServer (serverSettings (fromJust $ (ports config >>= listenPort)) "*") $ \appData -> do
 
         case oTestFilePath options of
             Nothing ->
-                runTCPClient (clientSettings (fromJust $ successPort config) "localhost") $ \successServer ->
-                runTCPClient (clientSettings (fromJust $ failPort config) "localhost") $ \failServer ->
+                runTCPClient (clientSettings (fromJust $ ports config >>= successPort) "localhost") $ \successServer ->
+                runTCPClient (clientSettings (fromJust $ ports config >>= failPort) "localhost") $ \failServer ->
                     case oJsonInput options of
                         True  -> appSource appData
                                     $= CB.lines
-                                    $= C.map normaliseJsonInput
+                                    $= C.map (normaliseJsonInput fs)
                                     $$ messageSink successServer failServer
                         False -> appSource appData
                                     $= DCT.decode DCT.utf8
                                     $= DCT.lines
-                                    $= C.map normaliseText
+                                    $= C.map (normaliseText fs)
                                     $$ messageSink successServer failServer
             Just testSinkFileName ->
                 runResourceT $ appSource appData
                     $= (case oJsonInput options of
-                        True  -> CB.lines $= C.map normaliseJsonInput
-                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map normaliseText)
+                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs))
                     $= mySink
                     $$ sinkFile testSinkFileName

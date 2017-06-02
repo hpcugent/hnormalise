@@ -7,6 +7,7 @@ module HNormalise.Json where
 --------------------------------------------------------------------------------
 import           Control.Monad
 import           Data.Aeson
+import qualified Data.HashMap.Lazy     as M
 import           Data.Monoid
 
 --------------------------------------------------------------------------------
@@ -41,15 +42,21 @@ instance FromJSON Rsyslog where
 --------------------------------------------------------------------------------
 instance ToJSON Rsyslog where
     toEncoding = genericToEncoding defaultOptions
+    toJSON = genericToJSON defaultOptions
 
 --------------------------------------------------------------------------------
 instance ToJSON NormalisedRsyslog where
-    toEncoding (NRsyslog r n k) =
-        pairs
-            (  "message" .= msg r
-            <> "syslog_abspri" .= pri r
-            <> "syslog_version" .= version r
-            <> "program" .= app_name r
-            <> "@source_host" .= hostname r          -- the host in ES will likely be set to the machine sending the data to logstash
-            <> k .= n
-            )
+    toEncoding (NRsyslog r n k fs) =
+        case fs of
+            -- this is the default
+            Nothing -> pairs
+                        (  "message" .= msg r
+                        <> "syslog_abspri" .= pri r
+                        <> "syslog_version" .= version r
+                        <> "program" .= app_name r
+                        <> "@source_host" .= hostname r          -- the host in ES will likely be set to the machine sending the data to logstash
+                        <> k .= n
+                        )
+            Just fs' -> case toJSON r of
+                            Object syslog -> pairs $ foldl (\v (key, fieldname) -> v <> key .= (M.lookupDefault Null fieldname syslog)) (k .= n) fs'
+                            _ -> pairs (k .= n) -- FIXME: this should never happen

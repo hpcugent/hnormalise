@@ -43,20 +43,22 @@ data Normalised
 --------------------------------------------------------------------------------
 -- | The 'normaliseJsonInput' function converts a `ByteString` to a normalised message or keeps the original if
 -- the conversion (parsing) fails.
-normaliseJsonInput :: SBS.ByteString    -- ^ Input representing an rsyslog message in JSON format
-                   -> Normalised        -- ^ Transformed or Original result
-normaliseJsonInput logLine =
-    case (Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= normaliseRsyslog of
+normaliseJsonInput :: Maybe [(Text, Text)]    -- ^ Output fields
+                   -> SBS.ByteString          -- ^ Input representing an rsyslog message in JSON format
+                   -> Normalised              -- ^ Transformed or Original result
+normaliseJsonInput fs logLine =
+    case (Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= (normaliseRsyslog fs) of
         Just j  -> Transformed j
         Nothing -> Original logLine
 
 --------------------------------------------------------------------------------
 -- | The 'normaliseText' function converts a 'Text' to a normalised message or keeps the original (in 'ByteString')
 -- format if the conversion fails
-normaliseText :: Text          -- ^ Input
-              -> Normalised    -- ^ Transformed or Original result
-normaliseText logLine =
-    case parse parseRsyslogLogstashString logLine of
+normaliseText :: Maybe [(Text, Text)]  -- ^ Output fields
+              -> Text                  -- ^ Input
+              -> Normalised            -- ^ Transformed or Original result
+normaliseText fs logLine =
+    case parse (parseRsyslogLogstashString fs) logLine of
         Done _ r    -> Transformed r
         Partial c   -> case c empty of
                             Done _ r -> Transformed r
@@ -81,10 +83,11 @@ convertMessage message =
 --------------------------------------------------------------------------------
 -- | The 'normaliseRsyslog' function returns an 'NRSyslog' structure tranformed to a 'ByteString' or 'Nothing'
 -- when parsing fails
-normaliseRsyslog :: Rsyslog               -- ^ Incoming rsyslog information
-                 -> Maybe SBS.ByteString  -- ^ If the conversion succeeded the JSON encoded rsyslog message to forward
-normaliseRsyslog rsyslog = do
+normaliseRsyslog :: Maybe [(Text, Text)]   -- ^ Output fields
+                 -> Rsyslog                -- ^ Incoming rsyslog information
+                 -> Maybe SBS.ByteString   -- ^ If the conversion succeeded the JSON encoded rsyslog message to forward
+normaliseRsyslog fs rsyslog = do
     cm <- convertMessage $ msg rsyslog
     return $ BS.toStrict
            $ Aeson.encode
-           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm }
+           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm, fields = fs }

@@ -1,9 +1,23 @@
 # Configuraton file for the hnormalise service
 # --------------------------------------------
 
-listenPort: 519
-listenHost: "localhost"
-successPort: 26002
-successHost: "localhost"
-failPort: 518
-failHost: "localhost"
+# the ports to listen and connect to
+ports:
+    listenPort: 519
+    listenHost: "localhost"
+    successPort: 26002
+    successHost: "localhost"
+    failPort: 518
+    failHost: "localhost"
+
+fields:
+    - - "@source_host"
+      - "hostname"
+    - - "message"
+      - "msg"
+    - - "syslog_version"
+      - "version"
+    - - "syslog_abspri"
+      - "pri"
+    - - "program"
+      - "app_name"

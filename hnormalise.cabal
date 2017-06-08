@@ -103,6 +103,7 @@ executable hnormalise-0mq
                      , word8
                      , yaml
                      , zeromq4-haskell
+                     , zeromq4-conduit
   default-language:    Haskell2010
 
 test-suite hnormalise-test

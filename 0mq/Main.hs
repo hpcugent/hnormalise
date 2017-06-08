@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
@@ -18,6 +19,7 @@ import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
 import qualified Data.Conduit.Text            as DCT
+import qualified Data.Conduit.ZMQ4            as ZMQC
 import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  (mempty, (<>))
 import qualified Data.Text                    as T
@@ -26,8 +28,8 @@ import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
-import qualified Data.Conduit.ZMQ4            as ZMQC
-import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, Pull(..))
+import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, connect, Pull(..), Push(..))
+import           Text.Printf                  (printf)
 
 import           Debug.Trace
 --------------------------------------------------------------------------------
@@ -84,12 +86,12 @@ messageSink success failure = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield json $$ appSink success
-                yield (SBS.pack "\n") $$ appSink success
+                yield json $$ success
+                yield (SBS.pack "\n") $$ success
                 loop
             Just (Original l) -> do
-                yield l $$ appSink failure
-                yield (SBS.pack "\n") $$ appSink failure
+                yield l $$ failure
+                yield (SBS.pack "\n") $$ failure
                 loop
             Nothing -> return ()
 
@@ -136,37 +138,34 @@ main = do
     let fs = fields config
 
     runResourceT $ SMM.runZMQ 1 $ do
+
+        -- 0mq socket to bind for the upstream input
         s <- SMM.makeSocket SMM.Pull
         SMM.bind s "tcp://*:31338"
-        ZMQC.zmqSource s $=
-            (case oJsonInput options of
-                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs))
-                    $= mySink
-                    $$ sinkFile $ fromJust $ oTestFilePath options
 
-{-
-    runTCPServer (serverSettings (fromJust $ (ports config >>= listenPort)) "*") $ \appData -> do
+        -- 0mq sockets to connect to the downstream outputs
+        successSocket <- SMM.makeSocket SMM.Push
+        SMM.connect successSocket $ printf "tcp://%s:%d" (fromJust $ ports config >>= successHost) (fromJust $ ports config >>= successPort)
+
+        failSocket <- SMM.makeSocket SMM.Push
+        SMM.connect failSocket $ printf "tcp://%s:%d" (fromJust $ ports config >>= failHost) (fromJust $ ports config >>= failPort)
 
         case oTestFilePath options of
             Nothing ->
-                runTCPClient (clientSettings (fromJust $ ports config >>= successPort) "localhost") $ \successServer ->
-                runTCPClient (clientSettings (fromJust $ ports config >>= failPort) "localhost") $ \failServer ->
                     case oJsonInput options of
-                        True  -> appSource appData
+                        True  -> ZMQC.zmqSource s
                                     $= CB.lines
                                     $= C.map (normaliseJsonInput fs)
-                                    $$ messageSink successServer failServer
-                        False -> appSource appData
+                                    $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failSocket [])
+                        False -> ZMQC.zmqSource s
                                     $= DCT.decode DCT.utf8
                                     $= DCT.lines
                                     $= C.map (normaliseText fs)
-                                    $$ messageSink successServer failServer
+                                    $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failSocket [])
             Just testSinkFileName ->
-                runResourceT $ appSource appData
+                ZMQC.zmqSource s
                     $= (case oJsonInput options of
                         True  -> CB.lines $= C.map (normaliseJsonInput fs)
                         False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs))
                     $= mySink
                     $$ sinkFile testSinkFileName
--}

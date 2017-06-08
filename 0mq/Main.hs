@@ -27,7 +27,7 @@ import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
 import qualified Data.Conduit.ZMQ4            as ZMQC
-import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, connect, Pull(..))
+import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, Pull(..))
 
 import           Debug.Trace
 --------------------------------------------------------------------------------
@@ -137,7 +137,7 @@ main = do
 
     runResourceT $ SMM.runZMQ 1 $ do
         s <- SMM.makeSocket SMM.Pull
-        SMM.connect s "tcp://localhost:31338"
+        SMM.bind s "tcp://*:31338"
         ZMQC.zmqSource s $=
             (case oJsonInput options of
                         True  -> CB.lines $= C.map (normaliseJsonInput fs)

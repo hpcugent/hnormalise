@@ -37,7 +37,7 @@
     #success:
         #host: "localhost"
         #port: 26001
-    #fail:
+    #failure:
         #host: "localhost"
         #port: 26002
 
@@ -55,7 +55,7 @@
 
         # default port
         #port: 27001
-    #fail:
+    #failure:
         # Currently, only push is supported, which will
         # connect to the socket on our side, requiring a
         # bind on the other (pull) side.

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
@@ -18,6 +19,7 @@ import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
 import qualified Data.Conduit.Text            as DCT
+import qualified Data.Conduit.ZMQ4            as ZMQC
 import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  (mempty, (<>))
 import qualified Data.Text                    as T
@@ -26,11 +28,22 @@ import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
+import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, connect, Pull(..), Push(..))
+import           Text.Printf                  (printf)
 
 import           Debug.Trace
 --------------------------------------------------------------------------------
 import           HNormalise
-import           HNormalise.Config            (Config (..), PortConfig(..), loadConfig)
+import           HNormalise.Config            ( Config (..)
+                                              , ConnectionType(..)
+                                              , InputConfig(..)
+                                              , OutputConfig(..)
+                                              , TcpOutputConfig(..)
+                                              , TcpPortConfig(..)
+                                              , ZeroMQOutputConfig(..)
+                                              , ZeroMQPortConfig(..)
+                                              , connectionType
+                                              , loadConfig)
 import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
 
@@ -82,12 +95,12 @@ messageSink success failure = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield json $$ appSink success
-                yield (SBS.pack "\n") $$ appSink success
+                yield json $$ success
+                yield (SBS.pack "\n") $$ success
                 loop
             Just (Original l) -> do
-                yield l $$ appSink failure
-                yield (SBS.pack "\n") $$ appSink failure
+                yield l $$ failure
+                yield (SBS.pack "\n") $$ failure
                 loop
             Nothing -> return ()
 
@@ -101,17 +114,93 @@ mySink = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield (SBS.pack "success: ")
+                trace "successfull parse" $ yield (SBS.pack "success: ")
                 yield json
                 yield (SBS.pack "\n")
                 loop
             Just (Original l) -> do
-                yield (SBS.pack "fail - original: ")
+                trace "failed parse" $ yield (SBS.pack "fail - original: ")
                 yield l
                 yield (SBS.pack "\n")
                 loop
             Nothing -> return ()
 
+--------------------------------------------------------------------------------
+runTCPConnection options config = do
+    let listenHost = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> h)
+    let listenPort = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> p)
+    runTCPServer (serverSettings listenPort "*") $ \appData -> do
+        let fs = fields config
+        case oTestFilePath options of
+            Nothing -> do
+                let successHost = TE.encodeUtf8 $ fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> s) >>= (\(TcpPortConfig h p) -> h)
+                let successPort = fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> s) >>= (\(TcpPortConfig h p) -> p)
+                let failureHost = TE.encodeUtf8 $ fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> f) >>= (\(TcpPortConfig h p) -> h)
+                let failurePort = fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> f) >>= (\(TcpPortConfig h p) -> p)
+
+                runTCPClient (clientSettings successPort successHost) $ \successServer ->
+                    runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
+                        let normalisationConduit = case oJsonInput options of
+                                                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                        in appSource appData
+                            $= normalisationConduit
+                            $$ messageSink (appSink successServer) (appSink failServer)
+            Just testSinkFileName ->
+                let normalisationConduit = case oJsonInput options of
+                                                True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                in runResourceT $ appSource appData
+                    $= normalisationConduit
+                    $= mySink
+                    $$ sinkFile testSinkFileName
+
+
+--------------------------------------------------------------------------------
+runZeroMQConnection options config = do
+    runResourceT $ SMM.runZMQ 1 $ do
+
+        let fs = fields config
+
+        let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
+        let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
+
+        -- 0mq socket to bind for the upstream input
+        s <- SMM.makeSocket SMM.Pull
+        SMM.bind s $ printf "tcp://%s:%d" listenHost listenPort
+
+        --((\v -> trace ("listening on port: " ++ show v) v)(fromJust $ ports config >>= listenPort))
+
+        case oTestFilePath options of
+            Nothing -> do
+                    -- 0mq sockets to connect to the downstream outputs
+                    let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
+                    let successPort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> p)
+                    successSocket <- SMM.makeSocket SMM.Push
+                    SMM.connect successSocket $ printf "tcp://%s:%d" successHost successPort
+
+                    let failureHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> h)
+                    let failurePort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> p)
+                    failSocket <- SMM.makeSocket SMM.Push
+                    SMM.connect failSocket $ printf "tcp://%s:%d"  failureHost failurePort
+
+                    let normalisationConduit = case oJsonInput options of
+                                                    True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                    False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                    ZMQC.zmqSource s
+                        $= normalisationConduit
+                        $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failSocket [])
+
+            {- FIXME: I cannot get the types for this part right.
+            Just testSinkFileName ->
+                let normalisationConduit = case oJsonInput options of
+                                                True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                in ZMQC.zmqSource s
+                    $= normalisationConduit
+                    $= mySink
+                    $$ sinkFile testSinkFileName
+            -}
 
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
@@ -127,32 +216,8 @@ main = do
     config <- loadConfig (oConfigFilePath options)
     trace (show config) $ return ()
 
-    let lHost = case ports config >>= listenHost of
-                    Just h  -> T.unpack h
-                    Nothing -> "*"
-
-    let fs = fields config
-
-    runTCPServer (serverSettings (fromJust $ (ports config >>= listenPort)) "*") $ \appData -> do
-
-        case oTestFilePath options of
-            Nothing ->
-                runTCPClient (clientSettings (fromJust $ ports config >>= successPort) "localhost") $ \successServer ->
-                runTCPClient (clientSettings (fromJust $ ports config >>= failPort) "localhost") $ \failServer ->
-                    case oJsonInput options of
-                        True  -> appSource appData
-                                    $= CB.lines
-                                    $= C.map (normaliseJsonInput fs)
-                                    $$ messageSink successServer failServer
-                        False -> appSource appData
-                                    $= DCT.decode DCT.utf8
-                                    $= DCT.lines
-                                    $= C.map (normaliseText fs)
-                                    $$ messageSink successServer failServer
-            Just testSinkFileName ->
-                runResourceT $ appSource appData
-                    $= (case oJsonInput options of
-                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs))
-                    $= mySink
-                    $$ sinkFile testSinkFileName
+    -- For now, we only support input and output configurations of the same type,
+    -- i.e., both TCP, both ZeroMQ, etc.
+    case connectionType config of
+        TCP    -> void $ runTCPConnection options config
+        ZeroMQ -> runZeroMQConnection options config

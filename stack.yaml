@@ -42,6 +42,8 @@ packages:
 extra-deps:
   - permute-1.0
   - ip-0.9
+    #  - record-0.3.2
+    #  - template-haskell-compat-v0208-0.1.1
   - zeromq4-conduit-0.1.0.0
 
 # Override default flag values for local packages and extra-deps

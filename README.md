@@ -8,12 +8,13 @@ structured log messages, i.e., turning the `msg` payload into (a nested) JSON ob
 
 Features:
 
+- accepts incoming data on a regular TCP port or a ZeroMQ `pull` type port.
 - accepts JSON-style rsyslog data (sent as %jsonmesg% in the rsyslog template)
 - accepts legacy encoded rsyslog data (currently sent with the fixed template
   <%PRI%>1 %TIMEGENERATED% %HOSTNAME% %SYSLOGTAG% - %APPNAME%: %msg%)
-- sends out successfull converted results on a TCP port, allowing communication back to a wide range of services,
+- sends out successfull converted results on a TCP or ZeroMQ port, allowing communication back to a wide range of services,
   including rsyslog, [logstash](http://www.elastic.co/products/logstash), ...
-- sends out original messages to a (different) TCP port in case the parsing fails, allowing other services to process the
+- sends out original messages to a (different) TCP or ZeroMQ port in case the parsing fails, allowing other services to process the
   information.
 
 Usage and configuration
@@ -24,10 +25,12 @@ To start just run `hnormalise`. If you need help, use the `-h` flag. To run the 
 To run the included benchmarks, run `stack bench` (with the `--output target.html` flag to get a nice web page with
 the results).
 
-Ports and machines can be tweaked through a configuration file. See `data/hnormalise.yaml` for an example.
+Ports and machines can be tweaked through a configuration file. See `data/hnormalise.yaml.full` for an example.
 
 Testing the actual setup can be done trivially via `nc`, provided you have data to throw at `hNormalise`. A test example
 is also provided below, or you can get useful examples from the tests, under `test/HNormalise/*/ParserSpec.hs`
+
+For ZeroMQ, the development libraries for czmq are required. We use ZeroMQ >= 4.1.
 
 Supported log messages
 ----------------------
@@ -36,6 +39,7 @@ Currently, hNormalise supports several log messages out of the box (i.e., the on
 - [Torque](http://www.adaptivecomputing.com/products/open-source/torque/) accounting logs for a job exit.
 - [Shorewall](http://shorewall.org) firewall log messages for TCP, UDP and ICMP connections
 - [Lmod](https://www.tacc.utexas.edu/research-development/tacc-projects/lmod) module load messages
+- [Snoopy](https://github.com/a2o/snoopy) log messages
 
 More are forthcoming soon, e.g., (in no particular order)
 - GPFS
@@ -43,7 +47,6 @@ More are forthcoming soon, e.g., (in no particular order)
 - NFS
 - OpenNebula
 - SSH
-- Snoopy
 - Jube
 
 Parsing
@@ -57,6 +60,7 @@ no definite ordering. Note that this _will_ slow down the parsing.
 
 Caveat: at this point, we do not a priori restrict the possible parsers we unleash on each message. However, if the inbound
 data can be tagged properly, we could reduce the maximal number of parsers tried and avoid extensive backtracking.
+Using ZeroMQ, this could be done by using topics to tag inbound information.
 
 ### Adding a new parser
 
@@ -160,6 +164,14 @@ aimed to get.
               },
               "energy" : 0
             },
+            "execHost": [
+              {
+                "name": "exec_host=mynode.mycluster.mydomain.com",
+                "cores": [
+                  1
+                ]
+              }
+            ],
             "resourceRequest" : {
               "neednodes" : {
                 "Right" : [

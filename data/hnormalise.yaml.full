@@ -6,66 +6,68 @@
 # should configure one. If you do not, by default
 # plain TCP will be used.
 #
-# --------------------------------------------------
-# input on a normal TCP port
-#input.tcp:
-    #host: "localhost"
-    #port: 4001
+#input:
+    # --------------------------------------------------
+    # input on a normal TCP port
+    #tcp:
+        #host: "localhost"
+        #port: 4001
 
-# --------------------------------------------------
-# input through a zeromq socket.
-#input.zeromq:
-    # Currently, only pull is supported, which will
-    # bind to the socket on our side, requiring a
-    # connect on the other (push) side
-    #method: "pull"
+    # --------------------------------------------------
+    # input through a zeromq socket.
+    #zeromq:
+        # Currently, only pull is supported, which will
+        # bind to the socket on our side, requiring a
+        # connect on the other (push) side
+        #method: "pull"
 
-    # by default, we listen to all hosts
-    #host: "*"
+        # by default, we listen to all hosts
+        #host: "*"
 
-    # just pick a port
-    #port: 31338
+        # just pick a port
+        #port: 31338
 
 # --------------------------------------------------
 # There are several output modes available. We only
 # support the same mode for both success and failure
 # at this point.
 #
-# --------------------------------------------------
-# output on a normal TCP port
-#output.tcp:
-    #success:
-        #host: "localhost"
-        #port: 26001
-    #failure:
-        #host: "localhost"
-        #port: 26002
+#output:
+    # --------------------------------------------------
+    # output on a normal TCP port
+    #tcp:
+        #success:
+            #host: "localhost"
+            #port: 26001
+        #failure:
+            #host: "localhost"
+            #port: 26002
 
-# --------------------------------------------------
-# output through a zeromq socket
-#output.zeromq:
-    #success:
-        # Currently, only push is supported, which will
-        # connect to the socket on our side, requiring a
-        # bind on the other (pull) side.
-        #method: "push"
+    # --------------------------------------------------
+    # output through a zeromq socket
+    #zeromq:
+        #success:
+            # Currently, only push is supported, which will
+            # connect to the socket on our side, requiring a
+            # bind on the other (pull) side.
+            #method: "push"
 
-        # by default, we push to localhost
-        #host: "localhost"
+            # by default, we push to localhost
+            #host: "localhost"
 
-        # default port
-        #port: 27001
-    #failure:
-        # Currently, only push is supported, which will
-        # connect to the socket on our side, requiring a
-        # bind on the other (pull) side.
-        #method: "push"
+            # default port
+            #port: 27001
+        #failure:
+            # Currently, only push is supported, which will
+            # connect to the socket on our side, requiring a
+            # bind on the other (pull) side.
+            #method: "push"
 
-        # by default, we push to localhost
-        #host: "localhost"
+            # by default, we push to localhost
+            #host: "localhost"
 
-        # default port
-        #port: 27002
+            # default port
+            #port: 27002
 
 # --------------------------------------------------
 # The rsyslog fields we should pass on to the output

@@ -9,7 +9,7 @@
 # named .travis.yml
 
 # Use new container infrastructure to enable caching
-dist: xenial
+dist: trusty
 sudo: required
 
 # Do not choose a language; we provide our own build tools.

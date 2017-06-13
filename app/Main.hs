@@ -6,8 +6,11 @@ module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
+import           Control.Concurrent.MVar      (modifyMVar_, newMVar, withMVar, MVar)
 import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
+import           Control.Monad.Loops          (whileM_)
+import           Control.Monad.Trans          (lift)
 import           Control.Monad.Trans.Resource (runResourceT)
 import           Data.Aeson
 import           Data.Attoparsec.Text
@@ -21,15 +24,18 @@ import           Data.Conduit.Network
 import qualified Data.Conduit.Text            as DCT
 import qualified Data.Conduit.ZMQ4            as ZMQC
 import           Data.Maybe                   (fromJust)
-import           Data.Monoid                  (mempty, (<>))
+import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as TE
 import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
-import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, connect, Pull(..), Push(..))
+import           System.Posix.Signals         (installHandler, Handler(Catch), sigINT, sigTERM)
+import qualified System.ZMQ4                  as ZMQ (Receiver, Sender, Socket)
+import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, connect, receive, Pull(..), Push(..))
 import           Text.Printf                  (printf)
+
 
 import           Debug.Trace
 --------------------------------------------------------------------------------
@@ -86,6 +92,13 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
         <> OA.progDesc "Normalise rsyslog messages"
         <> OA.header ("hNormalise v" <> showVersion Paths_hnormalise.version)
     )
+
+--------------------------------------------------------------------------------
+-- | 'handler' will catch SIGTERM and modify the MVar to allow the upstream
+-- connection to be closed cleanly when using ZeroMQ. Code taken from
+-- http://zguide.zeromq.org/hs:interrupt
+handler :: MVar Int -> IO ()
+handler s_interrupted = trace "Interrupt received" $ modifyMVar_ s_interrupted (return . (+1))
 
 --------------------------------------------------------------------------------
 -- | 'messageSink' yields the parsed JSON downstream, or if parsing fails, yields the original message downstream
@@ -156,8 +169,13 @@ runTCPConnection options config = do
                     $$ sinkFile testSinkFileName
 
 
+zmqInterruptibleSource :: (ZMQ.Receiver s, Ord a, Num a) => MVar a -> ZMQ.Socket s -> Source IO SBS.ByteString
+zmqInterruptibleSource m s = whileM_
+    (liftIO $ withMVar m (\val -> if val > 0 then return False else return True))
+    (lift (SMM.receive s) >>= yield)
+
 --------------------------------------------------------------------------------
-runZeroMQConnection options config = do
+runZeroMQConnection options config s_interrupted = do
     runResourceT $ SMM.runZMQ 1 $ do
 
         let fs = fields config
@@ -187,7 +205,7 @@ runZeroMQConnection options config = do
                     let normalisationConduit = case oJsonInput options of
                                                     True  -> CB.lines $= C.map (normaliseJsonInput fs)
                                                     False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-                    ZMQC.zmqSource s
+                    liftIO $ zmqInterruptibleSource s_interrupted s
                         $= normalisationConduit
                         $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failSocket [])
 
@@ -215,9 +233,17 @@ main = do
 
     config <- loadConfig (oConfigFilePath options)
     trace (show config) $ return ()
+    -- install the signal handlers for a clean shutdown
+
 
     -- For now, we only support input and output configurations of the same type,
     -- i.e., both TCP, both ZeroMQ, etc.
     case connectionType config of
         TCP    -> void $ runTCPConnection options config
-        ZeroMQ -> runZeroMQConnection options config
+        ZeroMQ -> do
+            s_interrupted <- newMVar 0
+    --        installHandler sigINT (Catch $ handler s_interrupted) Nothing
+    --        installHandler sigTERM (Catch $ handler s_interrupted) Nothing
+            runZeroMQConnection options config s_interrupted
+
+    exitSuccess

@@ -59,6 +59,7 @@ import           Data.Text        (Text)
 import qualified Data.Yaml        as Y
 import           System.Directory
 
+import           Debug.Trace
 --------------------------------------------------------------------------------
 data ConnectionType = TCP
                     | ZeroMQ
@@ -195,8 +196,8 @@ instance Monoid Config where
         }
 
 defaultConfig = Config
-    { input = Just defaultInputConfig
-    , output = Just defaultOutputConfig
+    { input = Nothing
+    , output = Nothing
     , fields = Nothing
     }
 
@@ -210,9 +211,10 @@ readConfig fp = do
     exists <- doesFileExist fp
     if exists then do
         contents <- B.readFile fp
+        trace "file read" $ return ()
         case Y.decodeEither contents of
             Left err     -> error $ "HNormalise.Config.readConfig: " ++ err
-            Right config -> return (config :: Config)
+            Right config -> trace ("got " ++ show config) $ return (config :: Config)
     else
         return mempty
 

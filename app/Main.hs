@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
@@ -5,8 +6,11 @@ module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
+import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, MVar)
 import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
+import           Control.Monad.Loops          (whileM_, untilM_)
+import           Control.Monad.Trans          (lift)
 import           Control.Monad.Trans.Resource (runResourceT)
 import           Data.Aeson
 import           Data.Attoparsec.Text
@@ -18,19 +22,33 @@ import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
 import qualified Data.Conduit.Text            as DCT
+import qualified Data.Conduit.ZMQ4            as ZMQC
 import           Data.Maybe                   (fromJust)
-import           Data.Monoid                  (mempty, (<>))
+import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as TE
 import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
+import           System.Posix.Signals         (installHandler, Handler(CatchOnce), sigINT, sigTERM)
+import qualified System.ZMQ4                  as ZMQ (Receiver, Sender, Socket, Size, context, term, setIoThreads, Context)
+import qualified System.ZMQ4                  as ZMQ (withContext, withSocket, bind, send, receive, connect, Push(..), Pull(..))
+import           Text.Printf                  (printf)
 
 import           Debug.Trace
 --------------------------------------------------------------------------------
 import           HNormalise
-import           HNormalise.Config            (Config (..), PortConfig(..), loadConfig)
+import           HNormalise.Config            ( Config (..)
+                                              , ConnectionType(..)
+                                              , InputConfig(..)
+                                              , OutputConfig(..)
+                                              , TcpOutputConfig(..)
+                                              , TcpPortConfig(..)
+                                              , ZeroMQOutputConfig(..)
+                                              , ZeroMQPortConfig(..)
+                                              , connectionType
+                                              , loadConfig)
 import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
 
@@ -75,6 +93,13 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
     )
 
 --------------------------------------------------------------------------------
+-- | 'handler' will catch SIGTERM and modify the MVar to allow the upstream
+-- connection to be closed cleanly when using ZeroMQ. Code taken from
+-- http://zguide.zeromq.org/hs:interrupt
+handler :: MVar () -> IO ()
+handler s_interrupted = trace "Interrupt received" $ putMVar s_interrupted ()
+
+--------------------------------------------------------------------------------
 -- | 'messageSink' yields the parsed JSON downstream, or if parsing fails, yields the original message downstream
 messageSink success failure = loop
   where
@@ -82,12 +107,12 @@ messageSink success failure = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield json $$ appSink success
-                yield (SBS.pack "\n") $$ appSink success
+                yield json $$ success
+                yield (SBS.pack "\n") $$ success
                 loop
             Just (Original l) -> do
-                yield l $$ appSink failure
-                yield (SBS.pack "\n") $$ appSink failure
+                yield l $$ failure
+                yield (SBS.pack "\n") $$ failure
                 loop
             Nothing -> return ()
 
@@ -101,17 +126,105 @@ mySink = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield (SBS.pack "success: ")
+                trace "successfull parse" $ yield (SBS.pack "success: ")
                 yield json
                 yield (SBS.pack "\n")
                 loop
             Just (Original l) -> do
-                yield (SBS.pack "fail - original: ")
+                trace "failed parse" $ yield (SBS.pack "fail - original: ")
                 yield l
                 yield (SBS.pack "\n")
                 loop
             Nothing -> return ()
 
+--------------------------------------------------------------------------------
+runTCPConnection options config = do
+    let listenHost = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> h)
+    let listenPort = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> p)
+    runTCPServer (serverSettings listenPort "*") $ \appData -> do
+        let fs = fields config
+        case oTestFilePath options of
+            Nothing -> do
+                let successHost = TE.encodeUtf8 $ fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> s) >>= (\(TcpPortConfig h p) -> h)
+                let successPort = fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> s) >>= (\(TcpPortConfig h p) -> p)
+                let failureHost = TE.encodeUtf8 $ fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> f) >>= (\(TcpPortConfig h p) -> h)
+                let failurePort = fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> f) >>= (\(TcpPortConfig h p) -> p)
+
+                runTCPClient (clientSettings successPort successHost) $ \successServer ->
+                    runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
+                        let normalisationConduit = case oJsonInput options of
+                                                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                        in appSource appData
+                            $= normalisationConduit
+                            $$ messageSink (appSink successServer) (appSink failServer)
+            Just testSinkFileName ->
+                let normalisationConduit = case oJsonInput options of
+                                                True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                in runResourceT $ appSource appData
+                    $= normalisationConduit
+                    $= mySink
+                    $$ sinkFile testSinkFileName
+
+-- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
+-- The source is halted when something is put into the MVar, effectively stopping the program from checking
+-- for new incoming messages.
+zmqInterruptibleSource m s = do
+    whileM_
+        (liftIO $ do
+            val <- tryTakeMVar m
+            case val of
+                Just _ ->  trace "interrupt received, stopping source" $ return False
+                Nothing -> trace "still going ..." $ return True)
+        (lift (ZMQ.receive s) >>= yield)
+    liftIO $ putStrLn "Done!"
+
+--------------------------------------------------------------------------------
+runZeroMQConnection options config s_interrupted = do
+    let fs = fields config
+    let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
+    let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
+    trace (printf "listening on tcp://%s:%d" listenHost listenPort) $ return ()
+
+    case oTestFilePath options of
+        Nothing -> do
+            ZMQ.withContext $ \ctx -> do
+                ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
+                    ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+
+                    let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
+                    let successPort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> p)
+                    let failureHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> h)
+                    let failurePort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> p)
+
+                    ZMQ.withSocket ctx ZMQ.Push $ \successSocket ->
+                      ZMQ.withSocket ctx ZMQ.Push $ \failureSocket -> do
+                        ZMQ.connect successSocket $ printf "tcp://%s:%d" successHost successPort
+                        trace (printf "connected to tcp://%s:%d" successHost successPort) $ return ()
+                        ZMQ.connect failureSocket $ printf "tcp://%s:%d"  failureHost failurePort
+                        trace (printf "connected to tcp://%s:%d" failureHost failurePort) $ return ()
+
+                        let normalisationConduit = case oJsonInput options of
+                                                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                        liftIO $ zmqInterruptibleSource s_interrupted s
+                            $= normalisationConduit
+                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])
+
+        {-Just testSinkFileName ->
+            let normalisationConduit = case oJsonInput options of
+                                            True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                            False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+
+            in ZMQ.withContext $ \ctx -> do
+                    ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
+                        ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                        liftIO $ zmqInterruptibleSource s_interrupted s
+                            $= normalisationConduit
+                            $= mySink
+                            $$ sinkFile testSinkFileName
+-}
 
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
@@ -125,34 +238,19 @@ main = do
         exitSuccess
 
     config <- loadConfig (oConfigFilePath options)
-    trace (show config) $ return ()
+    --trace (show config) $ return ()
+    -- install the signal handlers for a clean shutdown
 
-    let lHost = case ports config >>= listenHost of
-                    Just h  -> T.unpack h
-                    Nothing -> "*"
 
-    let fs = fields config
+    -- For now, we only support input and output configurations of the same type,
+    -- i.e., both TCP, both ZeroMQ, etc.
+    case connectionType config of
+        TCP    -> void $ runTCPConnection options config
+        ZeroMQ -> do
+            trace "zeromq" $ return ()
+            s_interrupted <- newEmptyMVar
+            installHandler sigINT (CatchOnce $ handler s_interrupted) Nothing
+            installHandler sigTERM (CatchOnce $ handler s_interrupted) Nothing
+            runZeroMQConnection options config s_interrupted
 
-    runTCPServer (serverSettings (fromJust $ (ports config >>= listenPort)) "*") $ \appData -> do
-
-        case oTestFilePath options of
-            Nothing ->
-                runTCPClient (clientSettings (fromJust $ ports config >>= successPort) "localhost") $ \successServer ->
-                runTCPClient (clientSettings (fromJust $ ports config >>= failPort) "localhost") $ \failServer ->
-                    case oJsonInput options of
-                        True  -> appSource appData
-                                    $= CB.lines
-                                    $= C.map (normaliseJsonInput fs)
-                                    $$ messageSink successServer failServer
-                        False -> appSource appData
-                                    $= DCT.decode DCT.utf8
-                                    $= DCT.lines
-                                    $= C.map (normaliseText fs)
-                                    $$ messageSink successServer failServer
-            Just testSinkFileName ->
-                runResourceT $ appSource appData
-                    $= (case oJsonInput options of
-                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs))
-                    $= mySink
-                    $$ sinkFile testSinkFileName
+    exitSuccess

@@ -34,7 +34,6 @@ import           System.Exit                  (exitFailure, exitSuccess)
 import           System.Posix.Signals         (installHandler, Handler(CatchOnce), sigINT, sigTERM)
 import qualified System.ZMQ4                  as ZMQ (Receiver, Sender, Socket, Size, context, term, setIoThreads, Context)
 import qualified System.ZMQ4                  as ZMQ (withContext, withSocket, bind, send, receive, connect, Push(..), Pull(..))
---import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, connect, receive, Pull(..), Push(..))
 import           Text.Printf                  (printf)
 
 import           Debug.Trace
@@ -168,7 +167,9 @@ runTCPConnection options config = do
                     $= mySink
                     $$ sinkFile testSinkFileName
 
---zmqInterruptibleSource :: (ZMQ.Receiver s) => MVar () -> ZMQ.Socket s -> Source IO SBS.ByteString
+-- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
+-- The source is halted when something is put into the MVar, effectively stopping the program from checking
+-- for new incoming messages.
 zmqInterruptibleSource m s = do
     whileM_
         (liftIO $ do

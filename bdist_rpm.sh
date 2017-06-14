@@ -17,9 +17,11 @@ stack install
 
 mkdir -p "${TARBALL_DIR}"/usr/bin
 mkdir -p "${TARBALL_DIR}"/etc/hnormalise
+mkdir -p "${TARBALL_DIR}"/usr/lib/systemd/system
 
 cp ~/.local/bin/hnormalise "${TARBALL_DIR}"/usr/bin/
 cp data/hnormalise.yaml "${TARBALL_DIR}"/etc/hnormalise/
+cp data/hnormalise.service "${TARBALL_DIR}"/usr/lib/systemd/system/
 
 tar zcvf hnormalise-"${VERSION}".tar.gz "${TARBALL_DIR}"
 cp hnormalise-"${VERSION}".tar.gz ~/rpmbuild/SOURCES

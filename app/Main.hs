@@ -181,47 +181,49 @@ zmqInterruptibleSource m s = do
 
 --------------------------------------------------------------------------------
 runZeroMQConnection options config s_interrupted = do
-        let fs = fields config
-        let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
-        let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
-        trace (printf "listening on tcp://%s:%d" listenHost listenPort) $ return ()
+    let fs = fields config
+    let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
+    let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
+    trace (printf "listening on tcp://%s:%d" listenHost listenPort) $ return ()
 
-        ZMQ.withContext $ \ctx -> do
-            ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+    case oTestFilePath options of
+        Nothing -> do
+            ZMQ.withContext $ \ctx -> do
+                ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
+                    ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
 
-                case oTestFilePath options of
-                    Nothing -> do
-                        -- 0mq sockets to connect to the downstream outputs
-                        let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
-                        let successPort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> p)
-                        let failureHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> h)
-                        let failurePort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> p)
+                    let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
+                    let successPort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> p)
+                    let failureHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> h)
+                    let failurePort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> p)
 
-                        ZMQ.withSocket ctx ZMQ.Push $ \successSocket ->
-                          ZMQ.withSocket ctx ZMQ.Push $ \failureSocket -> do
-                            ZMQ.connect successSocket $ printf "tcp://%s:%d" successHost successPort
-                            trace (printf "connected to tcp://%s:%d" successHost successPort) $ return ()
-                            ZMQ.connect failureSocket $ printf "tcp://%s:%d"  failureHost failurePort
-                            trace (printf "connected to tcp://%s:%d" failureHost failurePort) $ return ()
+                    ZMQ.withSocket ctx ZMQ.Push $ \successSocket ->
+                      ZMQ.withSocket ctx ZMQ.Push $ \failureSocket -> do
+                        ZMQ.connect successSocket $ printf "tcp://%s:%d" successHost successPort
+                        trace (printf "connected to tcp://%s:%d" successHost successPort) $ return ()
+                        ZMQ.connect failureSocket $ printf "tcp://%s:%d"  failureHost failurePort
+                        trace (printf "connected to tcp://%s:%d" failureHost failurePort) $ return ()
 
-                            let normalisationConduit = case oJsonInput options of
-                                                            True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                                                            False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-                            liftIO $ zmqInterruptibleSource s_interrupted s
-                                $= normalisationConduit
-                                $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])
+                        let normalisationConduit = case oJsonInput options of
+                                                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                        liftIO $ zmqInterruptibleSource s_interrupted s
+                            $= normalisationConduit
+                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])
 
-            {- FIXME: I cannot get the types for this part right.
-            Just testSinkFileName ->
-                let normalisationConduit = case oJsonInput options of
-                                                True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                                                False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-                in ZMQC.zmqSource s
-                    $= normalisationConduit
-                    $= mySink
-                    $$ sinkFile testSinkFileName
-            -}
+        {-Just testSinkFileName ->
+            let normalisationConduit = case oJsonInput options of
+                                            True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                            False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+
+            in ZMQ.withContext $ \ctx -> do
+                    ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
+                        ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                        liftIO $ zmqInterruptibleSource s_interrupted s
+                            $= normalisationConduit
+                            $= mySink
+                            $$ sinkFile testSinkFileName
+-}
 
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to

@@ -6,10 +6,10 @@ module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
-import           Control.Concurrent.MVar      (modifyMVar_, newMVar, withMVar, MVar)
+import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, MVar)
 import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
-import           Control.Monad.Loops          (whileM_)
+import           Control.Monad.Loops          (whileM_, untilM_)
 import           Control.Monad.Trans          (lift)
 import           Control.Monad.Trans.Resource (runResourceT)
 import           Data.Aeson
@@ -31,11 +31,11 @@ import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
-import           System.Posix.Signals         (installHandler, Handler(Catch), sigINT, sigTERM)
-import qualified System.ZMQ4                  as ZMQ (Receiver, Sender, Socket)
-import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, connect, receive, Pull(..), Push(..))
+import           System.Posix.Signals         (installHandler, Handler(CatchOnce), sigINT, sigTERM)
+import qualified System.ZMQ4                  as ZMQ (Receiver, Sender, Socket, Size, context, term, setIoThreads, Context)
+import qualified System.ZMQ4                  as ZMQ (withContext, withSocket, bind, send, receive, connect, Push(..), Pull(..))
+--import qualified System.ZMQ4.Monad            as SMM (makeSocket, runZMQ, bind, connect, receive, Pull(..), Push(..))
 import           Text.Printf                  (printf)
-
 
 import           Debug.Trace
 --------------------------------------------------------------------------------
@@ -97,8 +97,8 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
 -- | 'handler' will catch SIGTERM and modify the MVar to allow the upstream
 -- connection to be closed cleanly when using ZeroMQ. Code taken from
 -- http://zguide.zeromq.org/hs:interrupt
-handler :: MVar Int -> IO ()
-handler s_interrupted = trace "Interrupt received" $ modifyMVar_ s_interrupted (return . (+1))
+handler :: MVar () -> IO ()
+handler s_interrupted = trace "Interrupt received" $ putMVar s_interrupted ()
 
 --------------------------------------------------------------------------------
 -- | 'messageSink' yields the parsed JSON downstream, or if parsing fails, yields the original message downstream
@@ -168,46 +168,49 @@ runTCPConnection options config = do
                     $= mySink
                     $$ sinkFile testSinkFileName
 
-
-zmqInterruptibleSource :: (ZMQ.Receiver s, Ord a, Num a) => MVar a -> ZMQ.Socket s -> Source IO SBS.ByteString
-zmqInterruptibleSource m s = whileM_
-    (liftIO $ withMVar m (\val -> if val > 0 then return False else return True))
-    (lift (SMM.receive s) >>= yield)
+--zmqInterruptibleSource :: (ZMQ.Receiver s) => MVar () -> ZMQ.Socket s -> Source IO SBS.ByteString
+zmqInterruptibleSource m s = do
+    whileM_
+        (liftIO $ do
+            val <- tryTakeMVar m
+            case val of
+                Just _ ->  trace "interrupt received, stopping source" $ return False
+                Nothing -> trace "still going ..." $ return True)
+        (lift (ZMQ.receive s) >>= yield)
+    liftIO $ putStrLn "Done!"
 
 --------------------------------------------------------------------------------
 runZeroMQConnection options config s_interrupted = do
-    runResourceT $ SMM.runZMQ 1 $ do
-
         let fs = fields config
-
         let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
-        let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
+        let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
+        trace (printf "listening on tcp://%s:%d" listenHost listenPort) $ return ()
 
-        -- 0mq socket to bind for the upstream input
-        s <- SMM.makeSocket SMM.Pull
-        SMM.bind s $ printf "tcp://%s:%d" listenHost listenPort
+        ZMQ.withContext $ \ctx -> do
+            ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
+                ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
 
-        --((\v -> trace ("listening on port: " ++ show v) v)(fromJust $ ports config >>= listenPort))
+                case oTestFilePath options of
+                    Nothing -> do
+                        -- 0mq sockets to connect to the downstream outputs
+                        let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
+                        let successPort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> p)
+                        let failureHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> h)
+                        let failurePort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> p)
 
-        case oTestFilePath options of
-            Nothing -> do
-                    -- 0mq sockets to connect to the downstream outputs
-                    let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
-                    let successPort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> p)
-                    successSocket <- SMM.makeSocket SMM.Push
-                    SMM.connect successSocket $ printf "tcp://%s:%d" successHost successPort
+                        ZMQ.withSocket ctx ZMQ.Push $ \successSocket ->
+                          ZMQ.withSocket ctx ZMQ.Push $ \failureSocket -> do
+                            ZMQ.connect successSocket $ printf "tcp://%s:%d" successHost successPort
+                            trace (printf "connected to tcp://%s:%d" successHost successPort) $ return ()
+                            ZMQ.connect failureSocket $ printf "tcp://%s:%d"  failureHost failurePort
+                            trace (printf "connected to tcp://%s:%d" failureHost failurePort) $ return ()
 
-                    let failureHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> h)
-                    let failurePort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> f) >>= (\(ZeroMQPortConfig m h p) -> p)
-                    failSocket <- SMM.makeSocket SMM.Push
-                    SMM.connect failSocket $ printf "tcp://%s:%d"  failureHost failurePort
-
-                    let normalisationConduit = case oJsonInput options of
-                                                    True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                                                    False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-                    liftIO $ zmqInterruptibleSource s_interrupted s
-                        $= normalisationConduit
-                        $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failSocket [])
+                            let normalisationConduit = case oJsonInput options of
+                                                            True  -> CB.lines $= C.map (normaliseJsonInput fs)
+                                                            False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                            liftIO $ zmqInterruptibleSource s_interrupted s
+                                $= normalisationConduit
+                                $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])
 
             {- FIXME: I cannot get the types for this part right.
             Just testSinkFileName ->
@@ -232,7 +235,7 @@ main = do
         exitSuccess
 
     config <- loadConfig (oConfigFilePath options)
-    trace (show config) $ return ()
+    --trace (show config) $ return ()
     -- install the signal handlers for a clean shutdown
 
 
@@ -241,9 +244,10 @@ main = do
     case connectionType config of
         TCP    -> void $ runTCPConnection options config
         ZeroMQ -> do
-            s_interrupted <- newMVar 0
-    --        installHandler sigINT (Catch $ handler s_interrupted) Nothing
-    --        installHandler sigTERM (Catch $ handler s_interrupted) Nothing
+            trace "zeromq" $ return ()
+            s_interrupted <- newEmptyMVar
+            installHandler sigINT (CatchOnce $ handler s_interrupted) Nothing
+            installHandler sigTERM (CatchOnce $ handler s_interrupted) Nothing
             runZeroMQConnection options config s_interrupted
 
     exitSuccess

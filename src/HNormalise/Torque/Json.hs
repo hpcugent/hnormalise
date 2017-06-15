@@ -41,6 +41,7 @@ module HNormalise.Torque.Json where
 
 --------------------------------------------------------------------------------
 import           Data.Aeson
+import           Data.Monoid                 ((<>))
 
 --------------------------------------------------------------------------------
 import           HNormalise.Torque.Internal
@@ -59,9 +60,32 @@ instance ToJSON TorqueExecHost where
 instance ToJSON TorqueWalltime where
     toEncoding (TorqueWalltime d h m s) = toEncoding $ (((d * 24 + h) * 60) + m) * 60 + s
 
+instance ToJSON TorqueJobNode where
+    toEncoding (TSN n) = toEncoding n
+    toEncoding (TFN ns) = toEncoding ns
+
 instance ToJSON TorqueResourceRequest where
     toEncoding = genericToEncoding defaultOptions
-
+{-    toEncoding (TorqueResourceRequest mem advres naccesspolicy ncpus neednodes nice nodeCount nodes select qos pmem vmem pvmem walltime) =
+        pairs (  "mem" .= mem
+              <> "advres" .= advres
+              <> "naccesspolicy" .= naccesspolicy
+              <> "ncpus" .= ncpus
+              <> "neednodes" .= case neednodes of
+                                    Left n   -> toEncoding n
+                                    Right ns -> toEncoding ns
+              <> "nice" .= nice
+              <> "nodeCount" .= nodeCount
+              <> "nodes" .= case nodes of
+                                Left n   -> toEncoding n
+                                Right ns -> toEncoding ns
+              <> "select" .= select
+              <> "qos" .= qos
+              <> "pmem" .= pmem
+              <> "vmem" .= vmem
+              <> "pvmem" .= pvmem
+              <> "walltime" .= walltime)
+-}
 instance ToJSON TorqueResourceUsage where
     toEncoding = genericToEncoding defaultOptions
 

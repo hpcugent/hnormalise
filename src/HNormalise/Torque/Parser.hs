@@ -121,14 +121,14 @@ parseTorqueJobName = do
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueResourceNodeList' parses a list of FQDN nodes and their ppn or a nodecount and its ppn
-parseTorqueResourceNodeList :: Parser (Either TorqueJobShortNode [TorqueJobFQNode])
+parseTorqueResourceNodeList :: Parser TorqueJobNode
 parseTorqueResourceNodeList = do
     c <- peekChar'
     if Data.Char.isDigit c then do
         number <- decimal
         ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
-        return $ Left $ TorqueJobShortNode { number = number, ppn = ppn }
-    else Right <$> (flip sepBy (char '+') $ do
+        return $ TSN $ TorqueJobShortNode { number = number, ppn = ppn }
+    else TFN <$> (flip sepBy (char '+') $ do
         fqdn <- Data.Attoparsec.Text.takeWhile (/= ':')
         ppn <- char ':' *> kvNumParser "ppn"
         return TorqueJobFQNode { name = fqdn, ppn = ppn})

@@ -57,6 +57,11 @@ data TorqueJobFQNode = TorqueJobFQNode
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
+data TorqueJobNode = TSN TorqueJobShortNode
+                   | TFN [TorqueJobFQNode]
+                   deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
 data TorqueExecHost = TorqueExecHost
     { name      :: !Text
     , cores     :: ![Int]
@@ -76,10 +81,10 @@ data TorqueResourceRequest = TorqueResourceRequest
     , advres        :: !(Maybe Text)
     , naccesspolicy :: !(Maybe Text)
     , ncpus         :: !(Maybe Int)
-    , neednodes     :: !(Either TorqueJobShortNode [TorqueJobFQNode])
+    , neednodes     :: !TorqueJobNode
     , nice          :: !(Maybe Int)
     , nodeCount     :: !Int
-    , nodes         :: !(Either TorqueJobShortNode [TorqueJobFQNode])
+    , nodes         :: !TorqueJobNode
     , select        :: !(Maybe Text)
     , qos           :: !(Maybe Text)
     , pmem          :: !(Maybe Integer)

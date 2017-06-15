@@ -146,10 +146,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -165,10 +165,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -184,10 +184,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Just $ 200 * 1024
@@ -203,10 +203,10 @@ spec = do
                 , advres        = Just "myreservation.1"
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -222,10 +222,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = Left TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Just "someqos"
                 , pmem          = Nothing
@@ -300,7 +300,7 @@ spec = do
                     , advres        = Nothing
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
-                    , neednodes = Right
+                    , neednodes = TFN
                         [ TorqueJobFQNode
                             { name = "node2801.banette.gent.vsc"
                             , ppn  = 2
@@ -312,7 +312,7 @@ spec = do
                         ]
                     , nice      = Just 0
                     , nodeCount = 2
-                    , nodes = Right
+                    , nodes = TFN
                         [ TorqueJobFQNode
                             { name = "node2801.banette.gent.vsc"
                             , ppn  = 2

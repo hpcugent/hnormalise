@@ -66,26 +66,7 @@ instance ToJSON TorqueJobNode where
 
 instance ToJSON TorqueResourceRequest where
     toEncoding = genericToEncoding defaultOptions
-{-    toEncoding (TorqueResourceRequest mem advres naccesspolicy ncpus neednodes nice nodeCount nodes select qos pmem vmem pvmem walltime) =
-        pairs (  "mem" .= mem
-              <> "advres" .= advres
-              <> "naccesspolicy" .= naccesspolicy
-              <> "ncpus" .= ncpus
-              <> "neednodes" .= case neednodes of
-                                    Left n   -> toEncoding n
-                                    Right ns -> toEncoding ns
-              <> "nice" .= nice
-              <> "nodeCount" .= nodeCount
-              <> "nodes" .= case nodes of
-                                Left n   -> toEncoding n
-                                Right ns -> toEncoding ns
-              <> "select" .= select
-              <> "qos" .= qos
-              <> "pmem" .= pmem
-              <> "vmem" .= vmem
-              <> "pvmem" .= pvmem
-              <> "walltime" .= walltime)
--}
+
 instance ToJSON TorqueResourceUsage where
     toEncoding = genericToEncoding defaultOptions
 

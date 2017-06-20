@@ -45,6 +45,8 @@ Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 BuildArch: x86_64
 
+Requires: czmq >= 3.0.2, zeromq >= 4.1.4
+
 %description
 hnormalise is a log normalisation tool.
 

@@ -236,25 +236,25 @@ spec = do
 
     describe "parseTorqueHostList" $ do
         it "parse comma separated list of single cores" $ do
-            let s = "node1001.mycluster.mydomain/1,3,5,7" :: Text
+            let s = "exec_host=node1001.mycluster.mydomain/1,3,5,7" :: Text
             s ~> parseTorqueHostList `shouldParse` [ TorqueExecHost
                 { name = "node1001.mycluster.mydomain"
                 , cores = [1,3,5,7]
                 }]
         it "parse comma separated list of core rangess" $ do
-            let s = "node1001.mycluster.mydomain/1-3,5-7" :: Text
+            let s = "exec_host=node1001.mycluster.mydomain/1-3,5-7" :: Text
             s ~> parseTorqueHostList `shouldParse` [ TorqueExecHost
                 { name = "node1001.mycluster.mydomain"
                 , cores = [1,2,3,5,6,7]
                 }]
         it "parse comma separated list of single cores and core ranges" $ do
-            let s = "node1001.mycluster.mydomain/1,3,5-7,9,12-14" :: Text
+            let s = "exec_host=node1001.mycluster.mydomain/1,3,5-7,9,12-14" :: Text
             s ~> parseTorqueHostList `shouldParse` [ TorqueExecHost
                 { name = "node1001.mycluster.mydomain"
                 , cores = [1,3,5,6,7,9,12,13,14]
                 }]
         it "parse multiple nodes with one comma separated list of single cores and one core range" $ do
-            let s = "node1001.mycluster.mydomain/1,3,5,7+node1002.mycluster.mydomain/4-6" :: Text
+            let s = "exec_host=node1001.mycluster.mydomain/1,3,5,7+node1002.mycluster.mydomain/4-6" :: Text
             s ~> parseTorqueHostList `shouldParse` [
                 TorqueExecHost
                     { name = "node1001.mycluster.mydomain"
@@ -287,7 +287,7 @@ spec = do
                     }
                 , execHost =
                     [ TorqueExecHost
-                        { name = "exec_host=node2801.banette.gent.vsc"
+                        { name = "node2801.banette.gent.vsc"
                         , cores = [0,1]
                         }
                     , TorqueExecHost

@@ -192,11 +192,13 @@ parseTorqueResourceUsage = do
 -- | 'parseTorqueHostList' parses a '+' separated list of hostname/coreranges
 -- A core range can be of the form 1,3,5-7,9
 parseTorqueHostList :: Parser [TorqueExecHost]
-parseTorqueHostList = flip sepBy (char '+') $ do
-    fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
-    char '/'
-    cores <- parseCores
-    return $ TorqueExecHost { name = fqdn, cores = cores}
+parseTorqueHostList = do
+    string "exec_host="
+    flip sepBy (char '+') $ do
+        fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
+        char '/'
+        cores <- parseCores
+        return $ TorqueExecHost { name = fqdn, cores = cores}
   where parseCores :: Parser [Int]
         parseCores = do
             cores <- flip sepBy1' (char ',') $ try parseRange <|> parseSingle

@@ -265,7 +265,7 @@ parseTorqueExit = do
             , qtime = qtime
             , etime = etime
             , startTime = start
-            , endTime = end
+            , endTime = Just end
             }
         , execHost = exec_host
         , resourceRequest = request
@@ -276,7 +276,7 @@ parseTorqueExit = do
         })
 
 --------------------------------------------------------------------------------
--- | `parseTorqueDelete` parsed a complete log line denoting a deleted job. Tested with Torue 6.1.x
+-- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x
 parseTorqueDelete :: Parser (Text, TorqueJobDelete)
 parseTorqueDelete = do
     takeTill (== ';') *> string ";D;"   -- drop the prefix
@@ -289,7 +289,7 @@ parseTorqueDelete = do
         })
 
 --------------------------------------------------------------------------------
--- | `parseTorqueQueue` parsed a complete log line denoting a queued job. Tested with Torue 6.1.x
+-- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
 parseTorqueQueue :: Parser (Text, TorqueJobQueue)
 parseTorqueQueue = do
     takeTill (== ';') *> string ";Q;"   -- drop the prefix
@@ -299,4 +299,40 @@ parseTorqueQueue = do
     return ("torque", TorqueJobQueue
         { name = name
         , queue = queue
+        })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueStart` parses a complete log line denoting a started job. Tested with Torque 6.1.x
+parseTorqueStart :: Parser (Text, TorqueJobStart)
+parseTorqueStart = do
+    takeTill (== ';') *> string ";S;"   -- drop the prefix
+    name <- parseTorqueJobName
+    user <- kvTextParser "user"
+    group <- skipSpace *> kvTextParser "group"
+    jobname <- skipSpace *> kvTextParser "jobname"
+    queue <- skipSpace *> kvTextParser "queue"
+    ctime <- skipSpace *> kvNumParser "ctime"
+    qtime <- skipSpace *> kvNumParser "qtime"
+    etime <- skipSpace *> kvNumParser "etime"
+    start <- skipSpace *> kvNumParser "start"
+    owner <- skipSpace *> kvTextParser "owner"
+    exec_host <- skipSpace *> parseTorqueHostList
+    request <- parseTorqueResourceRequest
+
+    return $ ("torque", TorqueJobStart
+        { name = name
+        , user = user
+        , group = group
+        , jobname = jobname
+        , queue = queue
+        , owner = owner
+        , times = TorqueJobTime
+            { ctime = ctime
+            , qtime = qtime
+            , etime = etime
+            , startTime = start
+            , endTime = Nothing
+            }
+        , execHost = exec_host
+        , resourceRequest = request
         })

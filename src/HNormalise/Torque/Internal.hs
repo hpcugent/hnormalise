@@ -108,7 +108,7 @@ data TorqueJobTime = TorqueJobTime
     , qtime     :: !Integer
     , etime     :: !Integer
     , startTime :: !Integer
-    , endTime   :: !Integer
+    , endTime   :: !(Maybe Integer)
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------

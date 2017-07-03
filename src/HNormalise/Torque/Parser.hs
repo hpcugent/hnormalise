@@ -261,3 +261,16 @@ parseTorqueExit = do
         , uniqueNodeCount = unique_node_count
         , exitStatus = exit_status
         })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueQueue` parsed a complete log line denoting a queued job. Tested with Torue 6.1.x
+parseTorqueQueue :: Parser (Text, TorqueJobQueue)
+parseTorqueQueue = do
+    takeTill (== ';') *> string ";Q;"   -- drop the prefix
+    name <- parseTorqueJobName
+    queue <- kvTextParser "queue"
+
+    return ("torque", TorqueJobQueue
+        { name = name
+        , queue = queue
+        })

@@ -340,3 +340,11 @@ spec = do
                 , uniqueNodeCount = 2
                 , exitStatus = 0
                 })
+
+    describe "parseTorqueQueue" $ do
+        it "parse job queue entry" $ do
+            let s = "06/28/2017 14:31:09;Q;80.master23.banette.gent.vsc;queue=default" :: Text
+            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueJobQueue
+                { name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
+                , queue = "default"
+                })

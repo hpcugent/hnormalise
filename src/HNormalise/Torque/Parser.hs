@@ -43,7 +43,7 @@ module HNormalise.Torque.Parser where
 import           Control.Applicative         ((<|>))
 import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
-import           Data.Char                   (isDigit)
+import           Data.Char                   (isDigit, isSpace)
 import qualified Data.Map                    as M
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
@@ -212,6 +212,19 @@ parseTorqueHostList = do
             c <- decimal
             return [c]
 
+--------------------------------------------------------------------------------
+-- | `parseTorqueRequestor` parses a requestor string, i.e., the user plus machine issueing e.g., a delete request
+parseTorqueRequestor :: Parser TorqueRequestor
+parseTorqueRequestor = do
+    string "requestor="
+    user <- takeTill (== '@')
+    char '@'
+    whence <- takeTill isSpace   -- FIXME: this works in the given contexts, but might not be general enough.
+
+    return TorqueRequestor
+        { user = user
+        , whence = whence
+        }
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
@@ -260,6 +273,19 @@ parseTorqueExit = do
         , totalExecutionSlots = total_execution_slots
         , uniqueNodeCount = unique_node_count
         , exitStatus = exit_status
+        })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueDelete` parsed a complete log line denoting a deleted job. Tested with Torue 6.1.x
+parseTorqueDelete :: Parser (Text, TorqueJobDelete)
+parseTorqueDelete = do
+    takeTill (== ';') *> string ";D;"   -- drop the prefix
+    name <- parseTorqueJobName
+    requestor <- parseTorqueRequestor
+
+    return ("torque", TorqueJobDelete
+        { name = name
+        , requestor = requestor
         })
 
 --------------------------------------------------------------------------------

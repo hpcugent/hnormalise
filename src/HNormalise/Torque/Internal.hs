@@ -138,7 +138,6 @@ data TorqueJobName = TorqueJobName
     , cluster  :: !Text
     } deriving (Show, Eq, Generic)
 
-
 --------------------------------------------------------------------------------
 data TorqueJobQueue = TorqueJobQueue
     { name  :: !TorqueJobName
@@ -159,7 +158,13 @@ data TorqueJobStart = TorqueJobStart
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
+data TorqueRequestor = TorqueRequestor
+    { user     :: !Text
+    , whence   :: !Text
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
 data TorqueJobDelete = TorqueJobDelete
     { name      :: !TorqueJobName
-    , requestor :: !Text
+    , requestor :: !TorqueRequestor
     } deriving (Show, Eq, Generic)

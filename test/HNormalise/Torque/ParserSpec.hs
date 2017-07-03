@@ -348,3 +348,11 @@ spec = do
                 { name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
                 , queue = "default"
                 })
+
+    describe "parseTorqueDelete" $ do
+        it "parse job delete entry" $ do
+            let s = "06/28/2017 15:44:02;D;81.master23.banette.gent.vsc;requestor=vsc40075@gligar02.gligar.gent.vsc" :: Text
+            s ~> parseTorqueDelete `shouldParse` ("torque", TorqueJobDelete
+                { name = TorqueJobName { number = 81, array_id = Nothing, master = "master23", cluster = "banette" }
+                , requestor = TorqueRequestor { user = "vsc40075", whence = "gligar02.gligar.gent.vsc" }
+                })

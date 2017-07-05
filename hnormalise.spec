@@ -68,6 +68,9 @@ mkdir -p $RPM_BUILD_ROOT/etc/systemd/system/
 
 cp -a * %{buildroot}
 
+%post
+systemctl daemon-reload
+
 %clean
 #rm -rf ~/.stack ~/.stack-work
 

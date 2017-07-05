@@ -1,0 +1,13 @@
+[Unit]
+Description=Log normalisation service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/hnormalise -c /etc/hnormalise/hnormalise.yaml
+Restart=always
+UMask=0066
+
+[Install]
+WantedBy=multi-user.target
+;Alias=hnormalise.service

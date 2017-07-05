@@ -34,7 +34,7 @@
 
 Summary: Log normalisation tool
 Name: hnormalise
-Version: 0.4.1.1
+Version: 0.4.2.0
 Release: 1
 
 Group: Applications/System
@@ -61,11 +61,15 @@ hnormalise is a log normalisation tool.
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 mkdir -p $RPM_BUILD_ROOT/etc/hnormalise
+mkdir -p $RPM_BUILD_ROOT/etc/systemd/system/
 
 #install usr/bin/hnormalise $RPM_BUILD_ROOT/usr/bin/hnormalise
 #install etc/hormalise/hnormalise.yaml $RPM_BUILD_ROOT/etc/hnormalise/hnormalise.yaml
 
 cp -a * %{buildroot}
+
+%post
+systemctl daemon-reload
 
 %clean
 #rm -rf ~/.stack ~/.stack-work
@@ -76,6 +80,7 @@ cp -a * %{buildroot}
 
 %defattr(640,root,root,-)
 /etc/hnormalise/hnormalise.yaml
+/etc/systemd/system/hnormalise.service
 
 
 %changelog

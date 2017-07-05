@@ -43,7 +43,7 @@ module HNormalise.Torque.Parser where
 import           Control.Applicative         ((<|>))
 import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
-import           Data.Char                   (isDigit)
+import           Data.Char                   (isDigit, isSpace)
 import qualified Data.Map                    as M
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
@@ -212,6 +212,19 @@ parseTorqueHostList = do
             c <- decimal
             return [c]
 
+--------------------------------------------------------------------------------
+-- | `parseTorqueRequestor` parses a requestor string, i.e., the user plus machine issueing e.g., a delete request
+parseTorqueRequestor :: Parser TorqueRequestor
+parseTorqueRequestor = do
+    string "requestor="
+    user <- takeTill (== '@')
+    char '@'
+    whence <- takeTill isSpace   -- FIXME: this works in the given contexts, but might not be general enough.
+
+    return TorqueRequestor
+        { user = user
+        , whence = whence
+        }
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
@@ -252,7 +265,7 @@ parseTorqueExit = do
             , qtime = qtime
             , etime = etime
             , startTime = start
-            , endTime = end
+            , endTime = Just end
             }
         , execHost = exec_host
         , resourceRequest = request
@@ -260,4 +273,66 @@ parseTorqueExit = do
         , totalExecutionSlots = total_execution_slots
         , uniqueNodeCount = unique_node_count
         , exitStatus = exit_status
+        })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x
+parseTorqueDelete :: Parser (Text, TorqueJobDelete)
+parseTorqueDelete = do
+    takeTill (== ';') *> string ";D;"   -- drop the prefix
+    name <- parseTorqueJobName
+    requestor <- parseTorqueRequestor
+
+    return ("torque", TorqueJobDelete
+        { name = name
+        , requestor = requestor
+        })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
+parseTorqueQueue :: Parser (Text, TorqueJobQueue)
+parseTorqueQueue = do
+    takeTill (== ';') *> string ";Q;"   -- drop the prefix
+    name <- parseTorqueJobName
+    queue <- kvTextParser "queue"
+
+    return ("torque", TorqueJobQueue
+        { name = name
+        , queue = queue
+        })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueStart` parses a complete log line denoting a started job. Tested with Torque 6.1.x
+parseTorqueStart :: Parser (Text, TorqueJobStart)
+parseTorqueStart = do
+    takeTill (== ';') *> string ";S;"   -- drop the prefix
+    name <- parseTorqueJobName
+    user <- kvTextParser "user"
+    group <- skipSpace *> kvTextParser "group"
+    jobname <- skipSpace *> kvTextParser "jobname"
+    queue <- skipSpace *> kvTextParser "queue"
+    ctime <- skipSpace *> kvNumParser "ctime"
+    qtime <- skipSpace *> kvNumParser "qtime"
+    etime <- skipSpace *> kvNumParser "etime"
+    start <- skipSpace *> kvNumParser "start"
+    owner <- skipSpace *> kvTextParser "owner"
+    exec_host <- skipSpace *> parseTorqueHostList
+    request <- parseTorqueResourceRequest
+
+    return $ ("torque", TorqueJobStart
+        { name = name
+        , user = user
+        , group = group
+        , jobname = jobname
+        , queue = queue
+        , owner = owner
+        , times = TorqueJobTime
+            { ctime = ctime
+            , qtime = qtime
+            , etime = etime
+            , startTime = start
+            , endTime = Nothing
+            }
+        , execHost = exec_host
+        , resourceRequest = request
         })

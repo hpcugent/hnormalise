@@ -108,7 +108,7 @@ data TorqueJobTime = TorqueJobTime
     , qtime     :: !Integer
     , etime     :: !Integer
     , startTime :: !Integer
-    , endTime   :: !Integer
+    , endTime   :: !(Maybe Integer)
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -136,4 +136,35 @@ data TorqueJobName = TorqueJobName
     , array_id :: !(Maybe Integer)
     , master   :: !Text
     , cluster  :: !Text
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueJobQueue = TorqueJobQueue
+    { name  :: !TorqueJobName
+    , queue :: !Text
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueJobStart = TorqueJobStart
+    { name                :: !TorqueJobName
+    , user                :: !Text
+    , group               :: !Text
+    , jobname             :: !Text
+    , queue               :: !Text
+    , owner               :: !Text
+    , times               :: !TorqueJobTime
+    , execHost            :: ![TorqueExecHost]
+    , resourceRequest     :: !TorqueResourceRequest
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueRequestor = TorqueRequestor
+    { user     :: !Text
+    , whence   :: !Text
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueJobDelete = TorqueJobDelete
+    { name      :: !TorqueJobName
+    , requestor :: !TorqueRequestor
     } deriving (Show, Eq, Generic)

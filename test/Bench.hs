@@ -62,6 +62,10 @@ torqueJobExitInput2 = "04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=v
 
 torqueJobExitFailInput1 = "04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short HUPPEL"
 
+torqueJobQueueInput = "06/28/2017 14:31:09;Q;80.master23.banette.gent.vsc;queue=default"
+torqueJobDeleteInput = "06/28/2017 15:44:02;D;81.master23.banette.gent.vsc;requestor=vsc40075@gligar02.gligar.gent.vsc"
+torqueJobStartInput = "06/20/2017 11:24:49;S;63.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0"
+
 lmodLoadInput1 = "lmod::  username=myuser, cluster=mycluster, jobid=3230905.master.mycluster.mydomain, userload=yes, module=GSL/2.3-intel-2016b, fn=/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b" :: Text
 fullLmodInput = "<13>1 2016-06-07T17:50:22.495571+02:00 node2159 lmod: - lmod:: username=vsc40307, cluster=delcatty, jobid=434.master16.delcatty.gent.vsc, userload=no, module=binutils/2.25-GCCcore-4.9.3, fn=/apps/gent/SL6/sandybridge/modules/all/binutils/2.25-GCCcore-4.9.3" :: Text
 
@@ -80,6 +84,9 @@ main = defaultMain
         [ bench "jobexit full resource node list"  $ whnf (AT.parse TorqueP.parseTorqueExit) torqueJobExitInput1
         , bench "jobexit short resource node number"  $ whnf (AT.parse TorqueP.parseTorqueExit) torqueJobExitInput1
         , bench "jobexit borked input"  $ whnf (AT.parse TorqueP.parseTorqueExit) torqueJobExitFailInput1
+        , bench "jobqueue input" $ whnf (AT.parse TorqueP.parseTorqueQueue) torqueJobQueueInput
+        , bench "jobdelete input" $ whnf (AT.parse TorqueP.parseTorqueDelete) torqueJobDeleteInput
+        , bench "jobstart input" $ whnf (AT.parse TorqueP.parseTorqueStart) torqueJobStartInput
         ]
     , bgroup "parse lmod"
         [ bench "lmod successfull module load parse" $ whnf (AT.parse LmodP.parseLmodLoad) lmodLoadInput1]

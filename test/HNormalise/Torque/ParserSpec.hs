@@ -283,7 +283,7 @@ spec = do
                     , qtime = 1491390300
                     , etime = 1491390300
                     , startTime = 1491390307
-                    , endTime = 1491390413
+                    , endTime = Just 1491390413
                     }
                 , execHost =
                     [ TorqueExecHost
@@ -339,4 +339,71 @@ spec = do
                 , totalExecutionSlots = 4
                 , uniqueNodeCount = 2
                 , exitStatus = 0
+                })
+
+    describe "parseTorqueQueue" $ do
+        it "parse job queue entry" $ do
+            let s = "06/28/2017 14:31:09;Q;80.master23.banette.gent.vsc;queue=default" :: Text
+            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueJobQueue
+                { name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
+                , queue = "default"
+                })
+
+    describe "parseTorqueDelete" $ do
+        it "parse job delete entry" $ do
+            let s = "06/28/2017 15:44:02;D;81.master23.banette.gent.vsc;requestor=vsc40075@gligar02.gligar.gent.vsc" :: Text
+            s ~> parseTorqueDelete `shouldParse` ("torque", TorqueJobDelete
+                { name = TorqueJobName { number = 81, array_id = Nothing, master = "master23", cluster = "banette" }
+                , requestor = TorqueRequestor { user = "vsc40075", whence = "gligar02.gligar.gent.vsc" }
+                })
+
+    describe "parseTorqueStart" $ do
+        it "parse job start" $ do
+            let s = "06/20/2017 11:24:49;S;63.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text
+            s ~> parseTorqueStart `shouldParse` ("torque", TorqueJobStart
+                { name = TorqueJobName { number = 63, array_id = Nothing, master = "master23", cluster = "banette" }
+                , user = "vsc40075"
+                , group = "vsc40075"
+                , jobname = "STDIN"
+                , queue = "short"
+                , owner = "vsc40075@gligar01.gligar.gent.vsc"
+                , times = TorqueJobTime
+                    { ctime = 1497950675
+                    , qtime = 1497950675
+                    , etime = 1497950675
+                    , startTime = 1497950689
+                    , endTime = Nothing
+                    }
+                , execHost =
+                    [ TorqueExecHost
+                        { name = "node2801.banette.gent.vsc"
+                        , cores = [0]
+                        }
+                    ]
+                , resourceRequest = TorqueResourceRequest
+                    { mem           = Nothing
+                    , advres        = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus         = Nothing
+                    , neednodes = TSN
+                        ( TorqueJobShortNode
+                            { number = 1
+                            , ppn  = Just 1
+                            }
+                        )
+                    , nice      = Just 0
+                    , nodeCount = 1
+                    , nodes = TSN
+                        ( TorqueJobShortNode
+                            { number = 1
+                            , ppn  = Just 1
+                            }
+                        )
+                    , select        = Nothing
+                    , qos           = Nothing
+                    , vmem = Just $ 4224531456
+                    , pmem = Nothing
+                    , pvmem = Nothing
+                    , walltime  = TorqueWalltime { days = 0, hours = 0, minutes = 10, seconds = 0}
+                    }
                 })

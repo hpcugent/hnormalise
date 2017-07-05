@@ -97,7 +97,9 @@ parserInfo = OA.info (OA.helper <*> parserOptions)
 -- connection to be closed cleanly when using ZeroMQ. Code taken from
 -- http://zguide.zeromq.org/hs:interrupt
 handler :: MVar () -> IO ()
-handler s_interrupted = trace "Interrupt received" $ putMVar s_interrupted ()
+handler s_interrupted = do
+    putStrLn "Interrupt received"
+    putMVar s_interrupted ()
 
 --------------------------------------------------------------------------------
 -- | 'messageSink' yields the parsed JSON downstream, or if parsing fails, yields the original message downstream
@@ -126,12 +128,12 @@ mySink = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                trace "successfull parse" $ yield (SBS.pack "success: ")
+                yield (SBS.pack "success: ")
                 yield json
                 yield (SBS.pack "\n")
                 loop
             Just (Original l) -> do
-                trace "failed parse" $ yield (SBS.pack "fail - original: ")
+                yield (SBS.pack "fail - original: ")
                 yield l
                 yield (SBS.pack "\n")
                 loop
@@ -175,8 +177,8 @@ zmqInterruptibleSource m s = do
         (liftIO $ do
             val <- tryTakeMVar m
             case val of
-                Just _ ->  trace "interrupt received, stopping source" $ return False
-                Nothing -> trace "still going ..." $ return True)
+                Just _ ->  return False
+                Nothing -> return True)
         (lift (ZMQ.receive s) >>= yield)
     liftIO $ putStrLn "Done!"
 
@@ -185,7 +187,7 @@ runZeroMQConnection options config s_interrupted = do
     let fs = fields config
     let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
-    trace (printf "listening on tcp://%s:%d" listenHost listenPort) $ return ()
+    liftIO $ putStrLn (printf "listening on tcp://%s:%d" listenHost listenPort)
 
     case oTestFilePath options of
         Nothing -> do
@@ -201,9 +203,9 @@ runZeroMQConnection options config s_interrupted = do
                     ZMQ.withSocket ctx ZMQ.Push $ \successSocket ->
                       ZMQ.withSocket ctx ZMQ.Push $ \failureSocket -> do
                         ZMQ.connect successSocket $ printf "tcp://%s:%d" successHost successPort
-                        trace (printf "connected to tcp://%s:%d" successHost successPort) $ return ()
+                        liftIO $ putStrLn (printf "connected to tcp://%s:%d" successHost successPort)
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d"  failureHost failurePort
-                        trace (printf "connected to tcp://%s:%d" failureHost failurePort) $ return ()
+                        liftIO $ putStrLn (printf "connected to tcp://%s:%d" failureHost failurePort)
 
                         let normalisationConduit = case oJsonInput options of
                                                         True  -> CB.lines $= C.map (normaliseJsonInput fs)
@@ -238,9 +240,6 @@ main = do
         exitSuccess
 
     config <- loadConfig (oConfigFilePath options)
-    --trace (show config) $ return ()
-    -- install the signal handlers for a clean shutdown
-
 
     -- For now, we only support input and output configurations of the same type,
     -- i.e., both TCP, both ZeroMQ, etc.

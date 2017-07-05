@@ -24,9 +24,11 @@ stack install; test_and_exit "stack install failed"
 
 mkdir -p "${TARBALL_DIR}"/usr/bin;
 mkdir -p "${TARBALL_DIR}"/etc/hnormalise
+mkdir -p "${TARBALL_DIR}"/usr/lib/systemd/system
 
 cp ~/.local/bin/hnormalise "${TARBALL_DIR}"/usr/bin/
 cp data/hnormalise.yaml "${TARBALL_DIR}"/etc/hnormalise/
+cp data/hnormalise.service "${TARBALL_DIR}"/usr/lib/systemd/system/
 
 tar zcvf hnormalise-"${VERSION}".tar.gz "${TARBALL_DIR}"; test_and_exit "creating tarball failed"
 cp hnormalise-"${VERSION}".tar.gz ~/rpmbuild/SOURCES; test_and_exit "copying tarball to SOURCES failed"

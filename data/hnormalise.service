@@ -4,10 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/hnormalise -c /etc/hnormalise.yaml
-Restart=on-failure
+ExecStart=/usr/bin/hnormalise -c /etc/hnormalise/hnormalise.yaml
+Restart=always
 UMask=0066
-StandardOutput=null
 
 [Install]
 WantedBy=multi-user.target

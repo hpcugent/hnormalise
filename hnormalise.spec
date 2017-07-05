@@ -61,6 +61,7 @@ hnormalise is a log normalisation tool.
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 mkdir -p $RPM_BUILD_ROOT/etc/hnormalise
+mkdir -p $RPM_BUILD_ROOT/etc/systemd/system/
 
 #install usr/bin/hnormalise $RPM_BUILD_ROOT/usr/bin/hnormalise
 #install etc/hormalise/hnormalise.yaml $RPM_BUILD_ROOT/etc/hnormalise/hnormalise.yaml

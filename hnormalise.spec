@@ -80,6 +80,7 @@ systemctl daemon-reload
 
 %defattr(640,root,root,-)
 /etc/hnormalise/hnormalise.yaml
+/etc/systemd/system/hnormalise.service
 
 
 %changelog

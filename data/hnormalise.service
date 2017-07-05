@@ -3,7 +3,7 @@ Description=Log normalisation service
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
 ExecStart=/usr/bin/hnormalise -c /etc/hnormalise.yaml
 Restart=on-failure
 UMask=0066

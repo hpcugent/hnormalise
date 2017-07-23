@@ -38,6 +38,7 @@ library
                      , HNormalise.Torque.Internal
                      , HNormalise.Torque.Json
                      , HNormalise.Torque.Parser
+                     , HNormalise.Verbose
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , aeson-pretty

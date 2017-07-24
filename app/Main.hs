@@ -51,6 +51,7 @@ import           HNormalise.Config            ( Config (..)
                                               , loadConfig)
 import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
+import           HNormalise.Verbose
 
 --------------------------------------------------------------------------------
 data Options = Options
@@ -58,6 +59,7 @@ data Options = Options
     , oJsonInput      :: !Bool
     , oVersion        :: !Bool
     , oTestFilePath   :: !(Maybe FilePath)
+    , oVerbose        :: !Bool
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -82,6 +84,10 @@ parserOptions = Options
             OA.short 't' <>
             OA.metavar "OUTPUT FILENAME" <>
             OA.help "run in test modus, sinking output to the given file")
+    <*> (OA.switch $
+            OA.long "verbose" <>
+            OA.help "Verbose output" <>
+            OA.hidden)
 
 
 --------------------------------------------------------------------------------
@@ -183,17 +189,17 @@ zmqInterruptibleSource m s = do
     liftIO $ putStrLn "Done!"
 
 --------------------------------------------------------------------------------
-runZeroMQConnection options config s_interrupted = do
+runZeroMQConnection options config s_interrupted verbose' = do
     let fs = fields config
     let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
-    liftIO $ putStrLn (printf "listening on tcp://%s:%d" listenHost listenPort)
 
     case oTestFilePath options of
         Nothing -> do
             ZMQ.withContext $ \ctx -> do
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
                     ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                    verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
 
                     let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
                     let successPort = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> p)
@@ -203,9 +209,10 @@ runZeroMQConnection options config s_interrupted = do
                     ZMQ.withSocket ctx ZMQ.Push $ \successSocket ->
                       ZMQ.withSocket ctx ZMQ.Push $ \failureSocket -> do
                         ZMQ.connect successSocket $ printf "tcp://%s:%d" successHost successPort
-                        liftIO $ putStrLn (printf "connected to tcp://%s:%d" successHost successPort)
-                        ZMQ.connect failureSocket $ printf "tcp://%s:%d"  failureHost failurePort
-                        liftIO $ putStrLn (printf "connected to tcp://%s:%d" failureHost failurePort)
+                        verbose' $ printf "Pushing successful parses on tcp://%s:%d" successHost successPort
+
+                        ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
+                        verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
 
                         let normalisationConduit = case oJsonInput options of
                                                         True  -> CB.lines $= C.map (normaliseJsonInput fs)
@@ -239,17 +246,22 @@ main = do
         putStrLn $ showVersion Paths_hnormalise.version
         exitSuccess
 
+    let verbose' = makeVerbose (oVerbose options)
     config <- loadConfig (oConfigFilePath options)
+
+    verbose' $ "Config: " ++ show config
 
     -- For now, we only support input and output configurations of the same type,
     -- i.e., both TCP, both ZeroMQ, etc.
     case connectionType config of
         TCP    -> void $ runTCPConnection options config
         ZeroMQ -> do
-            trace "zeromq" $ return ()
+            verbose' "ZeroMQ connections"
             s_interrupted <- newEmptyMVar
             installHandler sigINT (CatchOnce $ handler s_interrupted) Nothing
+            verbose' "SIGINT handler installed"
             installHandler sigTERM (CatchOnce $ handler s_interrupted) Nothing
-            runZeroMQConnection options config s_interrupted
+            verbose' "SIGTERM handler installed"
+            runZeroMQConnection options config s_interrupted verbose'
 
     exitSuccess

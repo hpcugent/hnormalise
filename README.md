@@ -1,7 +1,7 @@
 hNormalise
 ==========
 
-[![Build Status](https://secure.travis-ci.org/itkovian/hnormalise.svg?branch=master)](http://travis-ci.org/itkovian/hnormalise)
+[![Build Status](https://secure.travis-ci.org/hpcugent/hnormalise.svg?branch=master)](http://travis-ci.org/hpcugent/hnormalise)
 
 `hNormalise` is a small tool and accompanying library for the conversion of regular [rsyslog](http://www.rsyslog.com) to
 structured log messages, i.e., turning the `msg` payload into (a nested) JSON object.

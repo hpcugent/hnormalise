@@ -74,12 +74,6 @@ parseMessage =
        <|> pm parseTorqueStart PR_Torque
        <|> pm parseTorqueDelete PR_Torque
        <|> pm parseTorqueExit PR_Torque
-        {-}(parseLmodLoad   >>= (\(a, v) -> return $ (a, PR_Lmod v)))
-    <|> (parseShorewall  >>= (\(a, v) -> return $ (a, PR_Shorewall v)))
-    <|> (parseSnoopy     >>= (\(a, v) -> return $ (a, PR_Snoopy v)))
-    <|> (parseTorqueExit >>= (\(a, v) -> return $ (a, PR_Torque v)))
-    <|> (parseTorqueQueue >>= (\(a,v) -> return $ (a, PR_Torque v)))
--}
 
 --------------------------------------------------------------------------------
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced

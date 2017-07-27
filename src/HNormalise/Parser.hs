@@ -66,10 +66,20 @@ rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %s
 -- | The 'parseMessage' function will try and use each configured parser to normalise the input it's given
 parseMessage :: Parser (Text, ParseResult)
 parseMessage =
-        (parseLmodLoad   >>= (\(a, v) -> return $ (a, PR_Lmod v)))
+    let pm parser target = (parser >>= (\(a, v) -> return $ (a, target v)))
+    in     pm parseLmodLoad PR_Lmod
+       <|> pm parseShorewall PR_Shorewall
+       <|> pm parseSnoopy PR_Snoopy
+       <|> pm parseTorqueQueue PR_Torque
+       <|> pm parseTorqueStart PR_Torque
+       <|> pm parseTorqueDelete PR_Torque
+       <|> pm parseTorqueExit PR_Torque
+        {-}(parseLmodLoad   >>= (\(a, v) -> return $ (a, PR_Lmod v)))
     <|> (parseShorewall  >>= (\(a, v) -> return $ (a, PR_Shorewall v)))
     <|> (parseSnoopy     >>= (\(a, v) -> return $ (a, PR_Snoopy v)))
     <|> (parseTorqueExit >>= (\(a, v) -> return $ (a, PR_Torque v)))
+    <|> (parseTorqueQueue >>= (\(a,v) -> return $ (a, PR_Torque v)))
+-}
 
 --------------------------------------------------------------------------------
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced

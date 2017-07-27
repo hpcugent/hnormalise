@@ -228,7 +228,7 @@ parseTorqueRequestor = do
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
-parseTorqueExit :: Parser (Text, TorqueJobExit)
+parseTorqueExit :: Parser (Text, TorqueParseResult)
 parseTorqueExit = do
     takeTill (== ';') *> string ";E;"   -- drop the prefix
     name <- parseTorqueJobName
@@ -251,7 +251,7 @@ parseTorqueExit = do
     exit_status <- skipSpace *> kvNumParser "Exit_status"
     usage <- skipSpace *> parseTorqueResourceUsage
 
-    return $ ("torque", TorqueJobExit
+    return $ ("torque", TorqueExit $ TorqueJobExit
         { name = name
         , user = user
         , group = group
@@ -277,33 +277,33 @@ parseTorqueExit = do
 
 --------------------------------------------------------------------------------
 -- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x
-parseTorqueDelete :: Parser (Text, TorqueJobDelete)
+parseTorqueDelete :: Parser (Text, TorqueParseResult)
 parseTorqueDelete = do
     takeTill (== ';') *> string ";D;"   -- drop the prefix
     name <- parseTorqueJobName
     requestor <- parseTorqueRequestor
 
-    return ("torque", TorqueJobDelete
+    return ("torque", TorqueDelete $ TorqueJobDelete
         { name = name
         , requestor = requestor
         })
 
 --------------------------------------------------------------------------------
 -- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
-parseTorqueQueue :: Parser (Text, TorqueJobQueue)
+parseTorqueQueue :: Parser (Text, TorqueParseResult)
 parseTorqueQueue = do
     takeTill (== ';') *> string ";Q;"   -- drop the prefix
     name <- parseTorqueJobName
     queue <- kvTextParser "queue"
 
-    return ("torque", TorqueJobQueue
+    return ("torque", TorqueQueue $ TorqueJobQueue
         { name = name
         , queue = queue
         })
 
 --------------------------------------------------------------------------------
 -- | `parseTorqueStart` parses a complete log line denoting a started job. Tested with Torque 6.1.x
-parseTorqueStart :: Parser (Text, TorqueJobStart)
+parseTorqueStart :: Parser (Text, TorqueParseResult)
 parseTorqueStart = do
     takeTill (== ';') *> string ";S;"   -- drop the prefix
     name <- parseTorqueJobName
@@ -319,7 +319,7 @@ parseTorqueStart = do
     exec_host <- skipSpace *> parseTorqueHostList
     request <- parseTorqueResourceRequest
 
-    return $ ("torque", TorqueJobStart
+    return $ ("torque", TorqueStart $ TorqueJobStart
         { name = name
         , user = user
         , group = group

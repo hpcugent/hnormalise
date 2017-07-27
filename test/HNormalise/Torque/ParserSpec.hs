@@ -269,7 +269,7 @@ spec = do
     describe "parseTorqueExit" $ do
         it "parse job exit log line" $ do
             let s = "torque: 04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0-1+node2803.banette.gent.vsc/0-1 Resource_List.nodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
-            s ~> parseTorqueExit `shouldParse` ("torque", TorqueJobExit
+            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit $ TorqueJobExit
                 { name = TorqueJobName { number = 45, array_id = Nothing, master = "master23", cluster = "banette" }
                 , user = "vsc40075"
                 , group = "vsc40075"
@@ -344,15 +344,22 @@ spec = do
     describe "parseTorqueQueue" $ do
         it "parse job queue entry" $ do
             let s = "06/28/2017 14:31:09;Q;80.master23.banette.gent.vsc;queue=default" :: Text
-            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueJobQueue
+            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue $ TorqueJobQueue
                 { name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
+                , queue = "default"
+                })
+
+        it "parse job queue entry master24 - torque 6.0" $ do
+            let s = "07/27/2017 14:17:41;Q;5.master24.banette.gent.vsc;queue=default" :: Text
+            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue $ TorqueJobQueue
+                { name = TorqueJobName { number = 5, array_id = Nothing, master = "master24" , cluster = "banette" }
                 , queue = "default"
                 })
 
     describe "parseTorqueDelete" $ do
         it "parse job delete entry" $ do
             let s = "06/28/2017 15:44:02;D;81.master23.banette.gent.vsc;requestor=vsc40075@gligar02.gligar.gent.vsc" :: Text
-            s ~> parseTorqueDelete `shouldParse` ("torque", TorqueJobDelete
+            s ~> parseTorqueDelete `shouldParse` ("torque", TorqueDelete $ TorqueJobDelete
                 { name = TorqueJobName { number = 81, array_id = Nothing, master = "master23", cluster = "banette" }
                 , requestor = TorqueRequestor { user = "vsc40075", whence = "gligar02.gligar.gent.vsc" }
                 })
@@ -360,7 +367,7 @@ spec = do
     describe "parseTorqueStart" $ do
         it "parse job start" $ do
             let s = "06/20/2017 11:24:49;S;63.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text
-            s ~> parseTorqueStart `shouldParse` ("torque", TorqueJobStart
+            s ~> parseTorqueStart `shouldParse` ("torque", TorqueStart $ TorqueJobStart
                 { name = TorqueJobName { number = 63, array_id = Nothing, master = "master23", cluster = "banette" }
                 , user = "vsc40075"
                 , group = "vsc40075"

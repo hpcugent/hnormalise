@@ -45,6 +45,15 @@ import           Data.Text
 import           GHC.Generics (Generic)
 
 --------------------------------------------------------------------------------
+-- | `TorqueParseResult` encapsulates the results we get from parsing torque lines
+data TorqueParseResult
+    = TorqueQueue TorqueJobQueue
+    | TorqueStart TorqueJobStart
+    | TorqueDelete TorqueJobDelete
+    | TorqueExit TorqueJobExit
+    deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
 data TorqueJobShortNode = TorqueJobShortNode
     { number :: !Int
     , ppn    :: !(Maybe Int)

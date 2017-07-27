@@ -78,3 +78,21 @@ instance ToJSON TorqueJobExit where
 
 instance ToJSON TorqueJobName where
     toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON TorqueRequestor where
+    toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON TorqueJobStart where
+    toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON TorqueJobQueue where
+    toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON TorqueJobDelete where
+    toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON TorqueParseResult where
+    toEncoding (TorqueQueue ts)   = toEncoding ts
+    toEncoding (TorqueStart ts)  = toEncoding ts
+    toEncoding (TorqueDelete ts) = toEncoding ts
+    toEncoding (TorqueExit ts)   = toEncoding ts

@@ -47,7 +47,8 @@ import           Data.Char                   (isDigit, isSpace)
 import qualified Data.Map                    as M
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
-import           Text.ParserCombinators.Perm ((<$$>), (<||>), (<$?>), (<|?>), permute)
+import           Text.ParserCombinators.Perm (permute, (<$$>), (<$?>), (<|?>),
+                                              (<||>))
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Parser

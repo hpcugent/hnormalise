@@ -54,6 +54,15 @@ data TorqueParseResult
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
+-- | `TorqueEntryType` distinguishes between accounting data entry Types
+data TorqueEntryType
+    = TorqueQueueEntry
+    | TorqueStartEntry
+    | TorqueDeleteEntry
+    | TorqueExitEntry
+    deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
 data TorqueJobShortNode = TorqueJobShortNode
     { number :: !Int
     , ppn    :: !(Maybe Int)
@@ -137,6 +146,7 @@ data TorqueJobExit = TorqueJobExit
     , totalExecutionSlots :: !Int
     , uniqueNodeCount     :: !Int
     , exitStatus          :: !Int
+    , torqueEntryType     :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -151,6 +161,7 @@ data TorqueJobName = TorqueJobName
 data TorqueJobQueue = TorqueJobQueue
     { name  :: !TorqueJobName
     , queue :: !Text
+    , torqueEntryType     :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -164,6 +175,7 @@ data TorqueJobStart = TorqueJobStart
     , times               :: !TorqueJobTime
     , execHost            :: ![TorqueExecHost]
     , resourceRequest     :: !TorqueResourceRequest
+    , torqueEntryType     :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -176,4 +188,5 @@ data TorqueRequestor = TorqueRequestor
 data TorqueJobDelete = TorqueJobDelete
     { name      :: !TorqueJobName
     , requestor :: !TorqueRequestor
+    , torqueEntryType     :: TorqueEntryType
     } deriving (Show, Eq, Generic)

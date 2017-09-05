@@ -1,5 +1,5 @@
 name:                hnormalise
-version:             0.4.4.0
+version:             0.4.5.0
 synopsis:            Log message normalisation tool producing structured JSON messages
 description:         Log message normalisation tool producing structured JSON messages
 homepage:            https://github.com/itkovian/hnormalise#readme

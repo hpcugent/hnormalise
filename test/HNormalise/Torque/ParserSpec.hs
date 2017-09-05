@@ -339,6 +339,7 @@ spec = do
                 , totalExecutionSlots = 4
                 , uniqueNodeCount = 2
                 , exitStatus = 0
+                , torqueEntryType = TorqueExitEntry
                 })
 
     describe "parseTorqueQueue" $ do
@@ -347,6 +348,7 @@ spec = do
             s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue $ TorqueJobQueue
                 { name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
                 , queue = "default"
+                , torqueEntryType = TorqueQueueEntry
                 })
 
         it "parse job queue entry master24 - torque 6.0" $ do
@@ -354,6 +356,7 @@ spec = do
             s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue $ TorqueJobQueue
                 { name = TorqueJobName { number = 5, array_id = Nothing, master = "master24" , cluster = "banette" }
                 , queue = "default"
+                , torqueEntryType = TorqueQueueEntry
                 })
 
     describe "parseTorqueDelete" $ do
@@ -362,6 +365,7 @@ spec = do
             s ~> parseTorqueDelete `shouldParse` ("torque", TorqueDelete $ TorqueJobDelete
                 { name = TorqueJobName { number = 81, array_id = Nothing, master = "master23", cluster = "banette" }
                 , requestor = TorqueRequestor { user = "vsc40075", whence = "gligar02.gligar.gent.vsc" }
+                , torqueEntryType = TorqueDeleteEntry
                 })
 
     describe "parseTorqueStart" $ do
@@ -413,4 +417,5 @@ spec = do
                     , pvmem = Nothing
                     , walltime  = TorqueWalltime { days = 0, hours = 0, minutes = 10, seconds = 0}
                     }
+                , torqueEntryType = TorqueStartEntry
                 })

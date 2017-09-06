@@ -47,7 +47,8 @@ import           Data.Char                   (isDigit, isSpace)
 import qualified Data.Map                    as M
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
-import           Text.ParserCombinators.Perm ((<$$>), (<||>), (<$?>), (<|?>), permute)
+import           Text.ParserCombinators.Perm (permute, (<$$>), (<$?>), (<|?>),
+                                              (<||>))
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Parser
@@ -273,6 +274,7 @@ parseTorqueExit = do
         , totalExecutionSlots = total_execution_slots
         , uniqueNodeCount = unique_node_count
         , exitStatus = exit_status
+        , torqueEntryType = TorqueExitEntry
         })
 
 --------------------------------------------------------------------------------
@@ -286,6 +288,7 @@ parseTorqueDelete = do
     return ("torque", TorqueDelete $ TorqueJobDelete
         { name = name
         , requestor = requestor
+        , torqueEntryType = TorqueDeleteEntry
         })
 
 --------------------------------------------------------------------------------
@@ -299,6 +302,7 @@ parseTorqueQueue = do
     return ("torque", TorqueQueue $ TorqueJobQueue
         { name = name
         , queue = queue
+        , torqueEntryType = TorqueQueueEntry
         })
 
 --------------------------------------------------------------------------------
@@ -335,4 +339,5 @@ parseTorqueStart = do
             }
         , execHost = exec_host
         , resourceRequest = request
+        , torqueEntryType = TorqueStartEntry
         })

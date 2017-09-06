@@ -41,12 +41,14 @@ module HNormalise.Torque.Json where
 
 --------------------------------------------------------------------------------
 import           Data.Aeson
-import           Data.Monoid                 ((<>))
+import           Data.Monoid                  ((<>))
 
 --------------------------------------------------------------------------------
 import           HNormalise.Torque.Internal
 
 --------------------------------------------------------------------------------
+instance  ToJSON TorqueEntryType where
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON TorqueJobShortNode where
     toEncoding = genericToEncoding defaultOptions

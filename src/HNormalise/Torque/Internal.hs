@@ -32,7 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -54,6 +53,15 @@ data TorqueParseResult
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
+-- | `TorqueEntryType` distinguishes between accounting data entry Types
+data TorqueEntryType
+    = TorqueQueueEntry
+    | TorqueStartEntry
+    | TorqueDeleteEntry
+    | TorqueExitEntry
+    deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
 data TorqueJobShortNode = TorqueJobShortNode
     { number :: !Int
     , ppn    :: !(Maybe Int)
@@ -72,8 +80,8 @@ data TorqueJobNode = TSN TorqueJobShortNode
 
 --------------------------------------------------------------------------------
 data TorqueExecHost = TorqueExecHost
-    { name      :: !Text
-    , cores     :: ![Int]
+    { name  :: !Text
+    , cores :: ![Int]
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -137,6 +145,7 @@ data TorqueJobExit = TorqueJobExit
     , totalExecutionSlots :: !Int
     , uniqueNodeCount     :: !Int
     , exitStatus          :: !Int
+    , torqueEntryType     :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -149,31 +158,34 @@ data TorqueJobName = TorqueJobName
 
 --------------------------------------------------------------------------------
 data TorqueJobQueue = TorqueJobQueue
-    { name  :: !TorqueJobName
-    , queue :: !Text
+    { name            :: !TorqueJobName
+    , queue           :: !Text
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobStart = TorqueJobStart
-    { name                :: !TorqueJobName
-    , user                :: !Text
-    , group               :: !Text
-    , jobname             :: !Text
-    , queue               :: !Text
-    , owner               :: !Text
-    , times               :: !TorqueJobTime
-    , execHost            :: ![TorqueExecHost]
-    , resourceRequest     :: !TorqueResourceRequest
+    { name            :: !TorqueJobName
+    , user            :: !Text
+    , group           :: !Text
+    , jobname         :: !Text
+    , queue           :: !Text
+    , owner           :: !Text
+    , times           :: !TorqueJobTime
+    , execHost        :: ![TorqueExecHost]
+    , resourceRequest :: !TorqueResourceRequest
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueRequestor = TorqueRequestor
-    { user     :: !Text
-    , whence   :: !Text
+    { user   :: !Text
+    , whence :: !Text
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobDelete = TorqueJobDelete
-    { name      :: !TorqueJobName
-    , requestor :: !TorqueRequestor
+    { name            :: !TorqueJobName
+    , requestor       :: !TorqueRequestor
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)

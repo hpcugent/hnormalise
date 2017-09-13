@@ -32,10 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-
-{-# LANGUAGE OverloadedStrings #-}
-
-
 module HNormalise
     ( normaliseRsyslog
     , normaliseJsonInput
@@ -82,7 +78,7 @@ normaliseJsonInput :: Maybe [(Text, Text)]    -- ^ Output fields
                    -> SBS.ByteString          -- ^ Input representing an rsyslog message in JSON format
                    -> Normalised              -- ^ Transformed or Original result
 normaliseJsonInput fs logLine =
-    case (Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= (normaliseRsyslog fs) of
+    case (Aeson.decodeStrict logLine :: Maybe Rsyslog) >>= normaliseRsyslog fs of
         Just j  -> Transformed j
         Nothing -> Original logLine
 
@@ -100,7 +96,7 @@ normaliseText fs logLine =
                             _        -> original
         _           -> original
   where
-    original = Original $ encodeUtf8 $ logLine
+    original = Original $ encodeUtf8 logLine
 
 --------------------------------------------------------------------------------
 -- | The 'convertMessage' function transforms the actual message to a 'Maybe' 'ParseResult'. If parsing fails,
@@ -124,5 +120,4 @@ normaliseRsyslog :: Maybe [(Text, Text)]   -- ^ Output fields
 normaliseRsyslog fs rsyslog = do
     cm <- convertMessage $ msg rsyslog
     return $ BS.toStrict
-           $ Aeson.encode
-           $ NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm, fields = fs }
+           $ Aeson.encode NRsyslog { rsyslog = rsyslog, normalised = cm, jsonkey = getJsonKey cm, fields = fs }

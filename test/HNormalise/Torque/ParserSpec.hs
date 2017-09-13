@@ -56,20 +56,20 @@ spec :: Spec
 spec = do
     describe "parseTorqueWalltime" $ do
         it "parse walltime given as SS" $ do
-            let s = ("1234567" :: Text)
+            let s = "1234567" :: Text
                 Right (s', _) = TR.decimal s
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 0, hours = 0, minutes = 0, seconds = s' }
 
         it "parse walltime given as MM:SS" $ do
-            let s = ("12:13") :: Text
+            let s = "12:13" :: Text
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 0, hours = 0, minutes = 12, seconds = 13}
 
         it "parse walltime given as HH:MM:SS" $ do
-            let s = ("11:12:13") :: Text
+            let s = "11:12:13" :: Text
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 0, hours = 11, minutes = 12, seconds = 13 }
 
         it "parse walltime given as MM:SS" $ do
-            let s = ("10:11:12:13") :: Text
+            let s = "10:11:12:13" :: Text
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 10, hours = 11, minutes = 12, seconds = 13 }
 
     describe "parseTorqueMemory" $ do
@@ -146,10 +146,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -165,10 +165,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -184,10 +184,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Just $ 200 * 1024
@@ -203,10 +203,10 @@ spec = do
                 , advres        = Just "myreservation.1"
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -222,10 +222,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Just "someqos"
                 , pmem          = Nothing

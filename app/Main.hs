@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 
 module Main where
 
@@ -65,21 +64,21 @@ data Options = Options
 --------------------------------------------------------------------------------
 parserOptions :: OA.Parser Options
 parserOptions = Options
-    <$> (OA.optional $ OA.strOption $
+    <$> OA.optional ( OA.strOption $
             OA.long "configfile" <>
             OA.short 'c' <>
             OA.metavar "FILENAME" <>
             OA.help "configuration file location ")
-    <*> (OA.switch $
+    <*> OA.switch (
             OA.long "jsoninput" <>
             OA.short 'j' <>
             OA.help "Input will be delivered as JSON (slower)")
-    <*> (OA.switch $
+    <*> OA.switch (
             OA.long "version" <>
             OA.short 'v' <>
             OA.help "Display version and exit" <>
             OA.hidden)
-    <*> (OA.optional $ OA.strOption $
+    <*> OA.optional ( OA.strOption $
             OA.long "test" <>
             OA.short 't' <>
             OA.metavar "OUTPUT FILENAME" <>
@@ -160,16 +159,16 @@ runTCPConnection options config = do
 
                 runTCPClient (clientSettings successPort successHost) $ \successServer ->
                     runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
-                        let normalisationConduit = case oJsonInput options of
-                                                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                                                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                        let normalisationConduit = if oJsonInput options
+                                                        then CB.lines $= C.map (normaliseJsonInput fs)
+                                                        else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
                         in appSource appData
                             $= normalisationConduit
                             $$ messageSink (appSink successServer) (appSink failServer)
             Just testSinkFileName ->
-                let normalisationConduit = case oJsonInput options of
-                                                True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                                                False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                let normalisationConduit = if oJsonInput options
+                                                then CB.lines $= C.map (normaliseJsonInput fs)
+                                                else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
                 in runResourceT $ appSource appData
                     $= normalisationConduit
                     $= mySink
@@ -189,14 +188,21 @@ zmqInterruptibleSource m s = do
     liftIO $ putStrLn "Done!"
 
 --------------------------------------------------------------------------------
+normalisationConduit options config =
+    let fs = fields config
+    in if oJsonInput options
+        then CB.lines $= C.map (normaliseJsonInput fs)
+        else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+
+
+--------------------------------------------------------------------------------
 runZeroMQConnection options config s_interrupted verbose' = do
     let fs = fields config
     let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
 
     case oTestFilePath options of
-        Nothing -> do
-            ZMQ.withContext $ \ctx -> do
+        Nothing -> ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
                     ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
                     verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
@@ -214,9 +220,9 @@ runZeroMQConnection options config s_interrupted verbose' = do
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
 
-                        let normalisationConduit = case oJsonInput options of
-                                                        True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                                                        False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+                        let normalisationConduit = if oJsonInput options
+                                                        then CB.lines $= C.map (normaliseJsonInput fs)
+                                                        else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
                         liftIO $ zmqInterruptibleSource s_interrupted s
                             $= normalisationConduit
                             $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])

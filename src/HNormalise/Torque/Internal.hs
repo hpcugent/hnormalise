@@ -32,10 +32,8 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Torque.Internal where
 
@@ -130,7 +128,8 @@ data TorqueJobTime = TorqueJobTime
 
 --------------------------------------------------------------------------------
 data TorqueJobExit = TorqueJobExit
-    { name                :: !TorqueJobName
+    { torqueDatestamp     :: !Text
+    , name                :: !TorqueJobName
     , user                :: !Text
     , group               :: !Text
     , jobname             :: !Text
@@ -158,23 +157,25 @@ data TorqueJobName = TorqueJobName
 
 --------------------------------------------------------------------------------
 data TorqueJobQueue = TorqueJobQueue
-    { name            :: !TorqueJobName
-    , queue           :: !Text
-    , torqueEntryType :: TorqueEntryType
+    { torqueDatestamp  :: !Text
+    , name             :: !TorqueJobName
+    , queue            :: !Text
+    , torqueEntryType  :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobStart = TorqueJobStart
-    { name            :: !TorqueJobName
-    , user            :: !Text
-    , group           :: !Text
-    , jobname         :: !Text
-    , queue           :: !Text
-    , owner           :: !Text
-    , times           :: !TorqueJobTime
-    , execHost        :: ![TorqueExecHost]
-    , resourceRequest :: !TorqueResourceRequest
-    , torqueEntryType :: TorqueEntryType
+    { torqueDatestamp  :: !Text
+    , name             :: !TorqueJobName
+    , user             :: !Text
+    , group            :: !Text
+    , jobname          :: !Text
+    , queue            :: !Text
+    , owner            :: !Text
+    , times            :: !TorqueJobTime
+    , execHost         :: ![TorqueExecHost]
+    , resourceRequest  :: !TorqueResourceRequest
+    , torqueEntryType  :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -185,7 +186,8 @@ data TorqueRequestor = TorqueRequestor
 
 --------------------------------------------------------------------------------
 data TorqueJobDelete = TorqueJobDelete
-    { name            :: !TorqueJobName
-    , requestor       :: !TorqueRequestor
-    , torqueEntryType :: TorqueEntryType
+    { torqueDatestamp  :: !Text
+    , name             :: !TorqueJobName
+    , requestor        :: !TorqueRequestor
+    , torqueEntryType  :: TorqueEntryType
     } deriving (Show, Eq, Generic)

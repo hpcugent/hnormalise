@@ -231,7 +231,9 @@ parseTorqueRequestor = do
 -- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
 parseTorqueExit :: Parser (Text, TorqueParseResult)
 parseTorqueExit = do
-    takeTill (== ';') *> string ";E;"   -- drop the prefix
+    string "torque: "
+    torqueDatestamp <- takeTill (== ';')
+    string ";E;"   -- drop the prefix
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
@@ -252,8 +254,9 @@ parseTorqueExit = do
     exit_status <- skipSpace *> kvNumParser "Exit_status"
     usage <- skipSpace *> parseTorqueResourceUsage
 
-    return $ ("torque", TorqueExit $ TorqueJobExit
-        { name = name
+    return ("torque", TorqueExit TorqueJobExit
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , user = user
         , group = group
         , jobname = jobname
@@ -281,12 +284,15 @@ parseTorqueExit = do
 -- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x
 parseTorqueDelete :: Parser (Text, TorqueParseResult)
 parseTorqueDelete = do
-    takeTill (== ';') *> string ";D;"   -- drop the prefix
+    string "torque: "
+    torqueDatestamp <- takeTill (== ';')
+    string ";D;"   -- drop the prefix
     name <- parseTorqueJobName
     requestor <- parseTorqueRequestor
 
-    return ("torque", TorqueDelete $ TorqueJobDelete
-        { name = name
+    return ("torque", TorqueDelete TorqueJobDelete
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , requestor = requestor
         , torqueEntryType = TorqueDeleteEntry
         })
@@ -295,12 +301,15 @@ parseTorqueDelete = do
 -- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
 parseTorqueQueue :: Parser (Text, TorqueParseResult)
 parseTorqueQueue = do
-    takeTill (== ';') *> string ";Q;"   -- drop the prefix
+    string "torque: "
+    torqueDatestamp <- takeTill (== ';')
+    string ";Q;"   -- drop the prefix
     name <- parseTorqueJobName
     queue <- kvTextParser "queue"
 
-    return ("torque", TorqueQueue $ TorqueJobQueue
-        { name = name
+    return ("torque", TorqueQueue TorqueJobQueue
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , queue = queue
         , torqueEntryType = TorqueQueueEntry
         })
@@ -309,7 +318,9 @@ parseTorqueQueue = do
 -- | `parseTorqueStart` parses a complete log line denoting a started job. Tested with Torque 6.1.x
 parseTorqueStart :: Parser (Text, TorqueParseResult)
 parseTorqueStart = do
-    takeTill (== ';') *> string ";S;"   -- drop the prefix
+    string "torque: "
+    torqueDatestamp <- takeTill (== ';')
+    string ";S;"   -- drop the prefix
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
@@ -323,8 +334,9 @@ parseTorqueStart = do
     exec_host <- skipSpace *> parseTorqueHostList
     request <- parseTorqueResourceRequest
 
-    return $ ("torque", TorqueStart $ TorqueJobStart
-        { name = name
+    return ("torque", TorqueStart TorqueJobStart
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , user = user
         , group = group
         , jobname = jobname

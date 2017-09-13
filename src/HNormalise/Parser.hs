@@ -32,7 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings         #-}
@@ -66,7 +65,7 @@ rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %s
 -- | The 'parseMessage' function will try and use each configured parser to normalise the input it's given
 parseMessage :: Parser (Text, ParseResult)
 parseMessage =
-    let pm parser target = (parser >>= (\(a, v) -> return $ (a, target v)))
+    let pm parser target = (parser >>= (\(a, v) -> return (a, target v)))
     in     pm parseLmodLoad PR_Lmod
        <|> pm parseShorewall PR_Shorewall
        <|> pm parseSnoopy PR_Snoopy
@@ -96,7 +95,7 @@ parseRsyslogLogstashString fs = do
         char '<'
         p <- decimal
         char '>'
-        v <- maybeOption $ decimal
+        v <- maybeOption decimal
         return (p, v)
     timereported <- skipSpace *> zonedTime
     hostname <- skipSpace *> takeTill isSpace
@@ -104,7 +103,7 @@ parseRsyslogLogstashString fs = do
     skipSpace *> char '-' *> skipSpace
     (original, (appname, parsed)) <- match parseMessage
     return $ let jsonkey = getJsonKey parsed
-             in BS.toStrict $ encode $ NRsyslog
+             in BS.toStrict $ encode NRsyslog
                     { rsyslog = Rsyslog
                         { msg              = original
                         , timereported     = timereported
@@ -114,7 +113,7 @@ parseRsyslogLogstashString fs = do
                         , fromhost         = T.empty
                         , fromhost_ip      = T.empty
                         , pri              = abspri >>= \(p, _) -> return p
-                        , version          = abspri >>= \(_, v) -> v
+                        , version          = abspri >>= snd
                         , syslogfacility   = T.empty
                         , syslogseverity   = T.empty
                         , timegenerated    = Nothing

@@ -266,7 +266,7 @@ parseTorqueExit = do
     total_execution_slots <- skipSpace *> maybeOption (kvNumParser "total_execution_slots")
     unique_node_count <- skipSpace *> maybeOption (kvNumParser "unique_node_count")
     end <- skipSpace *> kvNumParser "end"
-    exit_status <- skipSpace *> kvNumParser "Exit_status"
+    exit_status <- skipSpace *> kvSignedParser "Exit_status"
     usage <- skipSpace *> parseTorqueResourceUsage
 
     return ("torque", TorqueExit TorqueJobExit

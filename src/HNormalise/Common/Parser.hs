@@ -91,6 +91,11 @@ kvNumParser key = keyParser key *> decimal
 {-# INLINE kvNumParser #-}
 
 --------------------------------------------------------------------------------
+kvSignedParser :: Integral a => Text -> Parser a
+kvSignedParser key = keyParser key *> signed decimal
+{-# INLINE kvSignedParser #-}
+
+--------------------------------------------------------------------------------
 kvYesNoParser :: Text -> Parser Bool
 kvYesNoParser key = do
     keyParser key

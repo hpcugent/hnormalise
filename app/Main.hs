@@ -31,7 +31,6 @@ import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
 import           System.Exit                  (exitFailure, exitSuccess)
 import           System.Posix.Signals         (installHandler, Handler(CatchOnce), sigINT, sigTERM)
-import qualified System.ZMQ4                  as ZMQ (Receiver, Sender, Socket, Size, context, term, setIoThreads, Context)
 import qualified System.ZMQ4                  as ZMQ (withContext, withSocket, bind, send, receive, connect, Push(..), Pull(..))
 import           Text.Printf                  (printf)
 
@@ -159,20 +158,13 @@ runTCPConnection options config = do
 
                 runTCPClient (clientSettings successPort successHost) $ \successServer ->
                     runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
-                        let normalisationConduit = if oJsonInput options
-                                                        then CB.lines $= C.map (normaliseJsonInput fs)
-                                                        else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-                        in appSource appData
-                            $= normalisationConduit
+                        appSource appData
+                            $= normalisationConduit options config
                             $$ messageSink (appSink successServer) (appSink failServer)
-            Just testSinkFileName ->
-                let normalisationConduit = if oJsonInput options
-                                                then CB.lines $= C.map (normaliseJsonInput fs)
-                                                else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-                in runResourceT $ appSource appData
-                    $= normalisationConduit
-                    $= mySink
-                    $$ sinkFile testSinkFileName
+            Just testSinkFileName -> runResourceT $ appSource appData
+                $= normalisationConduit options config
+                $= mySink
+                $$ sinkFile testSinkFileName
 
 -- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
 -- The source is halted when something is put into the MVar, effectively stopping the program from checking
@@ -219,28 +211,20 @@ runZeroMQConnection options config s_interrupted verbose' = do
 
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
-
-                        let normalisationConduit = if oJsonInput options
-                                                        then CB.lines $= C.map (normaliseJsonInput fs)
-                                                        else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
                         liftIO $ zmqInterruptibleSource s_interrupted s
-                            $= normalisationConduit
+                            $= normalisationConduit options config
                             $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])
 
-        {-Just testSinkFileName ->
-            let normalisationConduit = case oJsonInput options of
-                                            True  -> CB.lines $= C.map (normaliseJsonInput fs)
-                                            False -> DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-
-            in ZMQ.withContext $ \ctx -> do
-                    ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                        ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
-                        liftIO $ zmqInterruptibleSource s_interrupted s
-                            $= normalisationConduit
-                            $= mySink
-                            $$ sinkFile testSinkFileName
+{-      -- FIXME: This does not work, gives a type error
+        Just testSinkFileName ->
+            ZMQ.withContext $ \ctx ->
+                ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
+                    ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                    liftIO $ zmqInterruptibleSource s_interrupted s
+                        $= normalisationConduit options config
+                        $= mySink
+                        $$ sinkFile testSinkFileName
 -}
-
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
 -- for the pipeline.

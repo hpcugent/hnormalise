@@ -224,14 +224,20 @@ parseTorqueRequestor = do
         { user = user
         , whence = whence
         }
+--------------------------------------------------------------------------------
+-- | `parseTorqueAccountingDatestamp` parses the datestamp and the given log line tag
+parseTorqueAccountingDatestamp :: Text -> Parser Text
+parseTorqueAccountingDatestamp tag = do
+    string "torque: "
+    torqueDatestamp <- takeTill (== ';')
+    string tag   -- drop the prefix
+    return torqueDatestamp
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
 parseTorqueExit :: Parser (Text, TorqueParseResult)
 parseTorqueExit = do
-    string "torque: "
-    torqueDatestamp <- takeTill (== ';')
-    string ";E;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";E;"
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
@@ -282,9 +288,7 @@ parseTorqueExit = do
 -- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x
 parseTorqueDelete :: Parser (Text, TorqueParseResult)
 parseTorqueDelete = do
-    string "torque: "
-    torqueDatestamp <- takeTill (== ';')
-    string ";D;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";D;"
     name <- parseTorqueJobName
     requestor <- parseTorqueRequestor
 
@@ -299,9 +303,7 @@ parseTorqueDelete = do
 -- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
 parseTorqueQueue :: Parser (Text, TorqueParseResult)
 parseTorqueQueue = do
-    string "torque: "
-    torqueDatestamp <- takeTill (== ';')
-    string ";Q;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";Q;"
     name <- parseTorqueJobName
     queue <- kvTextParser "queue"
 
@@ -316,9 +318,7 @@ parseTorqueQueue = do
 -- | `parseTorqueStart` parses a complete log line denoting a started job. Tested with Torque 6.1.x
 parseTorqueStart :: Parser (Text, TorqueParseResult)
 parseTorqueStart = do
-    string "torque: "
-    torqueDatestamp <- takeTill (== ';')
-    string ";S;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";S;"
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"

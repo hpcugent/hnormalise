@@ -84,6 +84,9 @@ data TorqueExecHost = TorqueExecHost
     , cores :: ![Int]
     } deriving (Show, Eq, Generic)
 
+instance Ord TorqueExecHost where
+    compare (TorqueExecHost t1 _) (TorqueExecHost t2 _) = compare t1 t2 
+
 --------------------------------------------------------------------------------
 data TorqueWalltime = TorqueWalltime
     { days    :: !Int

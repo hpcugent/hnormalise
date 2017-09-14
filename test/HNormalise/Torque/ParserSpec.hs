@@ -383,67 +383,7 @@ spec = do
                 , execHost =
                     [ TorqueExecHost
                         { name = "node2135.delcatty.gent.vsc"
-                        , cores = [0]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [1]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [2]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [3]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [4]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [5]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [6]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [7]
-                        }
-                    , TorqueExecHost
-                        {name = "node2135.delcatty.gent.vsc"
-                        , cores = [8]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [9]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [10]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [11]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [12]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [13]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [14]
-                        }
-                    , TorqueExecHost
-                        { name = "node2135.delcatty.gent.vsc"
-                        , cores = [15]
+                        , cores = [0 .. 15]
                         }
                     ]
                 , resourceRequest = TorqueResourceRequest

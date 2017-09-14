@@ -43,6 +43,7 @@ import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
 import           Data.Char                   (isDigit, isSpace)
 import qualified Data.Map                    as M
+import           Data.List                   (concatMap, groupBy, sort)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 import           Text.ParserCombinators.Perm (permute, (<$$>), (<$?>), (<|?>),
@@ -199,16 +200,30 @@ parseTorqueResourceUsage = do
         }
 
 --------------------------------------------------------------------------------
+-- | `aggregateHosts` take a list of TorqueExecHost and condenses them to a minimal form
+-- There will be one entry for each different host, each time with the cores combined
+aggregateHosts :: [TorqueExecHost] -> [TorqueExecHost]
+aggregateHosts ths =
+    let ths' = groupBy (\(TorqueExecHost n1 _) (TorqueExecHost n2 _) -> n1 == n2) $ sort ths
+    in map aggCores ths'
+  where aggCores :: [TorqueExecHost] -> TorqueExecHost
+        aggCores ths@(TorqueExecHost n _:_) = TorqueExecHost
+            { name = n
+            , cores = sort . concatMap cores $ ths
+            }
+
+--------------------------------------------------------------------------------
 -- | 'parseTorqueHostList' parses a '+' separated list of hostname/coreranges
 -- A core range can be of the form 1,3,5-7,9
 parseTorqueHostList :: Parser [TorqueExecHost]
 parseTorqueHostList = do
     string "exec_host="
-    flip sepBy (char '+') $ do
+    hosts <- flip sepBy (char '+') $ do
         fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
         char '/'
         cores <- parseCores
         return TorqueExecHost { name = fqdn, cores = cores}
+    return $ aggregateHosts hosts
   where parseCores :: Parser [Int]
         parseCores = do
             cores <- flip sepBy1' (char ',') $ try parseRange <|> parseSingle

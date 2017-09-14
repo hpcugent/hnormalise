@@ -56,20 +56,20 @@ spec :: Spec
 spec = do
     describe "parseTorqueWalltime" $ do
         it "parse walltime given as SS" $ do
-            let s = ("1234567" :: Text)
+            let s = "1234567" :: Text
                 Right (s', _) = TR.decimal s
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 0, hours = 0, minutes = 0, seconds = s' }
 
         it "parse walltime given as MM:SS" $ do
-            let s = ("12:13") :: Text
+            let s = "12:13" :: Text
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 0, hours = 0, minutes = 12, seconds = 13}
 
         it "parse walltime given as HH:MM:SS" $ do
-            let s = ("11:12:13") :: Text
+            let s = "11:12:13" :: Text
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 0, hours = 11, minutes = 12, seconds = 13 }
 
         it "parse walltime given as MM:SS" $ do
-            let s = ("10:11:12:13") :: Text
+            let s = "10:11:12:13" :: Text
             s ~> parseTorqueWalltime `shouldParse` TorqueWalltime { days = 10, hours = 11, minutes = 12, seconds = 13 }
 
     describe "parseTorqueMemory" $ do
@@ -146,10 +146,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -165,10 +165,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -184,10 +184,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Just $ 200 * 1024
@@ -203,10 +203,10 @@ spec = do
                 , advres        = Just "myreservation.1"
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
                 , pmem          = Nothing
@@ -222,10 +222,10 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN $ TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Just "someqos"
                 , pmem          = Nothing
@@ -266,11 +266,12 @@ spec = do
                     }
                 ]
 
-    describe "parseTorqueExit" $ do
+    describe "parseTorqueExit" $
         it "parse job exit log line" $ do
             let s = "torque: 04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0-1+node2803.banette.gent.vsc/0-1 Resource_List.nodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
-            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit $ TorqueJobExit
-                { name = TorqueJobName { number = 45, array_id = Nothing, master = "master23", cluster = "banette" }
+            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
+                { torqueDatestamp = "04/05/2017 13:06:53"
+                , name = TorqueJobName { number = 45, array_id = Nothing, master = "master23", cluster = "banette" }
                 , user = "vsc40075"
                 , group = "vsc40075"
                 , jobname = "STDIN"
@@ -344,35 +345,39 @@ spec = do
 
     describe "parseTorqueQueue" $ do
         it "parse job queue entry" $ do
-            let s = "06/28/2017 14:31:09;Q;80.master23.banette.gent.vsc;queue=default" :: Text
-            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue $ TorqueJobQueue
-                { name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
+            let s = "torque: 06/28/2017 14:31:09;Q;80.master23.banette.gent.vsc;queue=default" :: Text
+            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue TorqueJobQueue
+                { torqueDatestamp = "06/28/2017 14:31:09"
+                , name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
                 , queue = "default"
                 , torqueEntryType = TorqueQueueEntry
                 })
 
         it "parse job queue entry master24 - torque 6.0" $ do
-            let s = "07/27/2017 14:17:41;Q;5.master24.banette.gent.vsc;queue=default" :: Text
-            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue $ TorqueJobQueue
-                { name = TorqueJobName { number = 5, array_id = Nothing, master = "master24" , cluster = "banette" }
+            let s = "torque: 07/27/2017 14:17:41;Q;5.master24.banette.gent.vsc;queue=default" :: Text
+            s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue TorqueJobQueue
+                { torqueDatestamp = "07/27/2017 14:17:41"
+                , name = TorqueJobName { number = 5, array_id = Nothing, master = "master24" , cluster = "banette" }
                 , queue = "default"
                 , torqueEntryType = TorqueQueueEntry
                 })
 
-    describe "parseTorqueDelete" $ do
+    describe "parseTorqueDelete" $
         it "parse job delete entry" $ do
-            let s = "06/28/2017 15:44:02;D;81.master23.banette.gent.vsc;requestor=vsc40075@gligar02.gligar.gent.vsc" :: Text
-            s ~> parseTorqueDelete `shouldParse` ("torque", TorqueDelete $ TorqueJobDelete
-                { name = TorqueJobName { number = 81, array_id = Nothing, master = "master23", cluster = "banette" }
+            let s = "torque: 06/28/2017 15:44:02;D;81.master23.banette.gent.vsc;requestor=vsc40075@gligar02.gligar.gent.vsc" :: Text
+            s ~> parseTorqueDelete `shouldParse` ("torque", TorqueDelete TorqueJobDelete
+                { torqueDatestamp = "06/28/2017 15:44:02"
+                , name = TorqueJobName { number = 81, array_id = Nothing, master = "master23", cluster = "banette" }
                 , requestor = TorqueRequestor { user = "vsc40075", whence = "gligar02.gligar.gent.vsc" }
                 , torqueEntryType = TorqueDeleteEntry
                 })
 
-    describe "parseTorqueStart" $ do
+    describe "parseTorqueStart" $
         it "parse job start" $ do
-            let s = "06/20/2017 11:24:49;S;63.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text
-            s ~> parseTorqueStart `shouldParse` ("torque", TorqueStart $ TorqueJobStart
-                { name = TorqueJobName { number = 63, array_id = Nothing, master = "master23", cluster = "banette" }
+            let s = "torque: 06/20/2017 11:24:49;S;63.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text
+            s ~> parseTorqueStart `shouldParse` ("torque", TorqueStart TorqueJobStart
+                { torqueDatestamp = "06/20/2017 11:24:49"
+                , name = TorqueJobName { number = 63, array_id = Nothing, master = "master23", cluster = "banette" }
                 , user = "vsc40075"
                 , group = "vsc40075"
                 , jobname = "STDIN"
@@ -397,22 +402,20 @@ spec = do
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
                     , neednodes = TSN
-                        ( TorqueJobShortNode
+                        TorqueJobShortNode
                             { number = 1
                             , ppn  = Just 1
                             }
-                        )
                     , nice      = Just 0
                     , nodeCount = 1
                     , nodes = TSN
-                        ( TorqueJobShortNode
+                        TorqueJobShortNode
                             { number = 1
                             , ppn  = Just 1
                             }
-                        )
                     , select        = Nothing
                     , qos           = Nothing
-                    , vmem = Just $ 4224531456
+                    , vmem = Just 4224531456
                     , pmem = Nothing
                     , pvmem = Nothing
                     , walltime  = TorqueWalltime { days = 0, hours = 0, minutes = 10, seconds = 0}

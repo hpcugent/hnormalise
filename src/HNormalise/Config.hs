@@ -165,8 +165,8 @@ defaultInputTcpConfig = TcpPortConfig
     }
 
 defaultOutputTcpConfig = TcpOutputConfig
-    { success = Just $ TcpPortConfig { host = Just "localhost", port = Just 26001 }
-    , failure = Just $ TcpPortConfig { host = Just "localhost", port = Just 26002 }
+    { success = Just TcpPortConfig { host = Just "localhost", port = Just 26001 }
+    , failure = Just TcpPortConfig { host = Just "localhost", port = Just 26002 }
     }
 
 defaultInputConfig = InputConfig

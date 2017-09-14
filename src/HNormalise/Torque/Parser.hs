@@ -32,8 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
@@ -110,7 +108,7 @@ parseTorqueJobName = do
     m <- char '.' *> takeTill (== '.')
     c <- char '.' *> takeTill (== '.')
     manyTill anyChar (lookAhead ";") *> char ';'
-    return $ TorqueJobName { number = n, array_id = a, master = m, cluster = c}
+    return TorqueJobName { number = n, array_id = a, master = m, cluster = c}
   where
     parseArrayId :: Parser (Maybe Integer)
     parseArrayId = try $ maybeOption $ do
@@ -128,11 +126,11 @@ parseTorqueResourceNodeList = do
     if Data.Char.isDigit c then do
         number <- decimal
         ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
-        return $ TSN $ TorqueJobShortNode { number = number, ppn = ppn }
-    else TFN <$> (flip sepBy (char '+') $ do
+        return $ TSN TorqueJobShortNode { number = number, ppn = ppn }
+    else TFN <$> sepBy (do
         fqdn <- Data.Attoparsec.Text.takeWhile (/= ':')
         ppn <- char ':' *> kvNumParser "ppn"
-        return TorqueJobFQNode { name = fqdn, ppn = ppn})
+        return TorqueJobFQNode { name = fqdn, ppn = ppn}) (char '+')
 
 --------------------------------------------------------------------------------
 {- Examples found in the 2016 logs
@@ -155,7 +153,7 @@ Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.no
 -- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur, the last
 -- 1.5 years of data we have were used to make an educated guess as to which keys might appear and in what order
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
-parseTorqueResourceRequest = do
+parseTorqueResourceRequest =
     permute $ TorqueResourceRequest
         <$?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.advres"))
@@ -181,7 +179,7 @@ parseTorqueResourceUsage = do
     mem <- skipSpace *> string "resources_used.mem=" *> parseTorqueMemory
     vmem <- skipSpace *> string "resources_used.vmem=" *> parseTorqueMemory
     walltime <- skipSpace *> string "resources_used.walltime=" *> parseTorqueWalltime
-    return $ TorqueResourceUsage
+    return TorqueResourceUsage
         { cputime = cput
         , energy = energy
         , mem = mem
@@ -199,7 +197,7 @@ parseTorqueHostList = do
         fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
         char '/'
         cores <- parseCores
-        return $ TorqueExecHost { name = fqdn, cores = cores}
+        return TorqueExecHost { name = fqdn, cores = cores}
   where parseCores :: Parser [Int]
         parseCores = do
             cores <- flip sepBy1' (char ',') $ try parseRange <|> parseSingle
@@ -226,12 +224,20 @@ parseTorqueRequestor = do
         { user = user
         , whence = whence
         }
+--------------------------------------------------------------------------------
+-- | `parseTorqueAccountingDatestamp` parses the datestamp and the given log line tag
+parseTorqueAccountingDatestamp :: Text -> Parser Text
+parseTorqueAccountingDatestamp tag = do
+    string "torque: "
+    torqueDatestamp <- takeTill (== ';')
+    string tag   -- drop the prefix
+    return torqueDatestamp
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
 parseTorqueExit :: Parser (Text, TorqueParseResult)
 parseTorqueExit = do
-    takeTill (== ';') *> string ";E;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";E;"
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
@@ -252,8 +258,9 @@ parseTorqueExit = do
     exit_status <- skipSpace *> kvNumParser "Exit_status"
     usage <- skipSpace *> parseTorqueResourceUsage
 
-    return $ ("torque", TorqueExit $ TorqueJobExit
-        { name = name
+    return ("torque", TorqueExit TorqueJobExit
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , user = user
         , group = group
         , jobname = jobname
@@ -281,12 +288,13 @@ parseTorqueExit = do
 -- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x
 parseTorqueDelete :: Parser (Text, TorqueParseResult)
 parseTorqueDelete = do
-    takeTill (== ';') *> string ";D;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";D;"
     name <- parseTorqueJobName
     requestor <- parseTorqueRequestor
 
-    return ("torque", TorqueDelete $ TorqueJobDelete
-        { name = name
+    return ("torque", TorqueDelete TorqueJobDelete
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , requestor = requestor
         , torqueEntryType = TorqueDeleteEntry
         })
@@ -295,12 +303,13 @@ parseTorqueDelete = do
 -- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
 parseTorqueQueue :: Parser (Text, TorqueParseResult)
 parseTorqueQueue = do
-    takeTill (== ';') *> string ";Q;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";Q;"
     name <- parseTorqueJobName
     queue <- kvTextParser "queue"
 
-    return ("torque", TorqueQueue $ TorqueJobQueue
-        { name = name
+    return ("torque", TorqueQueue TorqueJobQueue
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , queue = queue
         , torqueEntryType = TorqueQueueEntry
         })
@@ -309,7 +318,7 @@ parseTorqueQueue = do
 -- | `parseTorqueStart` parses a complete log line denoting a started job. Tested with Torque 6.1.x
 parseTorqueStart :: Parser (Text, TorqueParseResult)
 parseTorqueStart = do
-    takeTill (== ';') *> string ";S;"   -- drop the prefix
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";S;"
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
@@ -323,8 +332,9 @@ parseTorqueStart = do
     exec_host <- skipSpace *> parseTorqueHostList
     request <- parseTorqueResourceRequest
 
-    return $ ("torque", TorqueStart $ TorqueJobStart
-        { name = name
+    return ("torque", TorqueStart TorqueJobStart
+        { torqueDatestamp = torqueDatestamp
+        , name = name
         , user = user
         , group = group
         , jobname = jobname

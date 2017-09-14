@@ -111,7 +111,7 @@ data TorqueResourceRequest = TorqueResourceRequest
 --------------------------------------------------------------------------------
 data TorqueResourceUsage = TorqueResourceUsage
     { cputime  :: !Integer
-    , energy   :: !Integer
+    , energy   :: !(Maybe Integer)
     , mem      :: !Integer
     , vmem     :: !Integer
     , walltime :: !TorqueWalltime
@@ -141,8 +141,8 @@ data TorqueJobExit = TorqueJobExit
     , execHost            :: ![TorqueExecHost]
     , resourceRequest     :: !TorqueResourceRequest
     , resourceUsage       :: !TorqueResourceUsage
-    , totalExecutionSlots :: !Int
-    , uniqueNodeCount     :: !Int
+    , totalExecutionSlots :: !(Maybe Int)
+    , uniqueNodeCount     :: !(Maybe Int)
     , exitStatus          :: !Int
     , torqueEntryType     :: TorqueEntryType
     } deriving (Show, Eq, Generic)

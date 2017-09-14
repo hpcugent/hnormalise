@@ -148,6 +148,9 @@ Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.no
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.qos Resource_List.vmem Resource_List.walltime
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.walltime
+
+-- 2014 logs
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
 -}
 -- | 'parseTorqueResourceRequest' parses all key value pairs denoting resources requested.
 -- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur, the last
@@ -171,11 +174,19 @@ parseTorqueResourceRequest =
         <||> skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
 
 --------------------------------------------------------------------------------
+-- | 'parseTorqueCpuTime' parses the cpu time spent
+-- This value is either given in seconds or in a torque timestamp format
+-- We always conver the value to seconds if needed
+parseTorqueCpuTime :: Parser Integer
+parseTorqueCpuTime =
+    try (parseTorqueWalltime >>= \(TorqueWalltime d h m s) -> return $ fromIntegral (((d*24+h)*60+m)*60+s)) <|> decimal
+
+--------------------------------------------------------------------------------
 -- | 'parseTorqueResourceUsage' parses all the key value pairs denoting used resources.
 parseTorqueResourceUsage :: Parser TorqueResourceUsage
 parseTorqueResourceUsage = do
-    cput <- skipSpace *> kvNumParser "resources_used.cput"
-    energy <- skipSpace *> kvNumParser "resources_used.energy_used"
+    cput <- skipSpace *> string "resources_used.cput=" *> parseTorqueCpuTime
+    energy <- skipSpace *> maybeOption (kvNumParser "resources_used.energy_used")
     mem <- skipSpace *> string "resources_used.mem=" *> parseTorqueMemory
     vmem <- skipSpace *> string "resources_used.vmem=" *> parseTorqueMemory
     walltime <- skipSpace *> string "resources_used.walltime=" *> parseTorqueWalltime
@@ -252,8 +263,8 @@ parseTorqueExit = do
     exec_host <- skipSpace *> parseTorqueHostList
     request <- parseTorqueResourceRequest
     session <- skipSpace *> kvNumParser "session"
-    total_execution_slots <- skipSpace *> kvNumParser "total_execution_slots"
-    unique_node_count <- skipSpace *> kvNumParser "unique_node_count"
+    total_execution_slots <- skipSpace *> maybeOption (kvNumParser "total_execution_slots")
+    unique_node_count <- skipSpace *> maybeOption (kvNumParser "unique_node_count")
     end <- skipSpace *> kvNumParser "end"
     exit_status <- skipSpace *> kvNumParser "Exit_status"
     usage <- skipSpace *> parseTorqueResourceUsage

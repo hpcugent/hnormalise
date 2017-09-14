@@ -234,6 +234,25 @@ spec = do
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
+        it "parse 2014 resource List" $ do
+            let s = "Resource_List.neednodes=1:ppn=16 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1:ppn=16 Resource_List.vmem=74737mb Resource_List.walltime=05:00:00" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem           = Nothing
+                , advres        = Nothing
+                , naccesspolicy = Nothing
+                , ncpus         = Nothing
+                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
+                , nice          = Just 0
+                , nodeCount     = 1
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
+                , select        = Nothing
+                , qos           = Nothing
+                , pmem          = Nothing
+                , vmem          = Just $ 74737 * 1024 * 1024
+                , pvmem         = Nothing
+                , walltime      = TorqueWalltime { days = 0, hours = 5, minutes = 0, seconds = 0 }
+                }
+
     describe "parseTorqueHostList" $ do
         it "parse comma separated list of single cores" $ do
             let s = "exec_host=node1001.mycluster.mydomain/1,3,5,7" :: Text
@@ -266,8 +285,8 @@ spec = do
                     }
                 ]
 
-    describe "parseTorqueExit" $
-        it "parse job exit log line" $ do
+    describe "parseTorqueExit" $ do
+        it "parse torque 6.0 job exit log line" $ do
             let s = "torque: 04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0-1+node2803.banette.gent.vsc/0-1 Resource_List.nodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
             s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
                 { torqueDatestamp = "04/05/2017 13:06:53"
@@ -332,16 +351,135 @@ spec = do
                     }
                 , resourceUsage = TorqueResourceUsage
                     { cputime = 0
-                    , energy = 0
+                    , energy = Just 0
                     , mem = 55048 * 1024
                     , vmem = 92488 * 1024
                     , walltime = TorqueWalltime { days = 0, hours = 0, minutes = 1, seconds = 44 }
                     }
-                , totalExecutionSlots = 4
-                , uniqueNodeCount = 2
+                , totalExecutionSlots = Just 4
+                , uniqueNodeCount = Just 2
                 , exitStatus = 0
                 , torqueEntryType = TorqueExitEntry
                 })
+        it "parse 2014 torque job exit line" $ do
+            let s = "torque: 01/12/2014 23:57:07;E;161299[389].master15.delcatty.gent.vsc;user=vsc40909 group=vsc40909 jobname=30by40XconChoicesResults-389 queue=short ctime=1389546423 qtime=1389546423 etime=1389546423 start=1389567229 owner=vsc40909@gligar02.gligar.gent.vsc exec_host=node2135.delcatty.gent.vsc/0+node2135.delcatty.gent.vsc/1+node2135.delcatty.gent.vsc/2+node2135.delcatty.gent.vsc/3+node2135.delcatty.gent.vsc/4+node2135.delcatty.gent.vsc/5+node2135.delcatty.gent.vsc/6+node2135.delcatty.gent.vsc/7+node2135.delcatty.gent.vsc/8+node2135.delcatty.gent.vsc/9+node2135.delcatty.gent.vsc/10+node2135.delcatty.gent.vsc/11+node2135.delcatty.gent.vsc/12+node2135.delcatty.gent.vsc/13+node2135.delcatty.gent.vsc/14+node2135.delcatty.gent.vsc/15 Resource_List.neednodes=1:ppn=16 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1:ppn=16 Resource_List.vmem=74737mb Resource_List.walltime=05:00:00 session=32698 end=1389567427 Exit_status=0 resources_used.cput=00:48:40 resources_used.mem=307504kb resources_used.vmem=1985904kb resources_used.walltime=00:03:21" :: Text
+            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
+                { torqueDatestamp = "01/12/2014 23:57:07"
+                , name = TorqueJobName { number = 161299, array_id = Just 389, master = "master15", cluster = "delcatty" }
+                , user = "vsc40909"
+                , group = "vsc40909"
+                , jobname = "30by40XconChoicesResults-389"
+                , queue = "short"
+                , startCount = Nothing
+                , owner = "vsc40909@gligar02.gligar.gent.vsc"
+                , session = 32698
+                , times = TorqueJobTime
+                    { ctime = 1389546423
+                    , qtime = 1389546423
+                    , etime = 1389546423
+                    , startTime = 1389567229
+                    , endTime = Just 1389567427
+                    }
+                , execHost =
+                    [ TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [0]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [1]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [2]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [3]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [4]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [5]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [6]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [7]
+                        }
+                    , TorqueExecHost
+                        {name = "node2135.delcatty.gent.vsc"
+                        , cores = [8]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [9]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [10]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [11]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [12]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [13]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [14]
+                        }
+                    , TorqueExecHost
+                        { name = "node2135.delcatty.gent.vsc"
+                        , cores = [15]
+                        }
+                    ]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , neednodes = TSN TorqueJobShortNode
+                        { number = 1
+                        , ppn = Just 16
+                        }
+                    , nice = Just 0
+                    , nodeCount = 1
+                    , nodes = TSN TorqueJobShortNode
+                        { number = 1
+                        , ppn = Just 16
+                        }
+                    , select = Nothing
+                    , qos = Nothing
+                    , pmem = Nothing
+                    , vmem = Just 78367424512
+                    , pvmem = Nothing
+                    , walltime = TorqueWalltime { days = 0, hours = 5, minutes = 0, seconds = 0}
+                    }
+                , resourceUsage = TorqueResourceUsage
+                    { cputime = 2920
+                    , energy = Nothing
+                    , mem = 314884096
+                    , vmem = 2033565696
+                    , walltime = TorqueWalltime { days = 0, hours = 0, minutes = 3, seconds = 21}
+                    }
+                , totalExecutionSlots = Nothing
+                , uniqueNodeCount = Nothing
+                , exitStatus = 0
+                , torqueEntryType = TorqueExitEntry
+            })
 
     describe "parseTorqueQueue" $ do
         it "parse job queue entry" $ do

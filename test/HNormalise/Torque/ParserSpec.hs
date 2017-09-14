@@ -510,6 +510,15 @@ spec = do
                 , torqueEntryType = TorqueDeleteEntry
                 })
 
+    describe "parseTorqueAbort" $
+        it "parse job abort entry" $ do
+            let s = "torque: 09/02/2013 17:34:26;A;34106.master15.delcatty.gent.vsc;" :: Text
+            s ~> parseTorqueAbort `shouldParse` ("torque", TorqueAbort TorqueJobAbort
+                { torqueDatestamp = "09/02/2013 17:34:26"
+                , name = TorqueJobName { number = 34106, array_id = Nothing, master = "master15", cluster = "delcatty" }
+                , torqueEntryType = TorqueAbortEntry
+                })
+
     describe "parseTorqueStart" $
         it "parse job start" $ do
             let s = "torque: 06/20/2017 11:24:49;S;63.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text

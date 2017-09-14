@@ -32,11 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
-
-
 module HNormalise.Torque.Json where
 
 --------------------------------------------------------------------------------
@@ -93,8 +88,12 @@ instance ToJSON TorqueJobQueue where
 instance ToJSON TorqueJobDelete where
     toEncoding = genericToEncoding defaultOptions
 
+instance ToJSON TorqueJobAbort where
+    toEncoding = genericToEncoding defaultOptions
+
 instance ToJSON TorqueParseResult where
     toEncoding (TorqueQueue ts)   = toEncoding ts
     toEncoding (TorqueStart ts)  = toEncoding ts
     toEncoding (TorqueDelete ts) = toEncoding ts
     toEncoding (TorqueExit ts)   = toEncoding ts
+    toEncoding (TorqueAbort ts)  = toEncoding ts

@@ -73,6 +73,7 @@ parseMessage =
        <|> pm parseTorqueStart PR_Torque
        <|> pm parseTorqueDelete PR_Torque
        <|> pm parseTorqueExit PR_Torque
+       <|> pm parseTorqueAbort PR_Torque
 
 --------------------------------------------------------------------------------
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced

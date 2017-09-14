@@ -311,6 +311,19 @@ parseTorqueDelete = do
         })
 
 --------------------------------------------------------------------------------
+-- | `parseTorqueAbort` parses a complete log line denoting an aborted job. Tested with Torque 4.x
+parseTorqueAbort :: Parser (Text, TorqueParseResult)
+parseTorqueAbort = do
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";A;"
+    name <- parseTorqueJobName
+
+    return ("torque", TorqueAbort TorqueJobAbort
+        { torqueDatestamp = torqueDatestamp
+        , name = name
+        , torqueEntryType = TorqueAbortEntry
+        })
+
+--------------------------------------------------------------------------------
 -- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
 parseTorqueQueue :: Parser (Text, TorqueParseResult)
 parseTorqueQueue = do

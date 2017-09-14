@@ -48,6 +48,7 @@ data TorqueParseResult
     | TorqueStart TorqueJobStart
     | TorqueDelete TorqueJobDelete
     | TorqueExit TorqueJobExit
+    | TorqueAbort TorqueJobAbort
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -57,6 +58,7 @@ data TorqueEntryType
     | TorqueStartEntry
     | TorqueDeleteEntry
     | TorqueExitEntry
+    | TorqueAbortEntry
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -189,5 +191,12 @@ data TorqueJobDelete = TorqueJobDelete
     { torqueDatestamp  :: !Text
     , name             :: !TorqueJobName
     , requestor        :: !TorqueRequestor
+    , torqueEntryType  :: TorqueEntryType
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueJobAbort = TorqueJobAbort
+    { torqueDatestamp  :: !Text
+    , name             :: !TorqueJobName
     , torqueEntryType  :: TorqueEntryType
     } deriving (Show, Eq, Generic)

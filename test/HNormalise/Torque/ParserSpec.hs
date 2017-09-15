@@ -146,6 +146,7 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
+                , cputime = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -165,6 +166,7 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
+                , cputime = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -184,6 +186,7 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
+                , cputime = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -203,6 +206,7 @@ spec = do
                 , advres        = Just "myreservation.1"
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
+                , cputime = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -222,6 +226,7 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
+                , cputime = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -241,6 +246,7 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
+                , cputime = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
                 , nice          = Just 0
                 , nodeCount     = 1
@@ -320,6 +326,7 @@ spec = do
                     , advres        = Nothing
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
+                    , cputime = Nothing
                     , neednodes = TFN
                         [ TorqueJobFQNode
                             { name = "node2801.somecluster.somedomain"
@@ -391,6 +398,7 @@ spec = do
                     , advres = Nothing
                     , naccesspolicy = Nothing
                     , ncpus = Nothing
+                    , cputime = Nothing
                     , neednodes = TSN TorqueJobShortNode
                         { number = 1
                         , ppn = Just 16
@@ -418,6 +426,56 @@ spec = do
                 , totalExecutionSlots = Nothing
                 , uniqueNodeCount = Nothing
                 , exitStatus = 0
+                , torqueEntryType = TorqueExitEntry
+            })
+
+        it "parse torque job exit line with cput resource request" $ do
+            let s = "torque: 07/22/2014 11:00:03;E;621344.master15.delcatty.gent.vsc;user=vsc40035 group=vsc40035 jobname=NB03N queue=long ctime=1406019524 qtime=1406019524 etime=1406019524 start=1406019532 owner=vsc40035@gligar03.gligar.gent.vsc exec_host=node2142.delcatty.gent.vsc/0+node2142.delcatty.gent.vsc/1+node2142.delcatty.gent.vsc/2+node2142.delcatty.gent.vsc/3+node2142.delcatty.gent.vsc/4+node2142.delcatty.gent.vsc/5+node2142.delcatty.gent.vsc/6+node2142.delcatty.gent.vsc/7+node2142.delcatty.gent.vsc/8+node2142.delcatty.gent.vsc/9+node2142.delcatty.gent.vsc/10+node2142.delcatty.gent.vsc/11+node2142.delcatty.gent.vsc/12+node2142.delcatty.gent.vsc/13+node2142.delcatty.gent.vsc/14+node2142.delcatty.gent.vsc/15 Resource_List.cput=72:00:00 Resource_List.neednodes=1:ppn=16 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1:ppn=16 Resource_List.vmem=74737mb Resource_List.walltime=72:00:00 session=117962 end=1406019603 Exit_status=271 resources_used.cput=00:00:25 resources_used.mem=5316kb resources_used.vmem=78756kb resources_used.walltime=00:01:14" :: Text
+            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
+                { torqueDatestamp = "07/22/2014 11:00:03"
+                , name = TorqueJobName {number = 621344, array_id = Nothing, master = "master15", cluster = "delcatty"}
+                , user = "vsc40035"
+                , group = "vsc40035"
+                , jobname = "NB03N"
+                , queue = "long"
+                , startCount = Nothing
+                , owner = "vsc40035@gligar03.gligar.gent.vsc"
+                , session = 117962
+                , times = TorqueJobTime
+                    { ctime = 1406019524
+                    , qtime = 1406019524
+                    , etime = 1406019524
+                    , startTime = 1406019532
+                    , endTime = Just 1406019603
+                    }
+                , execHost = [TorqueExecHost {name = "node2142.delcatty.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , cputime = Just TorqueWalltime {days = 0, hours = 72, minutes = 0, seconds = 0}
+                    , neednodes = TSN TorqueJobShortNode {number = 1, ppn = Just 16}
+                    , nice = Just 0
+                    , nodeCount = 1
+                    , nodes = TSN TorqueJobShortNode {number = 1, ppn = Just 16}
+                    , select = Nothing
+                    , qos = Nothing
+                    , pmem = Nothing
+                    , vmem = Just 78367424512
+                    , pvmem = Nothing
+                    , walltime = TorqueWalltime {days = 0, hours = 72, minutes = 0, seconds = 0}
+                    }
+                , resourceUsage = TorqueResourceUsage
+                    { cputime = 25
+                    , energy = Nothing
+                    , mem = 5443584
+                    , vmem = 80646144
+                    , walltime = TorqueWalltime {days = 0, hours = 0, minutes = 1, seconds = 14}
+                    }
+                , totalExecutionSlots = Nothing
+                , uniqueNodeCount = Nothing
+                , exitStatus = 271
                 , torqueEntryType = TorqueExitEntry
             })
 
@@ -497,6 +555,7 @@ spec = do
                     , advres        = Nothing
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
+                    , cputime = Nothing
                     , neednodes = TSN
                         TorqueJobShortNode
                             { number = 1

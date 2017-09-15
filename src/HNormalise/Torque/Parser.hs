@@ -39,7 +39,7 @@ module HNormalise.Torque.Parser where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative         ((<|>))
-import           Control.Monad               (join, liftM)
+import           Control.Monad               (join)
 import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
 import           Data.Char                   (isDigit, isSpace)
@@ -113,7 +113,7 @@ parseTorqueJobName = do
     return TorqueJobName { number = n, array_id = a, master = m, cluster = c}
   where
     parseArrayId :: Parser (Maybe Integer)
-    parseArrayId = liftM join $ maybeOption $ do
+    parseArrayId = fmap join $ maybeOption $ do
         char '['
         i <- maybeOption decimal
         char ']'
@@ -153,6 +153,7 @@ Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.no
 
 -- 2014 logs
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.cput Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
 -}
 -- | 'parseTorqueResourceRequest' parses all key value pairs denoting resources requested.
 -- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur, the last
@@ -164,6 +165,7 @@ parseTorqueResourceRequest =
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.advres"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.naccesspolicy"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.ncpus"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.cput=" *> parseTorqueWalltime))
         <||> skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.nice"))
         <||> skipSpace *> kvNumParser "Resource_List.nodect"

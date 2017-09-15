@@ -85,7 +85,7 @@ data TorqueExecHost = TorqueExecHost
     } deriving (Show, Eq, Generic)
 
 instance Ord TorqueExecHost where
-    compare (TorqueExecHost t1 _) (TorqueExecHost t2 _) = compare t1 t2 
+    compare (TorqueExecHost t1 _) (TorqueExecHost t2 _) = compare t1 t2
 
 --------------------------------------------------------------------------------
 data TorqueWalltime = TorqueWalltime
@@ -101,6 +101,7 @@ data TorqueResourceRequest = TorqueResourceRequest
     , advres        :: !(Maybe Text)
     , naccesspolicy :: !(Maybe Text)
     , ncpus         :: !(Maybe Int)
+    , cputime       :: !(Maybe TorqueWalltime)
     , neednodes     :: !TorqueJobNode
     , nice          :: !(Maybe Int)
     , nodeCount     :: !Int

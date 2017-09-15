@@ -39,6 +39,7 @@ module HNormalise.Torque.Parser where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative         ((<|>))
+import           Control.Monad               (join, liftM)
 import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
 import           Data.Char                   (isDigit, isSpace)
@@ -112,9 +113,9 @@ parseTorqueJobName = do
     return TorqueJobName { number = n, array_id = a, master = m, cluster = c}
   where
     parseArrayId :: Parser (Maybe Integer)
-    parseArrayId = try $ maybeOption $ do
+    parseArrayId = liftM join $ maybeOption $ do
         char '['
-        i <- decimal
+        i <- maybeOption decimal
         char ']'
         return i
 

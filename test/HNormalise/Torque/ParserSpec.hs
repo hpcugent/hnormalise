@@ -440,6 +440,15 @@ spec = do
                 , torqueEntryType = TorqueQueueEntry
                 })
 
+        it "parse job queue entry - torque 4.x" $ do
+            let s = "torque: 12/31/2014 15:51:48;Q;1166970[].somemaster.somecluster.gent.vsc;queue=long" :: Text
+            s ~> parseTorqueQueue `shouldParse`("torque", TorqueQueue TorqueJobQueue
+                { torqueDatestamp = "12/31/2014 15:51:48"
+                , name = TorqueJobName { number = 1166970, array_id = Nothing, master = "somemaster", cluster = "somecluster"}
+                , queue = "long"
+                , torqueEntryType = TorqueQueueEntry
+                })
+
     describe "parseTorqueDelete" $
         it "parse job delete entry" $ do
             let s = "torque: 06/28/2017 15:44:02;D;81.mymaster.somecluster.somedomain;requestor=vsc40075@submitnode02.submitnode.somedomain" :: Text

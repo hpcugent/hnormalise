@@ -138,6 +138,7 @@ data TorqueJobExit = TorqueJobExit
     , name                :: !TorqueJobName
     , user                :: !Text
     , group               :: !Text
+    , account             :: !(Maybe Text)
     , jobname             :: !Text
     , queue               :: !Text
     , startCount          :: !(Maybe Int)
@@ -175,6 +176,7 @@ data TorqueJobStart = TorqueJobStart
     , name             :: !TorqueJobName
     , user             :: !Text
     , group            :: !Text
+    , account          :: !(Maybe Text)
     , jobname          :: !Text
     , queue            :: !Text
     , owner            :: !Text

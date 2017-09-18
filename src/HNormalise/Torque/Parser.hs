@@ -180,7 +180,7 @@ parseTorqueResourceRequest =
 --------------------------------------------------------------------------------
 -- | 'parseTorqueCpuTime' parses the cpu time spent
 -- This value is either given in seconds or in a torque timestamp format
--- We always conver the value to seconds if needed
+-- We always convert the value to seconds if needed
 parseTorqueCpuTime :: Parser Integer
 parseTorqueCpuTime =
     try (parseTorqueWalltime >>= \(TorqueWalltime d h m s) -> return $ fromIntegral (((d*24+h)*60+m)*60+s)) <|> decimal
@@ -270,6 +270,7 @@ parseTorqueExit = do
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
+    account <- skipSpace *> maybeOption (kvTextParser "account")
     jobname <- skipSpace *> kvTextParser "jobname"
     queue <- skipSpace *> kvTextParser "queue"
     ctime <- skipSpace *> kvNumParser "ctime"
@@ -292,6 +293,7 @@ parseTorqueExit = do
         , name = name
         , user = user
         , group = group
+        , account = account
         , jobname = jobname
         , queue = queue
         , startCount = start_count
@@ -364,6 +366,7 @@ parseTorqueStart = do
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
+    account <- skipSpace *> maybeOption (kvTextParser "account")
     jobname <- skipSpace *> kvTextParser "jobname"
     queue <- skipSpace *> kvTextParser "queue"
     ctime <- skipSpace *> kvNumParser "ctime"
@@ -379,6 +382,7 @@ parseTorqueStart = do
         , name = name
         , user = user
         , group = group
+        , account = account
         , jobname = jobname
         , queue = queue
         , owner = owner

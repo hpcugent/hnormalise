@@ -249,7 +249,7 @@ main = do
 
     -- For now, we only support input and output configurations of the same type,
     -- i.e., both TCP, both ZeroMQ, etc.
-    messageCount <- newEmptyMVar
+    messageCount <- newMVar (0,0)
     case connectionType config of
         TCP    -> void $ runTCPConnection options config messageCount
         ZeroMQ -> do

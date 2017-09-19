@@ -128,7 +128,7 @@ messageSink success failure messageCount = loop
     increaseCount (s, f) =
         liftIO $ do
             (s', f') <- takeMVar messageCount
-            when (s' + f' `mod` 20000 == 0) $ do
+            when ((s' + f') `mod` 20000 == 0) $ do
                 epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
                 putStrLn (show epoch_int ++ " - message count: " ++ show (s' + f'))
             putMVar messageCount (s' + s, f' + f)

@@ -26,6 +26,8 @@ import           Data.Maybe                   (fromJust)
 import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as TE
+import           Data.Time
+import           Data.Time.Format
 import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
@@ -127,7 +129,8 @@ messageSink success failure messageCount = loop
         liftIO $ do
             (s', f') <- takeMVar messageCount
             putMVar messageCount (s' + s, f' + f)
-            when (s' + f' `mod` 100000 == 0) $ putStrLn ("message count: " ++ show (s' + f'))
+            epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
+            when (s' + f' `mod` 20000 == 0) $ putStrLn (show epoch_int ++ " - message count: " ++ show (s' + f'))
 
 --------------------------------------------------------------------------------
 -- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure

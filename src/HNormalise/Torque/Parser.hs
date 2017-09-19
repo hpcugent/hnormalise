@@ -122,6 +122,7 @@ parseTorqueJobName = do
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueResourceNodeList' parses a list of FQDN nodes and their ppn or a nodecount and its ppn
+-- FIXME: Add support for resource lists of the form Resource_List.neednodes=3:ppn=8+1:ppn=1
 parseTorqueResourceNodeList :: Parser TorqueJobNode
 parseTorqueResourceNodeList = do
     c <- peekChar'

@@ -5,7 +5,7 @@ module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
-import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, MVar)
+import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
 import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Loops          (whileM_, untilM_)
@@ -107,7 +107,7 @@ handler s_interrupted = do
 
 --------------------------------------------------------------------------------
 -- | 'messageSink' yields the parsed JSON downstream, or if parsing fails, yields the original message downstream
-messageSink success failure = loop
+messageSink success failure messageCount = loop
   where
     loop = do
         v <- await
@@ -115,13 +115,19 @@ messageSink success failure = loop
             Just (Transformed json) -> do
                 yield json $$ success
                 yield (SBS.pack "\n") $$ success
+                increaseCount (1, 0)
                 loop
             Just (Original l) -> do
                 yield l $$ failure
                 yield (SBS.pack "\n") $$ failure
+                increaseCount (1, 0)
                 loop
             Nothing -> return ()
-
+    increaseCount (s, f) =
+        liftIO $ do
+            (s', f') <- takeMVar messageCount
+            putMVar messageCount (s' + s, f' + f)
+            when (s' + f' `mod` 100000 == 0) $ putStrLn ("message count: " ++ show (s' + f'))
 
 --------------------------------------------------------------------------------
 -- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure
@@ -144,7 +150,7 @@ mySink = loop
             Nothing -> return ()
 
 --------------------------------------------------------------------------------
-runTCPConnection options config = do
+runTCPConnection options config messageCount = do
     let listenHost = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> p)
     runTCPServer (serverSettings listenPort "*") $ \appData -> do
@@ -160,7 +166,7 @@ runTCPConnection options config = do
                     runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
                         appSource appData
                             $= normalisationConduit options config
-                            $$ messageSink (appSink successServer) (appSink failServer)
+                            $$ messageSink (appSink successServer) (appSink failServer) messageCount
             Just testSinkFileName -> runResourceT $ appSource appData
                 $= normalisationConduit options config
                 $= mySink
@@ -188,7 +194,7 @@ normalisationConduit options config =
 
 
 --------------------------------------------------------------------------------
-runZeroMQConnection options config s_interrupted verbose' = do
+runZeroMQConnection options config s_interrupted messageCount verbose' = do
     let fs = fields config
     let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
@@ -213,7 +219,7 @@ runZeroMQConnection options config s_interrupted verbose' = do
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
                         liftIO $ zmqInterruptibleSource s_interrupted s
                             $= normalisationConduit options config
-                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])
+                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount
 
 {-      -- FIXME: This does not work, gives a type error
         Just testSinkFileName ->
@@ -243,8 +249,9 @@ main = do
 
     -- For now, we only support input and output configurations of the same type,
     -- i.e., both TCP, both ZeroMQ, etc.
+    messageCount <- newEmptyMVar
     case connectionType config of
-        TCP    -> void $ runTCPConnection options config
+        TCP    -> void $ runTCPConnection options config messageCount
         ZeroMQ -> do
             verbose' "ZeroMQ connections"
             s_interrupted <- newEmptyMVar
@@ -252,6 +259,6 @@ main = do
             verbose' "SIGINT handler installed"
             installHandler sigTERM (CatchOnce $ handler s_interrupted) Nothing
             verbose' "SIGTERM handler installed"
-            runZeroMQConnection options config s_interrupted verbose'
+            runZeroMQConnection options config s_interrupted messageCount verbose'
 
     exitSuccess

@@ -130,7 +130,7 @@ messageSink success failure messageCount = loop
             (s', f') <- takeMVar messageCount
             when ((s' + f') `mod` 10000 == 0) $ do
                 epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
-                putStrLn (show epoch_int ++ " - message count: " ++ show (s' + f') ++ "(succes: " ++ show s' ++ ", fail: " ++ show f' ++ ")")
+                printf "%ld - message count: %10d (success: %10d, fail: %10d)\n" epoch_int (s' + f') s' f'
             putMVar messageCount (s' + s, f' + f)
 
 --------------------------------------------------------------------------------
@@ -253,7 +253,7 @@ main = do
 
     -- For now, we only support input and output configurations of the same type,
     -- i.e., both TCP, both ZeroMQ, etc.
-    messageCount <- newMVar (0,0)
+    messageCount <- newMVar ((0,0) :: (Int, Int))
     case connectionType config of
         TCP    -> void $ runTCPConnection options config messageCount
         ZeroMQ -> do

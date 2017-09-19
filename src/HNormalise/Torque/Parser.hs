@@ -166,6 +166,8 @@ parseTorqueResourceRequest =
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.naccesspolicy"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.ncpus"))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.cput=" *> parseTorqueWalltime))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.prologue"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.epilogue"))
         <||> skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.nice"))
         <||> skipSpace *> kvNumParser "Resource_List.nodect"

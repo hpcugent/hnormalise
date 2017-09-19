@@ -147,6 +147,8 @@ spec = do
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
                 , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -167,6 +169,8 @@ spec = do
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
                 , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -187,6 +191,8 @@ spec = do
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
                 , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -207,6 +213,8 @@ spec = do
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
                 , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -227,6 +235,8 @@ spec = do
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
                 , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
@@ -247,6 +257,8 @@ spec = do
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
                 , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
                 , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
                 , nice          = Just 0
                 , nodeCount     = 1
@@ -328,6 +340,8 @@ spec = do
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
                     , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
                     , neednodes = TFN
                         [ TorqueJobFQNode
                             { name = "node2801.somecluster.somedomain"
@@ -401,6 +415,8 @@ spec = do
                     , naccesspolicy = Nothing
                     , ncpus = Nothing
                     , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
                     , neednodes = TSN TorqueJobShortNode
                         { number = 1
                         , ppn = Just 16
@@ -458,6 +474,8 @@ spec = do
                     , naccesspolicy = Nothing
                     , ncpus = Nothing
                     , cputime = Just TorqueWalltime {days = 0, hours = 72, minutes = 0, seconds = 0}
+                    , prologue = Nothing
+                    , epilogue = Nothing
                     , neednodes = TSN TorqueJobShortNode {number = 1, ppn = Just 16}
                     , nice = Just 0
                     , nodeCount = 1
@@ -485,7 +503,49 @@ spec = do
         it "parse torque job exit with account field" $ do
             let s = "torque: 08/03/2017 05:07:22;E;268279.master21.swalot.gent.vsc;user=vsc41771 group=vsc41771 account=lt1_2017-43 jobname=/user/scratch/gent/gvo000/gvo00003/vsc41771/amsterdam/restrained_md/test_withoutplumed queue=short ctime=1501686015 qtime=1501686015 etime=1501686015 start=1501686467 owner=vsc41771@gligar01.gligar.gent.vsc exec_host=node2612.swalot.gent.vsc/0-19+node2681.swalot.gent.vsc/0-19 Resource_List.neednodes=2:ppn=20 Resource_List.nice=0 Resource_List.nodect=2 Resource_List.nodes=2:ppn=20 Resource_List.vmem=143425316860b Resource_List.walltime=11:59:00 session=7473 total_execution_slots=40 unique_node_count=2 end=1501729642 Exit_status=-11 resources_used.cput=1725002 resources_used.energy_used=0 resources_used.mem=16209816kb resources_used.vmem=38821964kb resources_used.walltime=11:59:30" :: Text
             s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
-                {torqueDatestamp = "08/03/2017 05:07:22", name = TorqueJobName {number = 268279, array_id = Nothing, master = "master21", cluster = "swalot"}, user = "vsc41771", group = "vsc41771", account = Just "lt1_2017-43", jobname = "/user/scratch/gent/gvo000/gvo00003/vsc41771/amsterdam/restrained_md/test_withoutplumed", queue = "short", startCount = Nothing, owner = "vsc41771@gligar01.gligar.gent.vsc", session = 7473, times = TorqueJobTime {ctime = 1501686015, qtime = 1501686015, etime = 1501686015, startTime = 1501686467, endTime = Just 1501729642}, execHost = [TorqueExecHost {name = "node2612.swalot.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]},TorqueExecHost {name = "node2681.swalot.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]}], resourceRequest = TorqueResourceRequest {mem = Nothing, advres = Nothing, naccesspolicy = Nothing, ncpus = Nothing, cputime = Nothing, neednodes = TSN (TorqueJobShortNode {number = 2, ppn = Just 20}), nice = Just 0, nodeCount = 2, nodes = TSN (TorqueJobShortNode {number = 2, ppn = Just 20}), select = Nothing, qos = Nothing, pmem = Nothing, vmem = Just 143425316860, pvmem = Nothing, walltime = TorqueWalltime {days = 0, hours = 11, minutes = 59, seconds = 0}}, resourceUsage = TorqueResourceUsage {cputime = 1725002, energy = Just 0, mem = 16598851584, vmem = 39753691136, walltime = TorqueWalltime {days = 0, hours = 11, minutes = 59, seconds = 30}}, totalExecutionSlots = Just 40, uniqueNodeCount = Just 2, exitStatus = -11, torqueEntryType = TorqueExitEntry})
+                { torqueDatestamp = "08/03/2017 05:07:22"
+                , name = TorqueJobName {number = 268279, array_id = Nothing, master = "master21", cluster = "swalot"}
+                , user = "vsc41771"
+                , group = "vsc41771"
+                , account = Just "lt1_2017-43"
+                , jobname = "/user/scratch/gent/gvo000/gvo00003/vsc41771/amsterdam/restrained_md/test_withoutplumed"
+                , queue = "short"
+                , startCount = Nothing
+                , owner = "vsc41771@gligar01.gligar.gent.vsc"
+                , session = 7473
+                , times = TorqueJobTime {ctime = 1501686015, qtime = 1501686015, etime = 1501686015, startTime = 1501686467, endTime = Just 1501729642}
+                , execHost = [TorqueExecHost {name = "node2612.swalot.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]},TorqueExecHost {name = "node2681.swalot.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]}]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = TSN TorqueJobShortNode {number = 2, ppn = Just 20}
+                    , nice = Just 0
+                    , nodeCount = 2
+                    , nodes = TSN TorqueJobShortNode {number = 2, ppn = Just 20}
+                    , select = Nothing
+                    , qos = Nothing
+                    , pmem = Nothing
+                    , vmem = Just 143425316860
+                    , pvmem = Nothing
+                    , walltime = TorqueWalltime {days = 0, hours = 11, minutes = 59, seconds = 0}
+                }
+                , resourceUsage = TorqueResourceUsage
+                    { cputime = 1725002
+                    , energy = Just 0
+                    , mem = 16598851584
+                    , vmem = 39753691136
+                    , walltime = TorqueWalltime {days = 0, hours = 11, minutes = 59, seconds = 30}
+                    }
+                , totalExecutionSlots = Just 40
+                , uniqueNodeCount = Just 2
+                , exitStatus = -11
+                , torqueEntryType = TorqueExitEntry
+                })
 
     describe "parseTorqueQueue" $ do
         it "parse job queue entry" $ do
@@ -565,6 +625,8 @@ spec = do
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
                     , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
                     , neednodes = TSN
                         TorqueJobShortNode
                             { number = 1

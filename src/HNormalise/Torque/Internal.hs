@@ -102,6 +102,8 @@ data TorqueResourceRequest = TorqueResourceRequest
     , naccesspolicy :: !(Maybe Text)
     , ncpus         :: !(Maybe Int)
     , cputime       :: !(Maybe TorqueWalltime)
+    , prologue         :: !(Maybe Text)
+    , epilogue         :: !(Maybe Text)
     , neednodes     :: !TorqueJobNode
     , nice          :: !(Maybe Int)
     , nodeCount     :: !Int

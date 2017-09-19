@@ -122,7 +122,7 @@ messageSink success failure messageCount = loop
             Just (Original l) -> do
                 yield l $$ failure
                 yield (SBS.pack "\n") $$ failure
-                increaseCount (1, 0)
+                increaseCount (0, 1)
                 loop
             Nothing -> return ()
     increaseCount (s, f) =

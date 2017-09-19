@@ -265,10 +265,18 @@ parseTorqueAccountingDatestamp tag = do
     return torqueDatestamp
 
 --------------------------------------------------------------------------------
--- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
-parseTorqueExit :: Parser (Text, TorqueParseResult)
-parseTorqueExit = do
-    torqueDatestamp <- parseTorqueAccountingDatestamp ";E;"
+-- | 'parseCommonAccountingInfo' parser the initial part that is common between start and exit lines
+parseCommonAccountingInfo :: Parser
+    (TorqueJobName
+    , Text
+    , Text
+    , Maybe Text
+    , Text
+    , Text
+    , Integer
+    , Integer
+    , Integer)
+parseCommonAccountingInfo = do
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
@@ -278,11 +286,30 @@ parseTorqueExit = do
     ctime <- skipSpace *> kvNumParser "ctime"
     qtime <- skipSpace *> kvNumParser "qtime"
     etime <- skipSpace *> kvNumParser "etime"
-    start_count <- maybeOption $ skipSpace *> kvNumParser "start_count"
+    return (name, user, group, account, jobname, queue, ctime, qtime, etime)
+
+--------------------------------------------------------------------------------
+-- | 'parseCommonStartInfo' parses the start information that is common between start and exit lines
+parseCommonStartInfo :: Parser
+    ( Integer
+    , Text
+    , [TorqueExecHost]
+    , TorqueResourceRequest)
+parseCommonStartInfo = do
     start <- skipSpace *> kvNumParser "start"
     owner <- skipSpace *> kvTextParser "owner"
     exec_host <- skipSpace *> parseTorqueHostList
     request <- parseTorqueResourceRequest
+    return (start, owner, exec_host, request)
+
+--------------------------------------------------------------------------------
+-- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
+parseTorqueExit :: Parser (Text, TorqueParseResult)
+parseTorqueExit = do
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";E;"
+    (name, user, group, account, jobname, queue, ctime, qtime, etime) <- parseCommonAccountingInfo
+    start_count <- maybeOption $ skipSpace *> kvNumParser "start_count"
+    (start, owner, exec_host, request) <- parseCommonStartInfo
     session <- skipSpace *> kvNumParser "session"
     total_execution_slots <- skipSpace *> maybeOption (kvNumParser "total_execution_slots")
     unique_node_count <- skipSpace *> maybeOption (kvNumParser "unique_node_count")
@@ -365,19 +392,8 @@ parseTorqueQueue = do
 parseTorqueStart :: Parser (Text, TorqueParseResult)
 parseTorqueStart = do
     torqueDatestamp <- parseTorqueAccountingDatestamp ";S;"
-    name <- parseTorqueJobName
-    user <- kvTextParser "user"
-    group <- skipSpace *> kvTextParser "group"
-    account <- skipSpace *> maybeOption (kvTextParser "account")
-    jobname <- skipSpace *> kvTextParser "jobname"
-    queue <- skipSpace *> kvTextParser "queue"
-    ctime <- skipSpace *> kvNumParser "ctime"
-    qtime <- skipSpace *> kvNumParser "qtime"
-    etime <- skipSpace *> kvNumParser "etime"
-    start <- skipSpace *> kvNumParser "start"
-    owner <- skipSpace *> kvTextParser "owner"
-    exec_host <- skipSpace *> parseTorqueHostList
-    request <- parseTorqueResourceRequest
+    (name, user, group, account, jobname, queue, ctime, qtime, etime) <- parseCommonAccountingInfo
+    (start, owner, exec_host, request) <- parseCommonStartInfo
 
     return ("torque", TorqueStart TorqueJobStart
         { torqueDatestamp = torqueDatestamp

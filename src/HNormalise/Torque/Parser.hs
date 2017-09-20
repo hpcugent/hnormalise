@@ -135,8 +135,8 @@ parseTorqueResourceNodeList = do
         ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
         return $ TSN TorqueJobShortNode { number = number, ppn = ppn }
     else TFN <$> sepBy (do
-        fqdn <- Data.Attoparsec.Text.takeWhile (/= ':')
-        ppn <- char ':' *> kvNumParser "ppn"
+        fqdn <- Data.Attoparsec.Text.takeWhile (\c -> c /= ':' && c /= ' ')
+        ppn <- maybeOption $ char ':' *> kvNumParser "ppn"
         return TorqueJobFQNode { name = fqdn, ppn = ppn}) (char '+')
 
 --------------------------------------------------------------------------------
@@ -165,6 +165,11 @@ Resource_List.cput Resource_List.neednodes Resource_List.nice Resource_List.node
 -- 1.5 years of data we have were used to make an educated guess as to which keys might appear and in what order
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
 parseTorqueResourceRequest =
+    -- Resource_List.neednodes=node047.cvos.cluster
+    -- Resource_List.nice=0
+    -- Resource_List.nodect=1
+    -- Resource_List.nodes=1
+    -- Resource_List.walltime=01:00:00
     permute $ TorqueResourceRequest
         <$?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.advres"))

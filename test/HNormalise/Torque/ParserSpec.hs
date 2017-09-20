@@ -38,14 +38,14 @@
 module HNormalise.Torque.ParserSpec (main, spec) where
 
 --------------------------------------------------------------------------------
-import           Data.Text                 (Text)
-import qualified Data.Text.Read            as TR
+import           Data.Text                  (Text)
+import qualified Data.Text.Read             as TR
 import           Test.Hspec
 import           Test.Hspec.Attoparsec
 
 --------------------------------------------------------------------------------
-import           HNormalise.Torque.Parser
 import           HNormalise.Torque.Internal
+import           HNormalise.Torque.Parser
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -270,6 +270,27 @@ spec = do
                 , pvmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 5, minutes = 0, seconds = 0 }
                 }
+        it "parse resource list with FQDN node and no ppn specified" $ do
+            let s = "Resource_List.neednodes=somenode.somecluster.somedomain Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1 Resource_List.walltime=01:00:00" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem = Nothing
+                , advres = Nothing
+                , naccesspolicy = Nothing
+                , ncpus = Nothing
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes = TFN [TorqueJobFQNode {name = "somenode.somecluster.somedomain", ppn = Nothing}]
+                , nice = Just 0
+                , nodeCount = 1
+                , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
+                , select = Nothing
+                , qos = Nothing
+                , pmem = Nothing
+                , vmem = Nothing
+                , pvmem = Nothing
+                , walltime = TorqueWalltime {days = 0, hours = 1, minutes = 0, seconds = 0}
+            }
 
     describe "parseTorqueHostList" $ do
         it "parse comma separated list of single cores" $ do
@@ -345,11 +366,11 @@ spec = do
                     , neednodes = TFN
                         [ TorqueJobFQNode
                             { name = "node2801.somecluster.somedomain"
-                            , ppn  = 2
+                            , ppn  = Just 2
                             }
                         , TorqueJobFQNode
                             { name = "node2803.somecluster.somedomain"
-                            , ppn  = 2
+                            , ppn  = Just 2
                             }
                         ]
                     , nice      = Just 0
@@ -357,11 +378,11 @@ spec = do
                     , nodes = TFN
                         [ TorqueJobFQNode
                             { name = "node2801.somecluster.somedomain"
-                            , ppn  = 2
+                            , ppn  = Just 2
                             }
                         , TorqueJobFQNode
                             { name = "node2803.somecluster.somedomain"
-                            , ppn  = 2
+                            , ppn  = Just 2
                             }
                         ]
                     , select        = Nothing
@@ -594,7 +615,7 @@ spec = do
                 , torqueEntryType = TorqueAbortEntry
                 })
 
-    describe "parseTorqueStart" $
+    describe "parseTorqueStart" $ do
         it "parse job start" $ do
             let s = "torque: 06/20/2017 11:24:49;S;63.mymaster.somecluster.somedomain;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@submitnode01.submitnode.somedomain exec_host=node2801.somecluster.somedomain/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text
             s ~> parseTorqueStart `shouldParse` ("torque", TorqueStart TorqueJobStart
@@ -648,3 +669,37 @@ spec = do
                     }
                 , torqueEntryType = TorqueStartEntry
                 })
+        it "parse job start - torque legacy 2009" $ do
+            let s = "torque: 02/23/2009 11:48:35;S;102355.master.cvos.cluster;user=vsc40014 group=vsc40014 jobname=MtChr5_9036000_rmwrap.sh queue=short_eth ctime=1235384686 qtime=1235384686 etime=1235384686 start=1235386115 owner=vsc40014@gengar1.cvos.cluster exec_host=node047.cvos.cluster/4 Resource_List.neednodes=node047.cvos.cluster Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1 Resource_List.walltime=01:00:00" :: Text
+            s ~> parseTorqueStart `shouldParse` ("torque", TorqueStart TorqueJobStart
+                { torqueDatestamp = "02/23/2009 11:48:35"
+                , name = TorqueJobName {number = 102355, array_id = Nothing, master = "master", cluster = "cvos"}
+                , user = "vsc40014"
+                , group = "vsc40014"
+                , account = Nothing
+                , jobname = "MtChr5_9036000_rmwrap.sh"
+                , queue = "short_eth"
+                , owner = "vsc40014@gengar1.cvos.cluster"
+                , times = TorqueJobTime {ctime = 1235384686, qtime = 1235384686, etime = 1235384686, startTime = 1235386115, endTime = Nothing}
+                , execHost = [TorqueExecHost {name = "node047.cvos.cluster", cores = [4]}]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = TFN [TorqueJobFQNode {name = "node047.cvos.cluster", ppn = Nothing}]
+                    , nice = Just 0
+                    , nodeCount = 1
+                    , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
+                    , select = Nothing
+                    , qos = Nothing
+                    , pmem = Nothing
+                    , vmem = Nothing
+                    , pvmem = Nothing
+                    , walltime = TorqueWalltime {days = 0, hours = 1, minutes = 0, seconds = 0}
+                    }
+                , torqueEntryType = TorqueStartEntry
+            })

@@ -70,7 +70,7 @@ data TorqueJobShortNode = TorqueJobShortNode
 --------------------------------------------------------------------------------
 data TorqueJobFQNode = TorqueJobFQNode
     { name :: !Text
-    , ppn  :: !Int
+    , ppn  :: !(Maybe Int)
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------

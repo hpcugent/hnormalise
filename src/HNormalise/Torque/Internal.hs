@@ -159,8 +159,8 @@ data TorqueJobExit = TorqueJobExit
     , execHost            :: ![TorqueExecHost]
     , resourceRequest     :: !TorqueResourceRequest
     , resourceUsage       :: !TorqueResourceUsage
-    , totalExecutionSlots :: !(Maybe Int)
-    , uniqueNodeCount     :: !(Maybe Int)
+    , totalExecutionSlots :: !Int
+    , uniqueNodeCount     :: !Int
     , exitStatus          :: !Int
     , torqueEntryType     :: TorqueEntryType
     } deriving (Show, Eq, Generic)
@@ -168,7 +168,7 @@ data TorqueJobExit = TorqueJobExit
 --------------------------------------------------------------------------------
 data TorqueJobName = TorqueJobName
     { number   :: !Integer
-    , array_id :: !(Maybe Integer)
+    , arrayId :: !(Maybe Integer)
     , master   :: !Text
     , cluster  :: !Text
     } deriving (Show, Eq, Generic)

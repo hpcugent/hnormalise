@@ -44,6 +44,7 @@ import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
 import           Data.Char                   (isDigit, isSpace)
 import qualified Data.Map                    as M
+import           Data.Maybe                  (fromMaybe)
 import           Data.List                   (concatMap, groupBy, sort)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
@@ -110,7 +111,7 @@ parseTorqueJobName = do
     m <- char '.' *> takeTill (== '.')
     c <- char '.' *> takeTill (== '.')
     manyTill anyChar (lookAhead ";") *> char ';'
-    return TorqueJobName { number = n, array_id = a, master = m, cluster = c}
+    return TorqueJobName { number = n, arrayId = a, master = m, cluster = c}
   where
     parseArrayId :: Parser (Maybe Integer)
     parseArrayId = try parseArrayIdBracket <|> parseArrayIdDash
@@ -351,11 +352,12 @@ parseTorqueExit = do
         , execHost = exec_host
         , resourceRequest = request
         , resourceUsage = usage
-        , totalExecutionSlots = total_execution_slots
-        , uniqueNodeCount = unique_node_count
+        , totalExecutionSlots = fromMaybe (compute_total_execution_slots exec_host) total_execution_slots
+        , uniqueNodeCount = fromMaybe (length exec_host) unique_node_count
         , exitStatus = exit_status
         , torqueEntryType = TorqueExitEntry
         })
+  where compute_total_execution_slots = sum . map (\(TorqueExecHost _ cs) -> length cs)
 
 --------------------------------------------------------------------------------
 -- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x

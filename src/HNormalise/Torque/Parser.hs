@@ -161,15 +161,11 @@ Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.no
 Resource_List.cput Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
 -}
 -- | 'parseTorqueResourceRequest' parses all key value pairs denoting resources requested.
--- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur, the last
--- 1.5 years of data we have were used to make an educated guess as to which keys might appear and in what order
+-- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur,
+-- the guesses as to the most common ordering and the mandatory fields is based on 5 years of log data from Torque
+-- 4.x to 6.0
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
 parseTorqueResourceRequest =
-    -- Resource_List.neednodes=node047.cvos.cluster
-    -- Resource_List.nice=0
-    -- Resource_List.nodect=1
-    -- Resource_List.nodes=1
-    -- Resource_List.walltime=01:00:00
     permute $ TorqueResourceRequest
         <$?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.advres"))
@@ -178,7 +174,7 @@ parseTorqueResourceRequest =
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.cput=" *> parseTorqueWalltime))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.prologue"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.epilogue"))
-        <||> skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.nice"))
         <||> skipSpace *> kvNumParser "Resource_List.nodect"
         <||> skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList

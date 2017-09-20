@@ -113,11 +113,15 @@ parseTorqueJobName = do
     return TorqueJobName { number = n, array_id = a, master = m, cluster = c}
   where
     parseArrayId :: Parser (Maybe Integer)
-    parseArrayId = fmap join $ maybeOption $ do
-        char '['
-        i <- maybeOption decimal
-        char ']'
-        return i
+    parseArrayId = try parseArrayIdBracket <|> parseArrayIdDash
+      where parseArrayIdBracket = do
+                char '['
+                i <- maybeOption decimal
+                char ']'
+                return i
+            parseArrayIdDash = maybeOption $ do
+                char '-'
+                decimal
 
 
 --------------------------------------------------------------------------------

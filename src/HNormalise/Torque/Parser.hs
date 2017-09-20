@@ -43,9 +43,9 @@ import           Control.Monad               (join)
 import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
 import           Data.Char                   (isDigit, isSpace)
+import           Data.List                   (concatMap, groupBy, sort)
 import qualified Data.Map                    as M
 import           Data.Maybe                  (fromMaybe)
-import           Data.List                   (concatMap, groupBy, sort)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 import           Text.ParserCombinators.Perm (permute, (<$$>), (<$?>), (<|?>),

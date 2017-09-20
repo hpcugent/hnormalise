@@ -83,8 +83,8 @@ data LoggingConfig = LoggingConfig
 
 --------------------------------------------------------------------------------
 data TcpPortConfig = TcpPortConfig
-    { host   :: !(Maybe Text)
-    , port   :: !(Maybe Int)
+    { host :: !(Maybe Text)
+    , port :: !(Maybe Int)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -127,8 +127,8 @@ instance Monoid ZeroMQPortConfig where
 
 --------------------------------------------------------------------------------
 data ZeroMQOutputConfig = ZeroMQOutputConfig
-    { success  :: !(Maybe ZeroMQPortConfig)
-    , failure  :: !(Maybe ZeroMQPortConfig)
+    { success :: !(Maybe ZeroMQPortConfig)
+    , failure :: !(Maybe ZeroMQPortConfig)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -141,8 +141,8 @@ instance Monoid ZeroMQOutputConfig where
 
 --------------------------------------------------------------------------------
 data InputConfig = InputConfig
-    { tcp     :: !(Maybe TcpPortConfig)
-    , zeromq  :: !(Maybe ZeroMQPortConfig)
+    { tcp    :: !(Maybe TcpPortConfig)
+    , zeromq :: !(Maybe ZeroMQPortConfig)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -155,8 +155,8 @@ instance Monoid InputConfig where
 
 --------------------------------------------------------------------------------
 data OutputConfig = OutputConfig
-    { tcp     :: !(Maybe TcpOutputConfig)
-    , zeromq  :: !(Maybe ZeroMQOutputConfig)
+    { tcp    :: !(Maybe TcpOutputConfig)
+    , zeromq :: !(Maybe ZeroMQOutputConfig)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -192,9 +192,9 @@ defaultOutputConfig = OutputConfig
 --------------------------------------------------------------------------------
 data Config = Config
     { logging :: !(Maybe LoggingConfig)
-    , input  :: !(Maybe InputConfig)
-    , output :: !(Maybe OutputConfig)
-    , fields :: !(Maybe [(Text, Text)])
+    , input   :: !(Maybe InputConfig)
+    , output  :: !(Maybe OutputConfig)
+    , fields  :: !(Maybe [(Text, Text)])
     } deriving (Show)
 
 --------------------------------------------------------------------------------

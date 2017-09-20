@@ -39,16 +39,16 @@
 module HNormalise.Parser where
 
 --------------------------------------------------------------------------------
-import           Control.Applicative        ((<|>))
-import           Data.Aeson                 (encode)
+import           Control.Applicative         ((<|>))
+import           Data.Aeson                  (encode)
 import           Data.Attoparsec.Text
 import           Data.Attoparsec.Time
-import qualified Data.ByteString.Char8      as SBS
-import qualified Data.ByteString.Lazy.Char8 as BS
+import qualified Data.ByteString.Char8       as SBS
+import qualified Data.ByteString.Lazy.Char8  as BS
 import           Data.Char
-import           Data.Text                  (Text, empty)
-import qualified Data.Text                  as T
-import qualified Data.Text.Encoding         as TE
+import           Data.Text                   (Text, empty)
+import qualified Data.Text                   as T
+import qualified Data.Text.Encoding          as TE
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Parser
 import           HNormalise.Huppel.Parser
@@ -80,11 +80,11 @@ parseMessage =
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced
 getJsonKey :: ParseResult  -- ^ Wrapped result for which we need to get a key
            -> Text         -- ^ Key for use in the JSON encoding of the result
-getJsonKey (PR_Huppel _) = "huppel"
-getJsonKey (PR_Lmod _) = "lmod"
-getJsonKey (PR_Torque _) = "torque"
+getJsonKey (PR_Huppel _)    = "huppel"
+getJsonKey (PR_Lmod _)      = "lmod"
+getJsonKey (PR_Torque _)    = "torque"
 getJsonKey (PR_Shorewall _) = "shorewall"
-getJsonKey (PR_Snoopy _) = "snoopy"
+getJsonKey (PR_Snoopy _)    = "snoopy"
 
 --------------------------------------------------------------------------------
 -- | The 'parseRsyslogLogstashString' currently is a placeholder function that will convert the incoming rsyslog message

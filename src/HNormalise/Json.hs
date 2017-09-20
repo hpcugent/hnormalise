@@ -41,7 +41,7 @@ module HNormalise.Json where
 --------------------------------------------------------------------------------
 import           Control.Monad
 import           Data.Aeson
-import qualified Data.HashMap.Lazy     as M
+import qualified Data.HashMap.Lazy   as M
 import           Data.Monoid
 
 --------------------------------------------------------------------------------

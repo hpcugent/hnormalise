@@ -38,16 +38,16 @@
 module HNormalise.ParserSpec (main, spec) where
 
 --------------------------------------------------------------------------------
-import           Data.Text                 (Text)
-import qualified Data.Text.Read            as TR
+import           Data.Text                  (Text)
+import qualified Data.Text.Read             as TR
+import qualified Net.IPv4                   as NT
 import           Test.Hspec
 import           Test.Hspec.Attoparsec
-import qualified Net.IPv4                  as NT
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Internal
-import           HNormalise.Lmod.Internal
 import           HNormalise.Internal
+import           HNormalise.Lmod.Internal
 import           HNormalise.Parser
 --------------------------------------------------------------------------------
 main :: IO ()

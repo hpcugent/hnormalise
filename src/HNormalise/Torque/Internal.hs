@@ -167,34 +167,34 @@ data TorqueJobExit = TorqueJobExit
 
 --------------------------------------------------------------------------------
 data TorqueJobName = TorqueJobName
-    { number   :: !Integer
+    { number  :: !Integer
     , arrayId :: !(Maybe Integer)
-    , master   :: !Text
-    , cluster  :: !Text
+    , master  :: !Text
+    , cluster :: !Text
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobQueue = TorqueJobQueue
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , queue            :: !Text
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , queue           :: !Text
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobStart = TorqueJobStart
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , user             :: !Text
-    , group            :: !Text
-    , account          :: !(Maybe Text)
-    , jobname          :: !Text
-    , queue            :: !Text
-    , owner            :: !Text
-    , times            :: !TorqueJobTime
-    , execHost         :: ![TorqueExecHost]
-    , resourceRequest  :: !TorqueResourceRequest
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , user            :: !Text
+    , group           :: !Text
+    , account         :: !(Maybe Text)
+    , jobname         :: !Text
+    , queue           :: !Text
+    , owner           :: !Text
+    , times           :: !TorqueJobTime
+    , execHost        :: ![TorqueExecHost]
+    , resourceRequest :: !TorqueResourceRequest
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -205,22 +205,22 @@ data TorqueRequestor = TorqueRequestor
 
 --------------------------------------------------------------------------------
 data TorqueJobDelete = TorqueJobDelete
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , requestor        :: !TorqueRequestor
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , requestor       :: !TorqueRequestor
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobAbort = TorqueJobAbort
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobRerun = TorqueJobRerun
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)

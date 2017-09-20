@@ -180,9 +180,16 @@ parseTorqueResourceRequest =
         <||> skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.select"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.qos"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.other"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.feature"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.host"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.procs"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.nodeset"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.tpn"))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pmem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.vmem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pvmem=" *> parseTorqueMemory))
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mppmem=" *> parseTorqueMemory))
         <||> skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
 
 --------------------------------------------------------------------------------

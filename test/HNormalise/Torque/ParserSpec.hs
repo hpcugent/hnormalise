@@ -155,9 +155,16 @@ spec = do
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -177,9 +184,16 @@ spec = do
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -199,9 +213,16 @@ spec = do
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Just $ 200 * 1024
                 , vmem          = Just $ 1 * 1024 * 1024
                 , pvmem         = Just $ 400 * 1024
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -221,9 +242,16 @@ spec = do
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -243,9 +271,16 @@ spec = do
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Just "someqos"
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -265,9 +300,16 @@ spec = do
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Just $ 74737 * 1024 * 1024
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 5, minutes = 0, seconds = 0 }
                 }
         it "parse resource list with FQDN node and no ppn specified" $ do
@@ -286,9 +328,16 @@ spec = do
                 , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
                 , select = Nothing
                 , qos = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem = Nothing
                 , vmem = Nothing
                 , pvmem = Nothing
+                , mppmem         = Nothing
                 , walltime = TorqueWalltime {days = 0, hours = 1, minutes = 0, seconds = 0}
             }
         it "parse resource list without neednodes specified" $ do
@@ -307,9 +356,16 @@ spec = do
                 , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Just 8})
                 , select = Nothing
                 , qos = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem = Nothing
                 , vmem = Nothing
                 , pvmem = Nothing
+                , mppmem = Nothing
                 , walltime = TorqueWalltime {days = 0, hours = 3, minutes = 0, seconds = 0}
             }
 
@@ -408,9 +464,16 @@ spec = do
                         ]
                     , select        = Nothing
                     , qos           = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , vmem = Just $ 1 * 1024 * 1024 * 1024
                     , pmem = Nothing
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime  = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0}
                     }
                 , resourceUsage = TorqueResourceUsage
@@ -471,9 +534,16 @@ spec = do
                         }
                     , select = Nothing
                     , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , pmem = Nothing
                     , vmem = Just 78367424512
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime = TorqueWalltime { days = 0, hours = 5, minutes = 0, seconds = 0}
                     }
                 , resourceUsage = TorqueResourceUsage
@@ -524,9 +594,16 @@ spec = do
                     , nodes = TSN TorqueJobShortNode {number = 1, ppn = Just 16}
                     , select = Nothing
                     , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , pmem = Nothing
                     , vmem = Just 78367424512
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime = TorqueWalltime {days = 0, hours = 72, minutes = 0, seconds = 0}
                     }
                 , resourceUsage = TorqueResourceUsage
@@ -571,9 +648,16 @@ spec = do
                     , nodes = TSN TorqueJobShortNode {number = 2, ppn = Just 20}
                     , select = Nothing
                     , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , pmem = Nothing
                     , vmem = Just 143425316860
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime = TorqueWalltime {days = 0, hours = 11, minutes = 59, seconds = 0}
                 }
                 , resourceUsage = TorqueResourceUsage
@@ -683,9 +767,16 @@ spec = do
                             }
                     , select        = Nothing
                     , qos           = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , vmem = Just 4224531456
                     , pmem = Nothing
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime  = TorqueWalltime { days = 0, hours = 0, minutes = 10, seconds = 0}
                     }
                 , torqueEntryType = TorqueStartEntry
@@ -717,9 +808,16 @@ spec = do
                     , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
                     , select = Nothing
                     , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , pmem = Nothing
                     , vmem = Nothing
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime = TorqueWalltime {days = 0, hours = 1, minutes = 0, seconds = 0}
                     }
                 , torqueEntryType = TorqueStartEntry

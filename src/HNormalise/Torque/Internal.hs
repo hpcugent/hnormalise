@@ -102,20 +102,59 @@ data TorqueResourceRequest = TorqueResourceRequest
     , naccesspolicy :: !(Maybe Text)
     , ncpus         :: !(Maybe Int)
     , cputime       :: !(Maybe TorqueWalltime)
-    , prologue         :: !(Maybe Text)
-    , epilogue         :: !(Maybe Text)
+    , prologue      :: !(Maybe Text)
+    , epilogue      :: !(Maybe Text)
     , neednodes     :: !(Maybe TorqueJobNode)
     , nice          :: !(Maybe Int)
     , nodeCount     :: !Int
     , nodes         :: !TorqueJobNode
     , select        :: !(Maybe Text)
     , qos           :: !(Maybe Text)
+    , other         :: !(Maybe Text)
+    , feature       :: !(Maybe Text)
+    , host          :: !(Maybe Text)
+    , procs         :: !(Maybe Text)
+    , nodeset       :: !(Maybe Text)
+    , tpn           :: !(Maybe Text)
     , pmem          :: !(Maybe Integer)
     , vmem          :: !(Maybe Integer)
     , pvmem         :: !(Maybe Integer)
+    , mppmem        :: !(Maybe Integer)
     , walltime      :: !TorqueWalltime
     } deriving (Show, Eq, Generic)
+{-
+'resource_list_mppmem': None,
+'resource_list_procs': None,
+'resource_list_tpn': None,
+'resource_list_feature': None,
+'resource_list_host': None,
+'resource_list_other': None,
+'resource_list_nodeset': None,
 
+'resource_list_nice': None,
+'resource_list_nodect': None,
+'resource_list_neednodes': None,
+'resource_list_neednodes_ppn': None,
+'resource_list_nodes': None,
+'resource_list_nodes_ppn': None,
+'resource_list_walltime': None,
+'resource_list_mem': None,
+'resource_list_pmem': None,
+'resource_list_vmem': None,
+'resource_list_pvmem': None,
+'resource_list_mppmem': None,
+'resource_list_cput': None,
+'resource_list_ncpus': None,
+'resource_list_procs': None,
+'resource_list_tpn': None,
+'resource_list_feature': None,
+'resource_list_host': None,
+'resource_list_naccesspolicy': None,
+'resource_list_other': None,
+'resource_list_advres': None,
+'resource_list_nodeset': None,
+
+-}
 --------------------------------------------------------------------------------
 data TorqueResourceUsage = TorqueResourceUsage
     { cputime  :: !Integer

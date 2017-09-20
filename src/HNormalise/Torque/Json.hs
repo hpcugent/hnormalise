@@ -91,9 +91,13 @@ instance ToJSON TorqueJobDelete where
 instance ToJSON TorqueJobAbort where
     toEncoding = genericToEncoding defaultOptions
 
+instance ToJSON TorqueJobRerun where
+    toEncoding = genericToEncoding defaultOptions
+
 instance ToJSON TorqueParseResult where
     toEncoding (TorqueQueue ts)   = toEncoding ts
     toEncoding (TorqueStart ts)  = toEncoding ts
     toEncoding (TorqueDelete ts) = toEncoding ts
     toEncoding (TorqueExit ts)   = toEncoding ts
     toEncoding (TorqueAbort ts)  = toEncoding ts
+    toEncoding (TorqueRerun ts)  = toEncoding ts

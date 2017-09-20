@@ -49,6 +49,7 @@ data TorqueParseResult
     | TorqueDelete TorqueJobDelete
     | TorqueExit TorqueJobExit
     | TorqueAbort TorqueJobAbort
+    | TorqueRerun TorqueJobRerun
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -59,6 +60,7 @@ data TorqueEntryType
     | TorqueDeleteEntry
     | TorqueExitEntry
     | TorqueAbortEntry
+    | TorqueRerunEntry
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -122,39 +124,7 @@ data TorqueResourceRequest = TorqueResourceRequest
     , mppmem        :: !(Maybe Integer)
     , walltime      :: !TorqueWalltime
     } deriving (Show, Eq, Generic)
-{-
-'resource_list_mppmem': None,
-'resource_list_procs': None,
-'resource_list_tpn': None,
-'resource_list_feature': None,
-'resource_list_host': None,
-'resource_list_other': None,
-'resource_list_nodeset': None,
 
-'resource_list_nice': None,
-'resource_list_nodect': None,
-'resource_list_neednodes': None,
-'resource_list_neednodes_ppn': None,
-'resource_list_nodes': None,
-'resource_list_nodes_ppn': None,
-'resource_list_walltime': None,
-'resource_list_mem': None,
-'resource_list_pmem': None,
-'resource_list_vmem': None,
-'resource_list_pvmem': None,
-'resource_list_mppmem': None,
-'resource_list_cput': None,
-'resource_list_ncpus': None,
-'resource_list_procs': None,
-'resource_list_tpn': None,
-'resource_list_feature': None,
-'resource_list_host': None,
-'resource_list_naccesspolicy': None,
-'resource_list_other': None,
-'resource_list_advres': None,
-'resource_list_nodeset': None,
-
--}
 --------------------------------------------------------------------------------
 data TorqueResourceUsage = TorqueResourceUsage
     { cputime  :: !Integer
@@ -243,6 +213,13 @@ data TorqueJobDelete = TorqueJobDelete
 
 --------------------------------------------------------------------------------
 data TorqueJobAbort = TorqueJobAbort
+    { torqueDatestamp  :: !Text
+    , name             :: !TorqueJobName
+    , torqueEntryType  :: TorqueEntryType
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueJobRerun = TorqueJobRerun
     { torqueDatestamp  :: !Text
     , name             :: !TorqueJobName
     , torqueEntryType  :: TorqueEntryType

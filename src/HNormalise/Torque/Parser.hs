@@ -386,6 +386,20 @@ parseTorqueAbort = do
         })
 
 --------------------------------------------------------------------------------
+-- | `parseTorqueRerun` parses a complete log line denoting a rerun job. Tested with Torque 4.x
+parseTorqueRerun :: Parser (Text, TorqueParseResult)
+parseTorqueRerun = do
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";R;"
+    name <- parseTorqueJobName
+
+    return ("torque", TorqueRerun TorqueJobRerun
+        { torqueDatestamp = torqueDatestamp
+        , name = name
+        , torqueEntryType = TorqueRerunEntry
+        })
+
+
+--------------------------------------------------------------------------------
 -- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
 parseTorqueQueue :: Parser (Text, TorqueParseResult)
 parseTorqueQueue = do

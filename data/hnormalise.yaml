@@ -6,6 +6,8 @@
 # should configure one. If you do not, by default
 # plain TCP will be used.
 #
+logging:
+    frequency: 10000
 input:
     # --------------------------------------------------
     # input on a normal TCP port

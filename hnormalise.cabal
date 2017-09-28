@@ -49,6 +49,7 @@ library
                      , directory
                      , ip
                      , permute
+                     , stm-conduit
                      , text
                      , time
                      , unordered-containers
@@ -76,6 +77,7 @@ executable hnormalise
                      , mtl
                      , optparse-applicative
                      , resourcet
+                     , stm-conduit
                      , text
                      , time
                      , unix
@@ -110,6 +112,7 @@ executable hnormalise-0mq
                      , mtl
                      , optparse-applicative
                      , resourcet
+                     , stm-conduit
                      , text
                      , time
                      , unix

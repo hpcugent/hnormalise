@@ -16,6 +16,7 @@ import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
+import           Data.Conduit.Async
 import           Data.Conduit.Binary          (sinkFile)
 import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
@@ -119,26 +120,27 @@ messageSink success failure messageCount frequency = loop
             Just (Transformed json) -> do
                 yield json $$ success
                 yield (SBS.pack "\n") $$ success
-                increaseCount (1, 0)
+                liftIO $ increaseCount (1, 0) messageCount frequency
                 loop
             Just (Original l) -> do
                 yield l $$ failure
                 yield (SBS.pack "\n") $$ failure
-                increaseCount (0, 1)
+                liftIO $ increaseCount (0, 1) messageCount frequency
                 loop
             Nothing -> return ()
-    increaseCount (s, f) =
-        liftIO $ do
-            (s', f') <- takeMVar messageCount
-            when ((s' + f') `mod` frequency == 0) $ do
-                epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
-                printf "%ld - message count: %10d (success: %10d, fail: %10d)\n" epoch_int (s' + f') s' f'
-            putMVar messageCount (s' + s, f' + f)
+
+
+increaseCount (s, f) messageCount frequency = do
+    (s', f') <- takeMVar messageCount
+    when ((s' + f') `mod` frequency == 0) $ do
+        epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
+        printf "%ld - message count: %10d (success: %10d, fail: %10d)\n" epoch_int (s' + f') s' f'
+    putMVar messageCount (s' + s, f' + f)
 
 --------------------------------------------------------------------------------
 -- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure
 -- for testing purposes
-mySink = loop
+mySink messageCount frequency = loop
   where
     loop = do
         v <- await
@@ -147,11 +149,13 @@ mySink = loop
                 yield (SBS.pack "success: ")
                 yield json
                 yield (SBS.pack "\n")
+                liftIO $ increaseCount (1, 0) messageCount frequency
                 loop
             Just (Original l) -> do
                 yield (SBS.pack "fail - original: ")
                 yield l
                 yield (SBS.pack "\n")
+                liftIO $ increaseCount (0, 1) messageCount frequency
                 loop
             Nothing -> return ()
 
@@ -176,7 +180,7 @@ runTCPConnection options config messageCount = do
                             $$ messageSink (appSink successServer) (appSink failServer) messageCount frequency
             Just testSinkFileName -> runResourceT $ appSource appData
                 $= normalisationConduit options config
-                $= mySink
+                $= mySink messageCount frequency
                 $$ sinkFile testSinkFileName
 
 -- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
@@ -189,7 +193,7 @@ zmqInterruptibleSource m s = do
             case val of
                 Just _ ->  return False
                 Nothing -> return True)
-        (lift (ZMQ.receive s) >>= yield)
+        (liftIO (ZMQ.receive s) >>= yield)
     liftIO $ putStrLn "Done!"
 
 --------------------------------------------------------------------------------
@@ -226,19 +230,18 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
                         liftIO $ zmqInterruptibleSource s_interrupted s
-                            $= normalisationConduit options config
-                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
+                            =$=& normalisationConduit options config
+                            $$& messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
 
-{-      -- FIXME: This does not work, gives a type error
         Just testSinkFileName ->
             ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
                     ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
-                    liftIO $ zmqInterruptibleSource s_interrupted s
-                        $= normalisationConduit options config
-                        $= mySink
-                        $$ sinkFile testSinkFileName
--}
+                    verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
+                    runResourceT $ zmqInterruptibleSource s_interrupted s
+                        =$=& normalisationConduit options config
+                        =$=& mySink messageCount frequency
+                        $$& sinkFile testSinkFileName
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
 -- for the pipeline.

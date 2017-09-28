@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/hnormalise -c /etc/hnormalise/hnormalise.yaml
+ExecStart=/usr/bin/hnormalise -c /etc/hnormalise/hnormalise.yaml +RTS -N2
 Restart=always
 UMask=0066
 

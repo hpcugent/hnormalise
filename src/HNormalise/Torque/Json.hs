@@ -32,16 +32,11 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
-
-
 module HNormalise.Torque.Json where
 
 --------------------------------------------------------------------------------
 import           Data.Aeson
-import           Data.Monoid                  ((<>))
+import           Data.Monoid                ((<>))
 
 --------------------------------------------------------------------------------
 import           HNormalise.Torque.Internal
@@ -63,7 +58,7 @@ instance ToJSON TorqueWalltime where
     toEncoding (TorqueWalltime d h m s) = toEncoding $ (((d * 24 + h) * 60) + m) * 60 + s
 
 instance ToJSON TorqueJobNode where
-    toEncoding (TSN n) = toEncoding n
+    toEncoding (TSN n)  = toEncoding n
     toEncoding (TFN ns) = toEncoding ns
 
 instance ToJSON TorqueResourceRequest where
@@ -93,8 +88,16 @@ instance ToJSON TorqueJobQueue where
 instance ToJSON TorqueJobDelete where
     toEncoding = genericToEncoding defaultOptions
 
+instance ToJSON TorqueJobAbort where
+    toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON TorqueJobRerun where
+    toEncoding = genericToEncoding defaultOptions
+
 instance ToJSON TorqueParseResult where
-    toEncoding (TorqueQueue ts)   = toEncoding ts
+    toEncoding (TorqueQueue ts)  = toEncoding ts
     toEncoding (TorqueStart ts)  = toEncoding ts
     toEncoding (TorqueDelete ts) = toEncoding ts
     toEncoding (TorqueExit ts)   = toEncoding ts
+    toEncoding (TorqueAbort ts)  = toEncoding ts
+    toEncoding (TorqueRerun ts)  = toEncoding ts

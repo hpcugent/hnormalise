@@ -48,6 +48,8 @@ data TorqueParseResult
     | TorqueStart TorqueJobStart
     | TorqueDelete TorqueJobDelete
     | TorqueExit TorqueJobExit
+    | TorqueAbort TorqueJobAbort
+    | TorqueRerun TorqueJobRerun
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -57,6 +59,8 @@ data TorqueEntryType
     | TorqueStartEntry
     | TorqueDeleteEntry
     | TorqueExitEntry
+    | TorqueAbortEntry
+    | TorqueRerunEntry
     deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -68,7 +72,7 @@ data TorqueJobShortNode = TorqueJobShortNode
 --------------------------------------------------------------------------------
 data TorqueJobFQNode = TorqueJobFQNode
     { name :: !Text
-    , ppn  :: !Int
+    , ppn  :: !(Maybe Int)
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -81,6 +85,9 @@ data TorqueExecHost = TorqueExecHost
     { name  :: !Text
     , cores :: ![Int]
     } deriving (Show, Eq, Generic)
+
+instance Ord TorqueExecHost where
+    compare (TorqueExecHost t1 _) (TorqueExecHost t2 _) = compare t1 t2
 
 --------------------------------------------------------------------------------
 data TorqueWalltime = TorqueWalltime
@@ -96,22 +103,32 @@ data TorqueResourceRequest = TorqueResourceRequest
     , advres        :: !(Maybe Text)
     , naccesspolicy :: !(Maybe Text)
     , ncpus         :: !(Maybe Int)
-    , neednodes     :: !TorqueJobNode
+    , cputime       :: !(Maybe TorqueWalltime)
+    , prologue      :: !(Maybe Text)
+    , epilogue      :: !(Maybe Text)
+    , neednodes     :: !(Maybe TorqueJobNode)
     , nice          :: !(Maybe Int)
     , nodeCount     :: !Int
     , nodes         :: !TorqueJobNode
     , select        :: !(Maybe Text)
     , qos           :: !(Maybe Text)
+    , other         :: !(Maybe Text)
+    , feature       :: !(Maybe Text)
+    , host          :: !(Maybe Text)
+    , procs         :: !(Maybe Text)
+    , nodeset       :: !(Maybe Text)
+    , tpn           :: !(Maybe Text)
     , pmem          :: !(Maybe Integer)
     , vmem          :: !(Maybe Integer)
     , pvmem         :: !(Maybe Integer)
+    , mppmem        :: !(Maybe Integer)
     , walltime      :: !TorqueWalltime
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueResourceUsage = TorqueResourceUsage
     { cputime  :: !Integer
-    , energy   :: !Integer
+    , energy   :: !(Maybe Integer)
     , mem      :: !Integer
     , vmem     :: !Integer
     , walltime :: !TorqueWalltime
@@ -132,6 +149,7 @@ data TorqueJobExit = TorqueJobExit
     , name                :: !TorqueJobName
     , user                :: !Text
     , group               :: !Text
+    , account             :: !(Maybe Text)
     , jobname             :: !Text
     , queue               :: !Text
     , startCount          :: !(Maybe Int)
@@ -149,33 +167,34 @@ data TorqueJobExit = TorqueJobExit
 
 --------------------------------------------------------------------------------
 data TorqueJobName = TorqueJobName
-    { number   :: !Integer
-    , array_id :: !(Maybe Integer)
-    , master   :: !Text
-    , cluster  :: !Text
+    { number  :: !Integer
+    , arrayId :: !(Maybe Integer)
+    , master  :: !Text
+    , cluster :: !Text
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobQueue = TorqueJobQueue
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , queue            :: !Text
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , queue           :: !Text
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 data TorqueJobStart = TorqueJobStart
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , user             :: !Text
-    , group            :: !Text
-    , jobname          :: !Text
-    , queue            :: !Text
-    , owner            :: !Text
-    , times            :: !TorqueJobTime
-    , execHost         :: ![TorqueExecHost]
-    , resourceRequest  :: !TorqueResourceRequest
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , user            :: !Text
+    , group           :: !Text
+    , account         :: !(Maybe Text)
+    , jobname         :: !Text
+    , queue           :: !Text
+    , owner           :: !Text
+    , times           :: !TorqueJobTime
+    , execHost        :: ![TorqueExecHost]
+    , resourceRequest :: !TorqueResourceRequest
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -186,8 +205,22 @@ data TorqueRequestor = TorqueRequestor
 
 --------------------------------------------------------------------------------
 data TorqueJobDelete = TorqueJobDelete
-    { torqueDatestamp  :: !Text
-    , name             :: !TorqueJobName
-    , requestor        :: !TorqueRequestor
-    , torqueEntryType  :: TorqueEntryType
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , requestor       :: !TorqueRequestor
+    , torqueEntryType :: TorqueEntryType
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueJobAbort = TorqueJobAbort
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , torqueEntryType :: TorqueEntryType
+    } deriving (Show, Eq, Generic)
+
+--------------------------------------------------------------------------------
+data TorqueJobRerun = TorqueJobRerun
+    { torqueDatestamp :: !Text
+    , name            :: !TorqueJobName
+    , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)

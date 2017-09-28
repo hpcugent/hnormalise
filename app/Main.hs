@@ -5,7 +5,7 @@ module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
-import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, MVar)
+import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
 import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Loops          (whileM_, untilM_)
@@ -22,10 +22,12 @@ import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
 import qualified Data.Conduit.Text            as DCT
 import qualified Data.Conduit.ZMQ4            as ZMQC
-import           Data.Maybe                   (fromJust)
+import           Data.Maybe                   (fromJust, fromMaybe)
 import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as TE
+import           Data.Time
+import           Data.Time.Format
 import           Data.Version                 (showVersion)
 import qualified Options.Applicative          as OA
 import qualified Paths_hnormalise
@@ -40,12 +42,14 @@ import           HNormalise
 import           HNormalise.Config            ( Config (..)
                                               , ConnectionType(..)
                                               , InputConfig(..)
+                                              , LoggingConfig(..)
                                               , OutputConfig(..)
                                               , TcpOutputConfig(..)
                                               , TcpPortConfig(..)
                                               , ZeroMQOutputConfig(..)
                                               , ZeroMQPortConfig(..)
                                               , connectionType
+                                              , defaultLoggingFrequency
                                               , loadConfig)
 import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
@@ -107,7 +111,7 @@ handler s_interrupted = do
 
 --------------------------------------------------------------------------------
 -- | 'messageSink' yields the parsed JSON downstream, or if parsing fails, yields the original message downstream
-messageSink success failure = loop
+messageSink success failure messageCount frequency = loop
   where
     loop = do
         v <- await
@@ -115,13 +119,21 @@ messageSink success failure = loop
             Just (Transformed json) -> do
                 yield json $$ success
                 yield (SBS.pack "\n") $$ success
+                increaseCount (1, 0)
                 loop
             Just (Original l) -> do
                 yield l $$ failure
                 yield (SBS.pack "\n") $$ failure
+                increaseCount (0, 1)
                 loop
             Nothing -> return ()
-
+    increaseCount (s, f) =
+        liftIO $ do
+            (s', f') <- takeMVar messageCount
+            when ((s' + f') `mod` frequency == 0) $ do
+                epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
+                printf "%ld - message count: %10d (success: %10d, fail: %10d)\n" epoch_int (s' + f') s' f'
+            putMVar messageCount (s' + s, f' + f)
 
 --------------------------------------------------------------------------------
 -- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure
@@ -144,9 +156,10 @@ mySink = loop
             Nothing -> return ()
 
 --------------------------------------------------------------------------------
-runTCPConnection options config = do
+runTCPConnection options config messageCount = do
     let listenHost = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> p)
+    let frequency = fromMaybe defaultLoggingFrequency (logging config >>= (\(LoggingConfig f) -> f))
     runTCPServer (serverSettings listenPort "*") $ \appData -> do
         let fs = fields config
         case oTestFilePath options of
@@ -160,7 +173,7 @@ runTCPConnection options config = do
                     runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
                         appSource appData
                             $= normalisationConduit options config
-                            $$ messageSink (appSink successServer) (appSink failServer)
+                            $$ messageSink (appSink successServer) (appSink failServer) messageCount frequency
             Just testSinkFileName -> runResourceT $ appSource appData
                 $= normalisationConduit options config
                 $= mySink
@@ -188,10 +201,11 @@ normalisationConduit options config =
 
 
 --------------------------------------------------------------------------------
-runZeroMQConnection options config s_interrupted verbose' = do
+runZeroMQConnection options config s_interrupted messageCount verbose' = do
     let fs = fields config
     let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
+    let frequency = fromMaybe defaultLoggingFrequency (logging config >>= (\(LoggingConfig f) -> f))
 
     case oTestFilePath options of
         Nothing -> ZMQ.withContext $ \ctx ->
@@ -213,7 +227,7 @@ runZeroMQConnection options config s_interrupted verbose' = do
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
                         liftIO $ zmqInterruptibleSource s_interrupted s
                             $= normalisationConduit options config
-                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket [])
+                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
 
 {-      -- FIXME: This does not work, gives a type error
         Just testSinkFileName ->
@@ -243,8 +257,9 @@ main = do
 
     -- For now, we only support input and output configurations of the same type,
     -- i.e., both TCP, both ZeroMQ, etc.
+    messageCount <- newMVar ((0,0) :: (Int, Int))
     case connectionType config of
-        TCP    -> void $ runTCPConnection options config
+        TCP    -> void $ runTCPConnection options config messageCount
         ZeroMQ -> do
             verbose' "ZeroMQ connections"
             s_interrupted <- newEmptyMVar
@@ -252,6 +267,6 @@ main = do
             verbose' "SIGINT handler installed"
             installHandler sigTERM (CatchOnce $ handler s_interrupted) Nothing
             verbose' "SIGTERM handler installed"
-            runZeroMQConnection options config s_interrupted verbose'
+            runZeroMQConnection options config s_interrupted messageCount verbose'
 
     exitSuccess

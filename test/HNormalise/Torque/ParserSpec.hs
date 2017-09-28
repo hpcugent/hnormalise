@@ -38,14 +38,14 @@
 module HNormalise.Torque.ParserSpec (main, spec) where
 
 --------------------------------------------------------------------------------
-import           Data.Text                 (Text)
-import qualified Data.Text.Read            as TR
+import           Data.Text                  (Text)
+import qualified Data.Text.Read             as TR
 import           Test.Hspec
 import           Test.Hspec.Attoparsec
 
 --------------------------------------------------------------------------------
-import           HNormalise.Torque.Parser
 import           HNormalise.Torque.Internal
+import           HNormalise.Torque.Parser
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -132,11 +132,11 @@ spec = do
     describe "parseTorqueJobName" $ do
         it "parse regular torque job name" $ do
             let s = "123456789.master.mycluster.mydomain;" :: Text
-            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456789, array_id = Nothing, master = "master", cluster = "mycluster" }
+            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456789, arrayId = Nothing, master = "master", cluster = "mycluster" }
 
         it "parse array torque job name" $ do
             let s = "123456[789].master.mycluster.mydomain;" :: Text
-            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456, array_id = Just 789, master = "master", cluster = "mycluster" }
+            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456, arrayId = Just 789, master = "master", cluster = "mycluster" }
 
     describe "parseTorqueResourceRequest" $ do
         it "parse mandatory fields in expected order" $ do
@@ -146,15 +146,25 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -165,15 +175,25 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -184,15 +204,25 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Just $ 200 * 1024
                 , vmem          = Just $ 1 * 1024 * 1024
                 , pvmem         = Just $ 400 * 1024
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -203,15 +233,25 @@ spec = do
                 , advres        = Just "myreservation.1"
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
 
@@ -222,17 +262,112 @@ spec = do
                 , advres        = Nothing
                 , naccesspolicy = Nothing
                 , ncpus         = Nothing
-                , neednodes     = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , nice          = Nothing
                 , nodeCount     = 1
                 , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
                 , select        = Nothing
                 , qos           = Just "someqos"
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
                 , pmem          = Nothing
                 , vmem          = Nothing
                 , pvmem         = Nothing
+                , mppmem         = Nothing
                 , walltime      = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0 }
                 }
+
+        it "parse 2014 resource List" $ do
+            let s = "Resource_List.neednodes=1:ppn=16 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1:ppn=16 Resource_List.vmem=74737mb Resource_List.walltime=05:00:00" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem           = Nothing
+                , advres        = Nothing
+                , naccesspolicy = Nothing
+                , ncpus         = Nothing
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
+                , nice          = Just 0
+                , nodeCount     = 1
+                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
+                , select        = Nothing
+                , qos           = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
+                , pmem          = Nothing
+                , vmem          = Just $ 74737 * 1024 * 1024
+                , pvmem         = Nothing
+                , mppmem         = Nothing
+                , walltime      = TorqueWalltime { days = 0, hours = 5, minutes = 0, seconds = 0 }
+                }
+        it "parse resource list with FQDN node and no ppn specified" $ do
+            let s = "Resource_List.neednodes=somenode.somecluster.somedomain Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1 Resource_List.walltime=01:00:00" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem = Nothing
+                , advres = Nothing
+                , naccesspolicy = Nothing
+                , ncpus = Nothing
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes = Just $ TFN [TorqueJobFQNode {name = "somenode.somecluster.somedomain", ppn = Nothing}]
+                , nice = Just 0
+                , nodeCount = 1
+                , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
+                , select = Nothing
+                , qos = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
+                , pmem = Nothing
+                , vmem = Nothing
+                , pvmem = Nothing
+                , mppmem         = Nothing
+                , walltime = TorqueWalltime {days = 0, hours = 1, minutes = 0, seconds = 0}
+            }
+        it "parse resource list without neednodes specified" $ do
+            let s = "Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1:ppn=8 Resource_List.walltime=03:00:00" :: Text
+            s ~> parseTorqueResourceRequest `shouldParse` TorqueResourceRequest
+                { mem = Nothing
+                , advres = Nothing
+                , naccesspolicy = Nothing
+                , ncpus = Nothing
+                , cputime = Nothing
+                , prologue = Nothing
+                , epilogue = Nothing
+                , neednodes = Nothing
+                , nice = Just 0
+                , nodeCount = 1
+                , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Just 8})
+                , select = Nothing
+                , qos = Nothing
+                , other = Nothing
+                , feature   = Nothing
+                , host     = Nothing
+                , procs   = Nothing
+                , nodeset = Nothing
+                , tpn    = Nothing
+                , pmem = Nothing
+                , vmem = Nothing
+                , pvmem = Nothing
+                , mppmem = Nothing
+                , walltime = TorqueWalltime {days = 0, hours = 3, minutes = 0, seconds = 0}
+            }
 
     describe "parseTorqueHostList" $ do
         it "parse comma separated list of single cores" $ do
@@ -266,18 +401,19 @@ spec = do
                     }
                 ]
 
-    describe "parseTorqueExit" $
-        it "parse job exit log line" $ do
-            let s = "torque: 04/05/2017 13:06:53;E;45.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0-1+node2803.banette.gent.vsc/0-1 Resource_List.nodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.banette.gent.vsc:ppn=2+node2803.banette.gent.vsc:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
+    describe "parseTorqueExit" $ do
+        it "parse torque 6.0 job exit log line" $ do
+            let s = "torque: 04/05/2017 13:06:53;E;45.mymaster.somecluster.somedomain;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1491390300 qtime=1491390300 etime=1491390300 start=1491390307 owner=vsc40075@submitnode01.submitnode.somedomain exec_host=node2801.somecluster.somedomain/0-1+node2803.somecluster.somedomain/0-1 Resource_List.nodes=node2801.somecluster.somedomain:ppn=2+node2803.somecluster.somedomain:ppn=2 Resource_List.vmem=1gb Resource_List.nodect=2 Resource_List.neednodes=node2801.somecluster.somedomain:ppn=2+node2803.somecluster.somedomain:ppn=2 Resource_List.nice=0 Resource_List.walltime=01:00:00 session=15273 total_execution_slots=4 unique_node_count=2 end=1491390413 Exit_status=0 resources_used.cput=0 resources_used.energy_used=0 resources_used.mem=55048kb resources_used.vmem=92488kb resources_used.walltime=00:01:44" :: Text
             s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
                 { torqueDatestamp = "04/05/2017 13:06:53"
-                , name = TorqueJobName { number = 45, array_id = Nothing, master = "master23", cluster = "banette" }
+                , name = TorqueJobName { number = 45, arrayId = Nothing, master = "mymaster", cluster = "somecluster" }
                 , user = "vsc40075"
                 , group = "vsc40075"
+                , account = Nothing
                 , jobname = "STDIN"
                 , queue = "short"
                 , startCount = Nothing
-                , owner = "vsc40075@gligar01.gligar.gent.vsc"
+                , owner = "vsc40075@submitnode01.submitnode.somedomain"
                 , session = 15273
                 , times = TorqueJobTime
                     { ctime = 1491390300
@@ -288,11 +424,11 @@ spec = do
                     }
                 , execHost =
                     [ TorqueExecHost
-                        { name = "node2801.banette.gent.vsc"
+                        { name = "node2801.somecluster.somedomain"
                         , cores = [0,1]
                         }
                     , TorqueExecHost
-                        { name = "node2803.banette.gent.vsc"
+                        { name = "node2803.somecluster.somedomain"
                         , cores = [0,1]
                         }
                     ]
@@ -301,38 +437,48 @@ spec = do
                     , advres        = Nothing
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
-                    , neednodes = TFN
+                    , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = Just $ TFN
                         [ TorqueJobFQNode
-                            { name = "node2801.banette.gent.vsc"
-                            , ppn  = 2
+                            { name = "node2801.somecluster.somedomain"
+                            , ppn  = Just 2
                             }
                         , TorqueJobFQNode
-                            { name = "node2803.banette.gent.vsc"
-                            , ppn  = 2
+                            { name = "node2803.somecluster.somedomain"
+                            , ppn  = Just 2
                             }
                         ]
                     , nice      = Just 0
                     , nodeCount = 2
                     , nodes = TFN
                         [ TorqueJobFQNode
-                            { name = "node2801.banette.gent.vsc"
-                            , ppn  = 2
+                            { name = "node2801.somecluster.somedomain"
+                            , ppn  = Just 2
                             }
                         , TorqueJobFQNode
-                            { name = "node2803.banette.gent.vsc"
-                            , ppn  = 2
+                            { name = "node2803.somecluster.somedomain"
+                            , ppn  = Just 2
                             }
                         ]
                     , select        = Nothing
                     , qos           = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , vmem = Just $ 1 * 1024 * 1024 * 1024
                     , pmem = Nothing
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime  = TorqueWalltime { days = 0, hours = 1, minutes = 0, seconds = 0}
                     }
                 , resourceUsage = TorqueResourceUsage
                     { cputime = 0
-                    , energy = 0
+                    , energy = Just 0
                     , mem = 55048 * 1024
                     , vmem = 92488 * 1024
                     , walltime = TorqueWalltime { days = 0, hours = 0, minutes = 1, seconds = 44 }
@@ -342,47 +488,263 @@ spec = do
                 , exitStatus = 0
                 , torqueEntryType = TorqueExitEntry
                 })
+        it "parse 2014 torque job exit line" $ do
+            let s = "torque: 01/12/2014 23:57:07;E;161299[389].mymaster.somecluster.somedomain;user=vsc40909 group=vsc40909 jobname=30by40XconChoicesResults-389 queue=short ctime=1389546423 qtime=1389546423 etime=1389546423 start=1389567229 owner=vsc40909@submitnode02.submitnode.somedomain exec_host=node2135.somecluster.somedomain/0+node2135.somecluster.somedomain/1+node2135.somecluster.somedomain/2+node2135.somecluster.somedomain/3+node2135.somecluster.somedomain/4+node2135.somecluster.somedomain/5+node2135.somecluster.somedomain/6+node2135.somecluster.somedomain/7+node2135.somecluster.somedomain/8+node2135.somecluster.somedomain/9+node2135.somecluster.somedomain/10+node2135.somecluster.somedomain/11+node2135.somecluster.somedomain/12+node2135.somecluster.somedomain/13+node2135.somecluster.somedomain/14+node2135.somecluster.somedomain/15 Resource_List.neednodes=1:ppn=16 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1:ppn=16 Resource_List.vmem=74737mb Resource_List.walltime=05:00:00 session=32698 end=1389567427 Exit_status=0 resources_used.cput=00:48:40 resources_used.mem=307504kb resources_used.vmem=1985904kb resources_used.walltime=00:03:21" :: Text
+            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
+                { torqueDatestamp = "01/12/2014 23:57:07"
+                , name = TorqueJobName { number = 161299, arrayId = Just 389, master = "mymaster", cluster = "somecluster" }
+                , user = "vsc40909"
+                , group = "vsc40909"
+                , account = Nothing
+                , jobname = "30by40XconChoicesResults-389"
+                , queue = "short"
+                , startCount = Nothing
+                , owner = "vsc40909@submitnode02.submitnode.somedomain"
+                , session = 32698
+                , times = TorqueJobTime
+                    { ctime = 1389546423
+                    , qtime = 1389546423
+                    , etime = 1389546423
+                    , startTime = 1389567229
+                    , endTime = Just 1389567427
+                    }
+                , execHost =
+                    [ TorqueExecHost
+                        { name = "node2135.somecluster.somedomain"
+                        , cores = [0 .. 15]
+                        }
+                    ]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = Just $ TSN TorqueJobShortNode
+                        { number = 1
+                        , ppn = Just 16
+                        }
+                    , nice = Just 0
+                    , nodeCount = 1
+                    , nodes = TSN TorqueJobShortNode
+                        { number = 1
+                        , ppn = Just 16
+                        }
+                    , select = Nothing
+                    , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
+                    , pmem = Nothing
+                    , vmem = Just 78367424512
+                    , pvmem = Nothing
+                    , mppmem = Nothing
+                    , walltime = TorqueWalltime { days = 0, hours = 5, minutes = 0, seconds = 0}
+                    }
+                , resourceUsage = TorqueResourceUsage
+                    { cputime = 2920
+                    , energy = Nothing
+                    , mem = 314884096
+                    , vmem = 2033565696
+                    , walltime = TorqueWalltime { days = 0, hours = 0, minutes = 3, seconds = 21}
+                    }
+                , totalExecutionSlots = 16
+                , uniqueNodeCount = 1
+                , exitStatus = 0
+                , torqueEntryType = TorqueExitEntry
+            })
+
+        it "parse torque job exit line with cput resource request" $ do
+            let s = "torque: 07/22/2014 11:00:03;E;621344.master15.delcatty.gent.vsc;user=vsc40035 group=vsc40035 jobname=NB03N queue=long ctime=1406019524 qtime=1406019524 etime=1406019524 start=1406019532 owner=vsc40035@gligar03.gligar.gent.vsc exec_host=node2142.delcatty.gent.vsc/0+node2142.delcatty.gent.vsc/1+node2142.delcatty.gent.vsc/2+node2142.delcatty.gent.vsc/3+node2142.delcatty.gent.vsc/4+node2142.delcatty.gent.vsc/5+node2142.delcatty.gent.vsc/6+node2142.delcatty.gent.vsc/7+node2142.delcatty.gent.vsc/8+node2142.delcatty.gent.vsc/9+node2142.delcatty.gent.vsc/10+node2142.delcatty.gent.vsc/11+node2142.delcatty.gent.vsc/12+node2142.delcatty.gent.vsc/13+node2142.delcatty.gent.vsc/14+node2142.delcatty.gent.vsc/15 Resource_List.cput=72:00:00 Resource_List.neednodes=1:ppn=16 Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1:ppn=16 Resource_List.vmem=74737mb Resource_List.walltime=72:00:00 session=117962 end=1406019603 Exit_status=271 resources_used.cput=00:00:25 resources_used.mem=5316kb resources_used.vmem=78756kb resources_used.walltime=00:01:14" :: Text
+            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
+                { torqueDatestamp = "07/22/2014 11:00:03"
+                , name = TorqueJobName {number = 621344, arrayId = Nothing, master = "master15", cluster = "delcatty"}
+                , user = "vsc40035"
+                , group = "vsc40035"
+                , account = Nothing
+                , jobname = "NB03N"
+                , queue = "long"
+                , startCount = Nothing
+                , owner = "vsc40035@gligar03.gligar.gent.vsc"
+                , session = 117962
+                , times = TorqueJobTime
+                    { ctime = 1406019524
+                    , qtime = 1406019524
+                    , etime = 1406019524
+                    , startTime = 1406019532
+                    , endTime = Just 1406019603
+                    }
+                , execHost = [TorqueExecHost {name = "node2142.delcatty.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , cputime = Just TorqueWalltime {days = 0, hours = 72, minutes = 0, seconds = 0}
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = Just $ TSN TorqueJobShortNode {number = 1, ppn = Just 16}
+                    , nice = Just 0
+                    , nodeCount = 1
+                    , nodes = TSN TorqueJobShortNode {number = 1, ppn = Just 16}
+                    , select = Nothing
+                    , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
+                    , pmem = Nothing
+                    , vmem = Just 78367424512
+                    , pvmem = Nothing
+                    , mppmem = Nothing
+                    , walltime = TorqueWalltime {days = 0, hours = 72, minutes = 0, seconds = 0}
+                    }
+                , resourceUsage = TorqueResourceUsage
+                    { cputime = 25
+                    , energy = Nothing
+                    , mem = 5443584
+                    , vmem = 80646144
+                    , walltime = TorqueWalltime {days = 0, hours = 0, minutes = 1, seconds = 14}
+                    }
+                , totalExecutionSlots = 16
+                , uniqueNodeCount = 1
+                , exitStatus = 271
+                , torqueEntryType = TorqueExitEntry
+            })
+
+        it "parse torque job exit with account field" $ do
+            let s = "torque: 08/03/2017 05:07:22;E;268279.master21.swalot.gent.vsc;user=vsc41771 group=vsc41771 account=lt1_2017-43 jobname=/user/scratch/gent/gvo000/gvo00003/vsc41771/amsterdam/restrained_md/test_withoutplumed queue=short ctime=1501686015 qtime=1501686015 etime=1501686015 start=1501686467 owner=vsc41771@gligar01.gligar.gent.vsc exec_host=node2612.swalot.gent.vsc/0-19+node2681.swalot.gent.vsc/0-19 Resource_List.neednodes=2:ppn=20 Resource_List.nice=0 Resource_List.nodect=2 Resource_List.nodes=2:ppn=20 Resource_List.vmem=143425316860b Resource_List.walltime=11:59:00 session=7473 total_execution_slots=40 unique_node_count=2 end=1501729642 Exit_status=-11 resources_used.cput=1725002 resources_used.energy_used=0 resources_used.mem=16209816kb resources_used.vmem=38821964kb resources_used.walltime=11:59:30" :: Text
+            s ~> parseTorqueExit `shouldParse` ("torque", TorqueExit TorqueJobExit
+                { torqueDatestamp = "08/03/2017 05:07:22"
+                , name = TorqueJobName {number = 268279, arrayId = Nothing, master = "master21", cluster = "swalot"}
+                , user = "vsc41771"
+                , group = "vsc41771"
+                , account = Just "lt1_2017-43"
+                , jobname = "/user/scratch/gent/gvo000/gvo00003/vsc41771/amsterdam/restrained_md/test_withoutplumed"
+                , queue = "short"
+                , startCount = Nothing
+                , owner = "vsc41771@gligar01.gligar.gent.vsc"
+                , session = 7473
+                , times = TorqueJobTime {ctime = 1501686015, qtime = 1501686015, etime = 1501686015, startTime = 1501686467, endTime = Just 1501729642}
+                , execHost =
+                    [ TorqueExecHost {name = "node2612.swalot.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]}
+                    , TorqueExecHost {name = "node2681.swalot.gent.vsc", cores = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]}
+                    ]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = Just $ TSN TorqueJobShortNode {number = 2, ppn = Just 20}
+                    , nice = Just 0
+                    , nodeCount = 2
+                    , nodes = TSN TorqueJobShortNode {number = 2, ppn = Just 20}
+                    , select = Nothing
+                    , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
+                    , pmem = Nothing
+                    , vmem = Just 143425316860
+                    , pvmem = Nothing
+                    , mppmem = Nothing
+                    , walltime = TorqueWalltime {days = 0, hours = 11, minutes = 59, seconds = 0}
+                }
+                , resourceUsage = TorqueResourceUsage
+                    { cputime = 1725002
+                    , energy = Just 0
+                    , mem = 16598851584
+                    , vmem = 39753691136
+                    , walltime = TorqueWalltime {days = 0, hours = 11, minutes = 59, seconds = 30}
+                    }
+                , totalExecutionSlots = 40
+                , uniqueNodeCount = 2
+                , exitStatus = -11
+                , torqueEntryType = TorqueExitEntry
+                })
 
     describe "parseTorqueQueue" $ do
         it "parse job queue entry" $ do
-            let s = "torque: 06/28/2017 14:31:09;Q;80.master23.banette.gent.vsc;queue=default" :: Text
+            let s = "torque: 06/28/2017 14:31:09;Q;80.mymaster.somecluster.somedomain;queue=default" :: Text
             s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue TorqueJobQueue
                 { torqueDatestamp = "06/28/2017 14:31:09"
-                , name = TorqueJobName { number = 80, array_id = Nothing, master = "master23", cluster = "banette" }
+                , name = TorqueJobName { number = 80, arrayId = Nothing, master = "mymaster", cluster = "somecluster" }
                 , queue = "default"
                 , torqueEntryType = TorqueQueueEntry
                 })
 
         it "parse job queue entry master24 - torque 6.0" $ do
-            let s = "torque: 07/27/2017 14:17:41;Q;5.master24.banette.gent.vsc;queue=default" :: Text
+            let s = "torque: 07/27/2017 14:17:41;Q;5.master24.somecluster.somedomain;queue=default" :: Text
             s ~> parseTorqueQueue `shouldParse` ("torque", TorqueQueue TorqueJobQueue
                 { torqueDatestamp = "07/27/2017 14:17:41"
-                , name = TorqueJobName { number = 5, array_id = Nothing, master = "master24" , cluster = "banette" }
+                , name = TorqueJobName { number = 5, arrayId = Nothing, master = "master24" , cluster = "somecluster" }
                 , queue = "default"
+                , torqueEntryType = TorqueQueueEntry
+                })
+
+        it "parse job queue entry - torque 4.x" $ do
+            let s = "torque: 12/31/2014 15:51:48;Q;1166970[].somemaster.somecluster.gent.vsc;queue=long" :: Text
+            s ~> parseTorqueQueue `shouldParse`("torque", TorqueQueue TorqueJobQueue
+                { torqueDatestamp = "12/31/2014 15:51:48"
+                , name = TorqueJobName { number = 1166970, arrayId = Nothing, master = "somemaster", cluster = "somecluster"}
+                , queue = "long"
                 , torqueEntryType = TorqueQueueEntry
                 })
 
     describe "parseTorqueDelete" $
         it "parse job delete entry" $ do
-            let s = "torque: 06/28/2017 15:44:02;D;81.master23.banette.gent.vsc;requestor=vsc40075@gligar02.gligar.gent.vsc" :: Text
+            let s = "torque: 06/28/2017 15:44:02;D;81.mymaster.somecluster.somedomain;requestor=vsc40075@submitnode02.submitnode.somedomain" :: Text
             s ~> parseTorqueDelete `shouldParse` ("torque", TorqueDelete TorqueJobDelete
                 { torqueDatestamp = "06/28/2017 15:44:02"
-                , name = TorqueJobName { number = 81, array_id = Nothing, master = "master23", cluster = "banette" }
-                , requestor = TorqueRequestor { user = "vsc40075", whence = "gligar02.gligar.gent.vsc" }
+                , name = TorqueJobName { number = 81, arrayId = Nothing, master = "mymaster", cluster = "somecluster" }
+                , requestor = TorqueRequestor { user = "vsc40075", whence = "submitnode02.submitnode.somedomain" }
                 , torqueEntryType = TorqueDeleteEntry
                 })
 
-    describe "parseTorqueStart" $
+    describe "parseTorqueAbort" $
+        it "parse job abort entry" $ do
+            let s = "torque: 09/02/2013 17:34:26;A;34106.mymaster.somecluster.somedomain;" :: Text
+            s ~> parseTorqueAbort `shouldParse` ("torque", TorqueAbort TorqueJobAbort
+                { torqueDatestamp = "09/02/2013 17:34:26"
+                , name = TorqueJobName { number = 34106, arrayId = Nothing, master = "mymaster", cluster = "somecluster" }
+                , torqueEntryType = TorqueAbortEntry
+                })
+
+    describe "parseTorqueRerun" $
+        it "parse job rerun entry" $ do
+            let s = "torque: 09/02/2013 17:34:26;R;34106.mymaster.somecluster.somedomain;" :: Text
+            s ~> parseTorqueRerun `shouldParse` ("torque", TorqueRerun TorqueJobRerun
+                { torqueDatestamp = "09/02/2013 17:34:26"
+                , name = TorqueJobName { number = 34106, arrayId = Nothing, master = "mymaster", cluster = "somecluster" }
+                , torqueEntryType = TorqueRerunEntry
+                })
+
+
+    describe "parseTorqueStart" $ do
         it "parse job start" $ do
-            let s = "torque: 06/20/2017 11:24:49;S;63.master23.banette.gent.vsc;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@gligar01.gligar.gent.vsc exec_host=node2801.banette.gent.vsc/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text
+            let s = "torque: 06/20/2017 11:24:49;S;63.mymaster.somecluster.somedomain;user=vsc40075 group=vsc40075 jobname=STDIN queue=short ctime=1497950675 qtime=1497950675 etime=1497950675 start=1497950689 owner=vsc40075@submitnode01.submitnode.somedomain exec_host=node2801.somecluster.somedomain/0 Resource_List.vmem=4224531456b Resource_List.nodes=1:ppn=1 Resource_List.walltime=00:10:00 Resource_List.nodect=1 Resource_List.neednodes=1:ppn=1 Resource_List.nice=0" :: Text
             s ~> parseTorqueStart `shouldParse` ("torque", TorqueStart TorqueJobStart
                 { torqueDatestamp = "06/20/2017 11:24:49"
-                , name = TorqueJobName { number = 63, array_id = Nothing, master = "master23", cluster = "banette" }
+                , name = TorqueJobName { number = 63, arrayId = Nothing, master = "mymaster", cluster = "somecluster" }
                 , user = "vsc40075"
                 , group = "vsc40075"
+                , account = Nothing
                 , jobname = "STDIN"
                 , queue = "short"
-                , owner = "vsc40075@gligar01.gligar.gent.vsc"
+                , owner = "vsc40075@submitnode01.submitnode.somedomain"
                 , times = TorqueJobTime
                     { ctime = 1497950675
                     , qtime = 1497950675
@@ -392,7 +754,7 @@ spec = do
                     }
                 , execHost =
                     [ TorqueExecHost
-                        { name = "node2801.banette.gent.vsc"
+                        { name = "node2801.somecluster.somedomain"
                         , cores = [0]
                         }
                     ]
@@ -401,7 +763,10 @@ spec = do
                     , advres        = Nothing
                     , naccesspolicy = Nothing
                     , ncpus         = Nothing
-                    , neednodes = TSN
+                    , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = Just $ TSN
                         TorqueJobShortNode
                             { number = 1
                             , ppn  = Just 1
@@ -415,10 +780,58 @@ spec = do
                             }
                     , select        = Nothing
                     , qos           = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
                     , vmem = Just 4224531456
                     , pmem = Nothing
                     , pvmem = Nothing
+                    , mppmem = Nothing
                     , walltime  = TorqueWalltime { days = 0, hours = 0, minutes = 10, seconds = 0}
                     }
                 , torqueEntryType = TorqueStartEntry
                 })
+        it "parse job start - torque legacy 2009" $ do
+            let s = "torque: 02/23/2009 11:48:35;S;102355.master.cvos.cluster;user=vsc40014 group=vsc40014 jobname=MtChr5_9036000_rmwrap.sh queue=short_eth ctime=1235384686 qtime=1235384686 etime=1235384686 start=1235386115 owner=vsc40014@gengar1.cvos.cluster exec_host=node047.cvos.cluster/4 Resource_List.neednodes=node047.cvos.cluster Resource_List.nice=0 Resource_List.nodect=1 Resource_List.nodes=1 Resource_List.walltime=01:00:00" :: Text
+            s ~> parseTorqueStart `shouldParse` ("torque", TorqueStart TorqueJobStart
+                { torqueDatestamp = "02/23/2009 11:48:35"
+                , name = TorqueJobName {number = 102355, arrayId = Nothing, master = "master", cluster = "cvos"}
+                , user = "vsc40014"
+                , group = "vsc40014"
+                , account = Nothing
+                , jobname = "MtChr5_9036000_rmwrap.sh"
+                , queue = "short_eth"
+                , owner = "vsc40014@gengar1.cvos.cluster"
+                , times = TorqueJobTime {ctime = 1235384686, qtime = 1235384686, etime = 1235384686, startTime = 1235386115, endTime = Nothing}
+                , execHost = [TorqueExecHost {name = "node047.cvos.cluster", cores = [4]}]
+                , resourceRequest = TorqueResourceRequest
+                    { mem = Nothing
+                    , advres = Nothing
+                    , naccesspolicy = Nothing
+                    , ncpus = Nothing
+                    , cputime = Nothing
+                    , prologue = Nothing
+                    , epilogue = Nothing
+                    , neednodes = Just $ TFN [TorqueJobFQNode {name = "node047.cvos.cluster", ppn = Nothing}]
+                    , nice = Just 0
+                    , nodeCount = 1
+                    , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
+                    , select = Nothing
+                    , qos = Nothing
+                    , other = Nothing
+                    , feature   = Nothing
+                    , host     = Nothing
+                    , procs   = Nothing
+                    , nodeset = Nothing
+                    , tpn    = Nothing
+                    , pmem = Nothing
+                    , vmem = Nothing
+                    , pvmem = Nothing
+                    , mppmem = Nothing
+                    , walltime = TorqueWalltime {days = 0, hours = 1, minutes = 0, seconds = 0}
+                    }
+                , torqueEntryType = TorqueStartEntry
+            })

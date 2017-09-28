@@ -39,10 +39,13 @@ module HNormalise.Torque.Parser where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative         ((<|>))
+import           Control.Monad               (join)
 import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
 import           Data.Char                   (isDigit, isSpace)
+import           Data.List                   (concatMap, groupBy, sort)
 import qualified Data.Map                    as M
+import           Data.Maybe                  (fromMaybe)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 import           Text.ParserCombinators.Perm (permute, (<$$>), (<$?>), (<|?>),
@@ -108,18 +111,23 @@ parseTorqueJobName = do
     m <- char '.' *> takeTill (== '.')
     c <- char '.' *> takeTill (== '.')
     manyTill anyChar (lookAhead ";") *> char ';'
-    return TorqueJobName { number = n, array_id = a, master = m, cluster = c}
+    return TorqueJobName { number = n, arrayId = a, master = m, cluster = c}
   where
     parseArrayId :: Parser (Maybe Integer)
-    parseArrayId = try $ maybeOption $ do
-        char '['
-        i <- decimal
-        char ']'
-        return i
+    parseArrayId = try parseArrayIdBracket <|> parseArrayIdDash
+      where parseArrayIdBracket = do
+                char '['
+                i <- maybeOption decimal
+                char ']'
+                return i
+            parseArrayIdDash = maybeOption $ do
+                char '-'
+                decimal
 
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueResourceNodeList' parses a list of FQDN nodes and their ppn or a nodecount and its ppn
+-- FIXME: Add support for resource lists of the form Resource_List.neednodes=3:ppn=8+1:ppn=1
 parseTorqueResourceNodeList :: Parser TorqueJobNode
 parseTorqueResourceNodeList = do
     c <- peekChar'
@@ -128,8 +136,8 @@ parseTorqueResourceNodeList = do
         ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
         return $ TSN TorqueJobShortNode { number = number, ppn = ppn }
     else TFN <$> sepBy (do
-        fqdn <- Data.Attoparsec.Text.takeWhile (/= ':')
-        ppn <- char ':' *> kvNumParser "ppn"
+        fqdn <- Data.Attoparsec.Text.takeWhile (\c -> c /= ':' && c /= ' ')
+        ppn <- maybeOption $ char ':' *> kvNumParser "ppn"
         return TorqueJobFQNode { name = fqdn, ppn = ppn}) (char '+')
 
 --------------------------------------------------------------------------------
@@ -148,10 +156,15 @@ Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.no
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.qos Resource_List.vmem Resource_List.walltime
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
 Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.walltime
+
+-- 2014 logs
+Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
+Resource_List.cput Resource_List.neednodes Resource_List.nice Resource_List.nodect Resource_List.nodes Resource_List.vmem Resource_List.walltime
 -}
 -- | 'parseTorqueResourceRequest' parses all key value pairs denoting resources requested.
--- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur, the last
--- 1.5 years of data we have were used to make an educated guess as to which keys might appear and in what order
+-- Most of these are not obligatory. Since the Torque documentation is vague on mentioning which entries occur,
+-- the guesses as to the most common ordering and the mandatory fields is based on 5 years of log data from Torque
+-- 4.x to 6.0
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
 parseTorqueResourceRequest =
     permute $ TorqueResourceRequest
@@ -159,23 +172,41 @@ parseTorqueResourceRequest =
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.advres"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.naccesspolicy"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.ncpus"))
-        <||> skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.cput=" *> parseTorqueWalltime))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.prologue"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.epilogue"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvNumParser "Resource_List.nice"))
         <||> skipSpace *> kvNumParser "Resource_List.nodect"
         <||> skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.select"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.qos"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.other"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.feature"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.host"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.procs"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.nodeset"))
+        <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.tpn"))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pmem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.vmem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pvmem=" *> parseTorqueMemory))
+        <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mppmem=" *> parseTorqueMemory))
         <||> skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
+
+--------------------------------------------------------------------------------
+-- | 'parseTorqueCpuTime' parses the cpu time spent
+-- This value is either given in seconds or in a torque timestamp format
+-- We always convert the value to seconds if needed
+parseTorqueCpuTime :: Parser Integer
+parseTorqueCpuTime =
+    try (parseTorqueWalltime >>= \(TorqueWalltime d h m s) -> return $ fromIntegral (((d*24+h)*60+m)*60+s)) <|> decimal
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueResourceUsage' parses all the key value pairs denoting used resources.
 parseTorqueResourceUsage :: Parser TorqueResourceUsage
 parseTorqueResourceUsage = do
-    cput <- skipSpace *> kvNumParser "resources_used.cput"
-    energy <- skipSpace *> kvNumParser "resources_used.energy_used"
+    cput <- skipSpace *> string "resources_used.cput=" *> parseTorqueCpuTime
+    energy <- skipSpace *> maybeOption (kvNumParser "resources_used.energy_used")
     mem <- skipSpace *> string "resources_used.mem=" *> parseTorqueMemory
     vmem <- skipSpace *> string "resources_used.vmem=" *> parseTorqueMemory
     walltime <- skipSpace *> string "resources_used.walltime=" *> parseTorqueWalltime
@@ -188,16 +219,30 @@ parseTorqueResourceUsage = do
         }
 
 --------------------------------------------------------------------------------
+-- | `aggregateHosts` take a list of TorqueExecHost and condenses them to a minimal form
+-- There will be one entry for each different host, each time with the cores combined
+aggregateHosts :: [TorqueExecHost] -> [TorqueExecHost]
+aggregateHosts ths =
+    let ths' = groupBy (\(TorqueExecHost n1 _) (TorqueExecHost n2 _) -> n1 == n2) $ sort ths
+    in map aggCores ths'
+  where aggCores :: [TorqueExecHost] -> TorqueExecHost
+        aggCores ths@(TorqueExecHost n _:_) = TorqueExecHost
+            { name = n
+            , cores = sort . concatMap cores $ ths
+            }
+
+--------------------------------------------------------------------------------
 -- | 'parseTorqueHostList' parses a '+' separated list of hostname/coreranges
 -- A core range can be of the form 1,3,5-7,9
 parseTorqueHostList :: Parser [TorqueExecHost]
 parseTorqueHostList = do
     string "exec_host="
-    flip sepBy (char '+') $ do
+    hosts <- flip sepBy (char '+') $ do
         fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
         char '/'
         cores <- parseCores
         return TorqueExecHost { name = fqdn, cores = cores}
+    return $ aggregateHosts hosts
   where parseCores :: Parser [Int]
         parseCores = do
             cores <- flip sepBy1' (char ',') $ try parseRange <|> parseSingle
@@ -234,28 +279,56 @@ parseTorqueAccountingDatestamp tag = do
     return torqueDatestamp
 
 --------------------------------------------------------------------------------
--- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
-parseTorqueExit :: Parser (Text, TorqueParseResult)
-parseTorqueExit = do
-    torqueDatestamp <- parseTorqueAccountingDatestamp ";E;"
+-- | 'parseCommonAccountingInfo' parser the initial part that is common between start and exit lines
+parseCommonAccountingInfo :: Parser
+    (TorqueJobName
+    , Text
+    , Text
+    , Maybe Text
+    , Text
+    , Text
+    , Integer
+    , Integer
+    , Integer)
+parseCommonAccountingInfo = do
     name <- parseTorqueJobName
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
+    account <- skipSpace *> maybeOption (kvTextParser "account")
     jobname <- skipSpace *> kvTextParser "jobname"
     queue <- skipSpace *> kvTextParser "queue"
     ctime <- skipSpace *> kvNumParser "ctime"
     qtime <- skipSpace *> kvNumParser "qtime"
     etime <- skipSpace *> kvNumParser "etime"
-    start_count <- maybeOption $ skipSpace *> kvNumParser "start_count"
+    return (name, user, group, account, jobname, queue, ctime, qtime, etime)
+
+--------------------------------------------------------------------------------
+-- | 'parseCommonStartInfo' parses the start information that is common between start and exit lines
+parseCommonStartInfo :: Parser
+    ( Integer
+    , Text
+    , [TorqueExecHost]
+    , TorqueResourceRequest)
+parseCommonStartInfo = do
     start <- skipSpace *> kvNumParser "start"
     owner <- skipSpace *> kvTextParser "owner"
     exec_host <- skipSpace *> parseTorqueHostList
     request <- parseTorqueResourceRequest
+    return (start, owner, exec_host, request)
+
+--------------------------------------------------------------------------------
+-- | 'parseTorqueExit' parses a complete log line denoting a job exit. Tested with Torque 6.1.x.
+parseTorqueExit :: Parser (Text, TorqueParseResult)
+parseTorqueExit = do
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";E;"
+    (name, user, group, account, jobname, queue, ctime, qtime, etime) <- parseCommonAccountingInfo
+    start_count <- maybeOption $ skipSpace *> kvNumParser "start_count"
+    (start, owner, exec_host, request) <- parseCommonStartInfo
     session <- skipSpace *> kvNumParser "session"
-    total_execution_slots <- skipSpace *> kvNumParser "total_execution_slots"
-    unique_node_count <- skipSpace *> kvNumParser "unique_node_count"
+    total_execution_slots <- skipSpace *> maybeOption (kvNumParser "total_execution_slots")
+    unique_node_count <- skipSpace *> maybeOption (kvNumParser "unique_node_count")
     end <- skipSpace *> kvNumParser "end"
-    exit_status <- skipSpace *> kvNumParser "Exit_status"
+    exit_status <- skipSpace *> kvSignedParser "Exit_status"
     usage <- skipSpace *> parseTorqueResourceUsage
 
     return ("torque", TorqueExit TorqueJobExit
@@ -263,6 +336,7 @@ parseTorqueExit = do
         , name = name
         , user = user
         , group = group
+        , account = account
         , jobname = jobname
         , queue = queue
         , startCount = start_count
@@ -278,11 +352,12 @@ parseTorqueExit = do
         , execHost = exec_host
         , resourceRequest = request
         , resourceUsage = usage
-        , totalExecutionSlots = total_execution_slots
-        , uniqueNodeCount = unique_node_count
+        , totalExecutionSlots = fromMaybe (compute_total_execution_slots exec_host) total_execution_slots
+        , uniqueNodeCount = fromMaybe (length exec_host) unique_node_count
         , exitStatus = exit_status
         , torqueEntryType = TorqueExitEntry
         })
+  where compute_total_execution_slots = sum . map (\(TorqueExecHost _ cs) -> length cs)
 
 --------------------------------------------------------------------------------
 -- | `parseTorqueDelete` parses a complete log line denoting a deleted job. Tested with Torue 6.1.x
@@ -298,6 +373,33 @@ parseTorqueDelete = do
         , requestor = requestor
         , torqueEntryType = TorqueDeleteEntry
         })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueAbort` parses a complete log line denoting an aborted job. Tested with Torque 4.x
+parseTorqueAbort :: Parser (Text, TorqueParseResult)
+parseTorqueAbort = do
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";A;"
+    name <- parseTorqueJobName
+
+    return ("torque", TorqueAbort TorqueJobAbort
+        { torqueDatestamp = torqueDatestamp
+        , name = name
+        , torqueEntryType = TorqueAbortEntry
+        })
+
+--------------------------------------------------------------------------------
+-- | `parseTorqueRerun` parses a complete log line denoting a rerun job. Tested with Torque 4.x
+parseTorqueRerun :: Parser (Text, TorqueParseResult)
+parseTorqueRerun = do
+    torqueDatestamp <- parseTorqueAccountingDatestamp ";R;"
+    name <- parseTorqueJobName
+
+    return ("torque", TorqueRerun TorqueJobRerun
+        { torqueDatestamp = torqueDatestamp
+        , name = name
+        , torqueEntryType = TorqueRerunEntry
+        })
+
 
 --------------------------------------------------------------------------------
 -- | `parseTorqueQueue` parses a complete log line denoting a queued job. Tested with Torue 6.1.x
@@ -319,24 +421,15 @@ parseTorqueQueue = do
 parseTorqueStart :: Parser (Text, TorqueParseResult)
 parseTorqueStart = do
     torqueDatestamp <- parseTorqueAccountingDatestamp ";S;"
-    name <- parseTorqueJobName
-    user <- kvTextParser "user"
-    group <- skipSpace *> kvTextParser "group"
-    jobname <- skipSpace *> kvTextParser "jobname"
-    queue <- skipSpace *> kvTextParser "queue"
-    ctime <- skipSpace *> kvNumParser "ctime"
-    qtime <- skipSpace *> kvNumParser "qtime"
-    etime <- skipSpace *> kvNumParser "etime"
-    start <- skipSpace *> kvNumParser "start"
-    owner <- skipSpace *> kvTextParser "owner"
-    exec_host <- skipSpace *> parseTorqueHostList
-    request <- parseTorqueResourceRequest
+    (name, user, group, account, jobname, queue, ctime, qtime, etime) <- parseCommonAccountingInfo
+    (start, owner, exec_host, request) <- parseCommonStartInfo
 
     return ("torque", TorqueStart TorqueJobStart
         { torqueDatestamp = torqueDatestamp
         , name = name
         , user = user
         , group = group
+        , account = account
         , jobname = jobname
         , queue = queue
         , owner = owner

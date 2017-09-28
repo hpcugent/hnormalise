@@ -32,8 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
@@ -91,6 +89,11 @@ kvTextDelimParser key ds = keyParser key *> takeTill (`elem` ds)
 kvNumParser :: Integral a => Text -> Parser a
 kvNumParser key = keyParser key *> decimal
 {-# INLINE kvNumParser #-}
+
+--------------------------------------------------------------------------------
+kvSignedParser :: Integral a => Text -> Parser a
+kvSignedParser key = keyParser key *> signed decimal
+{-# INLINE kvSignedParser #-}
 
 --------------------------------------------------------------------------------
 kvYesNoParser :: Text -> Parser Bool

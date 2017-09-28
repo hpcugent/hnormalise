@@ -40,12 +40,14 @@ module HNormalise.Config
     ( Config(..)
     , ConnectionType(..)
     , InputConfig(..)
+    , LoggingConfig(..)
     , OutputConfig(..)
     , TcpOutputConfig(..)
     , TcpPortConfig(..)
     , ZeroMQOutputConfig(..)
     , ZeroMQPortConfig(..)
     , connectionType
+    , defaultLoggingFrequency
     , loadConfig
     ) where
 
@@ -60,6 +62,7 @@ import qualified Data.Yaml        as Y
 import           System.Directory
 
 import           Debug.Trace
+
 --------------------------------------------------------------------------------
 data ConnectionType = TCP
                     | ZeroMQ
@@ -72,9 +75,16 @@ connectionType c =
         _      -> ZeroMQ
 
 --------------------------------------------------------------------------------
+defaultLoggingFrequency = 100000
+
+data LoggingConfig = LoggingConfig
+    { frequency :: !(Maybe Int)    -- ^ How often should we write an update (# of messages processed)
+    } deriving (Show)
+
+--------------------------------------------------------------------------------
 data TcpPortConfig = TcpPortConfig
-    { host   :: !(Maybe Text)
-    , port   :: !(Maybe Int)
+    { host :: !(Maybe Text)
+    , port :: !(Maybe Int)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -117,8 +127,8 @@ instance Monoid ZeroMQPortConfig where
 
 --------------------------------------------------------------------------------
 data ZeroMQOutputConfig = ZeroMQOutputConfig
-    { success  :: !(Maybe ZeroMQPortConfig)
-    , failure  :: !(Maybe ZeroMQPortConfig)
+    { success :: !(Maybe ZeroMQPortConfig)
+    , failure :: !(Maybe ZeroMQPortConfig)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -131,8 +141,8 @@ instance Monoid ZeroMQOutputConfig where
 
 --------------------------------------------------------------------------------
 data InputConfig = InputConfig
-    { tcp     :: !(Maybe TcpPortConfig)
-    , zeromq  :: !(Maybe ZeroMQPortConfig)
+    { tcp    :: !(Maybe TcpPortConfig)
+    , zeromq :: !(Maybe ZeroMQPortConfig)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -145,8 +155,8 @@ instance Monoid InputConfig where
 
 --------------------------------------------------------------------------------
 data OutputConfig = OutputConfig
-    { tcp     :: !(Maybe TcpOutputConfig)
-    , zeromq  :: !(Maybe ZeroMQOutputConfig)
+    { tcp    :: !(Maybe TcpOutputConfig)
+    , zeromq :: !(Maybe ZeroMQOutputConfig)
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -181,22 +191,25 @@ defaultOutputConfig = OutputConfig
 
 --------------------------------------------------------------------------------
 data Config = Config
-    { input  :: !(Maybe InputConfig)
-    , output :: !(Maybe OutputConfig)
-    , fields :: !(Maybe [(Text, Text)])
+    { logging :: !(Maybe LoggingConfig)
+    , input   :: !(Maybe InputConfig)
+    , output  :: !(Maybe OutputConfig)
+    , fields  :: !(Maybe [(Text, Text)])
     } deriving (Show)
 
 --------------------------------------------------------------------------------
 instance Monoid Config where
-    mempty = Config Nothing Nothing Nothing
+    mempty = Config Nothing Nothing Nothing Nothing
     mappend l r = Config
-        { input  = input l  `mplus` input r
+        { logging = logging l `mplus` logging r
+        , input  = input l  `mplus` input r
         , output = output l `mplus` output r
         , fields = fields l `mplus` fields r
         }
 
 defaultConfig = Config
-    { input = Nothing
+    { logging = Just LoggingConfig { frequency = Just defaultLoggingFrequency }
+    , input = Nothing
     , output = Nothing
     , fields = Nothing
     }
@@ -229,6 +242,7 @@ loadConfig fp = do
     return $ userConfig <> systemConfig <> defaultConfig
 
 --------------------------------------------------------------------------------
+$(deriveJSON defaultOptions ''LoggingConfig)
 $(deriveJSON defaultOptions ''TcpPortConfig)
 $(deriveJSON defaultOptions ''TcpOutputConfig)
 $(deriveJSON defaultOptions ''ZeroMQPortConfig)

@@ -5,6 +5,7 @@ module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
+import           Control.Concurrent.Async     (concurrently)
 import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
 import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
@@ -54,6 +55,7 @@ import           HNormalise.Config            ( Config (..)
                                               , loadConfig)
 import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
+import           HNormalise.Parallel          (conduitPooledMapBuffered)
 import           HNormalise.Verbose
 
 --------------------------------------------------------------------------------
@@ -129,7 +131,6 @@ messageSink success failure messageCount frequency = loop
                 loop
             Nothing -> return ()
 
-
 increaseCount (s, f) messageCount frequency = do
     (s', f') <- takeMVar messageCount
     when ((s' + f') `mod` frequency == 0) $ do
@@ -149,13 +150,13 @@ mySink messageCount frequency = loop
                 yield (SBS.pack "success: ")
                 yield json
                 yield (SBS.pack "\n")
-                liftIO $ increaseCount (1, 0) messageCount frequency
+                -- liftIO $ increaseCount (1, 0) messageCount frequency
                 loop
             Just (Original l) -> do
                 yield (SBS.pack "fail - original: ")
                 yield l
                 yield (SBS.pack "\n")
-                liftIO $ increaseCount (0, 1) messageCount frequency
+                --liftIO $ increaseCount (0, 1) messageCount frequency
                 loop
             Nothing -> return ()
 
@@ -175,7 +176,7 @@ runTCPConnection options config messageCount = do
 
                 runTCPClient (clientSettings successPort successHost) $ \successServer ->
                     runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
-                        appSource appData
+                        runResourceT $ appSource appData
                             $= normalisationConduit options config
                             $$ messageSink (appSink successServer) (appSink failServer) messageCount frequency
             Just testSinkFileName -> runResourceT $ appSource appData
@@ -201,10 +202,16 @@ normalisationConduit options config =
     let fs = fields config
     in if oJsonInput options
         then CB.lines $= C.map (normaliseJsonInput fs)
-        else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
+        else DCT.decode DCT.utf8 $= DCT.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
 
 
 --------------------------------------------------------------------------------
+runZeroMQConnection :: Options
+                    -> Config
+                    -> MVar a1
+                    -> MVar (Int, Int)
+                    -> Verbose
+                    -> IO ()
 runZeroMQConnection options config s_interrupted messageCount verbose' = do
     let fs = fields config
     let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
@@ -229,9 +236,9 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
 
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
-                        liftIO $ zmqInterruptibleSource s_interrupted s
-                            =$=& normalisationConduit options config
-                            $$& messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
+                        runResourceT $ zmqInterruptibleSource s_interrupted s
+                            $= normalisationConduit options config
+                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
 
         Just testSinkFileName ->
             ZMQ.withContext $ \ctx ->

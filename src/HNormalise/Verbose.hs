@@ -40,7 +40,7 @@ module HNormalise.Verbose
 
 
 --------------------------------------------------------------------------------
-import           System.IO (hPutStrLn, stderr)
+import           System.IO     (hPutStrLn, stderr)
 
 
 --------------------------------------------------------------------------------

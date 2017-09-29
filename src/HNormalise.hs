@@ -31,6 +31,8 @@
  - (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE DeriveAnyClass        #-}
 
 module HNormalise
     ( normaliseRsyslog
@@ -42,6 +44,9 @@ module HNormalise
 
 --------------------------------------------------------------------------------
 import           Control.Applicative        ((<|>))
+import           Control.Parallel.Strategies
+import           Control.DeepSeq.Generics
+import           Control.Monad.Par
 import           Data.Aeson                 (ToJSON)
 import qualified Data.Aeson                 as Aeson
 import           Data.Aeson.Text            (encodeToLazyText)
@@ -52,6 +57,7 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Text                  (Text, empty)
 import           Data.Text.Encoding         (encodeUtf8)
 import           Data.Text.Lazy             (toStrict)
+import           GHC.Generics               (Generic)
 
 --------------------------------------------------------------------------------
 import           HNormalise.Huppel.Internal
@@ -70,6 +76,7 @@ data Normalised
     = Transformed !SBS.ByteString
     -- | An 'Original' messge contains the unaltered incoming message as a 'ByteString'
     | Original !SBS.ByteString
+    deriving (Generic, NFData)
 
 --------------------------------------------------------------------------------
 -- | The 'normaliseJsonInput' function converts a `ByteString` to a normalised message or keeps the original if
@@ -89,7 +96,8 @@ normaliseText :: Maybe [(Text, Text)]  -- ^ Output fields
               -> Text                  -- ^ Input
               -> Normalised            -- ^ Transformed or Original result
 normaliseText fs logLine =
-    case parse (parseRsyslogLogstashString fs) logLine of
+    let p = parse (parseRsyslogLogstashString fs) logLine
+    in case p of
         Done _ r    -> Transformed r
         Partial c   -> case c empty of
                             Done _ r -> Transformed r

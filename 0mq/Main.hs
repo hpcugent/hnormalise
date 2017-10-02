@@ -18,7 +18,6 @@ import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
-import           Data.Conduit.Async
 import           Data.Conduit.Binary          (sinkFile)
 import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
@@ -69,7 +68,7 @@ data Options = Options
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-parserOptions :: OA.Parser Options
+parserOptions :: OA.Parser Main.Options
 parserOptions = Options
     <$> OA.optional ( OA.strOption $
             OA.long "configfile" <>
@@ -97,7 +96,7 @@ parserOptions = Options
 
 
 --------------------------------------------------------------------------------
-parserInfo :: OA.ParserInfo Options
+parserInfo :: OA.ParserInfo Main.Options
 parserInfo = OA.info (OA.helper <*> parserOptions)
     (OA.fullDesc
         <> OA.progDesc "Normalise rsyslog messages"
@@ -208,7 +207,7 @@ normalisationConduit options config =
         else DCT.decode DCT.utf8 $= DCT.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
 
 --------------------------------------------------------------------------------
-{- runZeroMQConnection :: Options
+{- runZeroMQConnection :: Main.Options
                     -> Config
                     -> MVar a1
                     -> MVar (Int, Int)

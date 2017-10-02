@@ -61,7 +61,6 @@ library
                      , parallel
                      , permute
                      , resourcet
-                     , stm-conduit
                      , text
                      , time
                      , unordered-containers
@@ -93,7 +92,6 @@ executable hnormalise
                      , optparse-applicative
                      , parallel
                      , resourcet
-                     , stm-conduit
                      , text
                      , time
                      , unix

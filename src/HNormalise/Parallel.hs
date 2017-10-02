@@ -1,7 +1,7 @@
 {- hnormalise - a log normalisation library
  -
- - The following code adapted from github.com at https://gist.github.com/nh2/321567bb68e9efa6e299eb6b2410a1fb
- - and adapted for use in HNormalise
+ - The following code was taken from github.com at https://gist.github.com/nh2/321567bb68e9efa6e299eb6b2410a1fb
+ - and adapted for use in HNormalise.
  -}
 
 {-# LANGUAGE BangPatterns #-}

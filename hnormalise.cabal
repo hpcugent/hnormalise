@@ -49,6 +49,7 @@ library
                      , directory
                      , ip
                      , permute
+                     , resourcet
                      , text
                      , time
                      , unordered-containers

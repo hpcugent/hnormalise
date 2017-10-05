@@ -5,7 +5,6 @@ module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
-import           Control.Concurrent.Async     (concurrently)
 import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
 import           Control.Monad
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
@@ -55,7 +54,6 @@ import           HNormalise.Config            ( Config (..)
                                               , loadConfig)
 import           HNormalise.Internal          (Rsyslog (..))
 import           HNormalise.Json
-import           HNormalise.Parallel          (conduitPooledMapBuffered)
 import           HNormalise.Verbose
 
 --------------------------------------------------------------------------------

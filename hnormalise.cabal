@@ -1,5 +1,5 @@
 name:                hnormalise
-version:             0.4.7.0
+version:             0.4.8.0
 synopsis:            Log message normalisation tool producing structured JSON messages
 description:         Log message normalisation tool producing structured JSON messages
 homepage:            https://github.com/itkovian/hnormalise#readme
@@ -39,6 +39,7 @@ library
                      , HNormalise.Torque.Json
                      , HNormalise.Torque.Parser
                      , HNormalise.Verbose
+  other-modules:       Paths_hnormalise
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , aeson-pretty

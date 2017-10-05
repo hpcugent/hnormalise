@@ -49,13 +49,12 @@ import           Control.DeepSeq.Generics
 import           Control.Monad.Par
 import           Data.Aeson                 (ToJSON)
 import qualified Data.Aeson                 as Aeson
-import           Data.Aeson.Text            (encodeToLazyText)
 import           Data.Attoparsec.Combinator (lookAhead, manyTill)
 import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8      as SBS
 import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Text                  (Text, empty)
-import           Data.Text.Encoding         (encodeUtf8)
+import           Data.Text.Encoding         (encodeUtf8, decodeUtf8)
 import           Data.Text.Lazy             (toStrict)
 import           GHC.Generics               (Generic)
 
@@ -93,10 +92,10 @@ normaliseJsonInput fs logLine =
 -- | The 'normaliseText' function converts a 'Text' to a normalised message or keeps the original (in 'ByteString')
 -- format if the conversion fails
 normaliseText :: Maybe [(Text, Text)]  -- ^ Output fields
-              -> Text                  -- ^ Input
+              -> SBS.ByteString        -- ^ Input
               -> Normalised            -- ^ Transformed or Original result
 normaliseText fs logLine =
-    let p = parse (parseRsyslogLogstashString fs) logLine
+    let !p = parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine
     in case p of
         Done _ r    -> Transformed r
         Partial c   -> case c empty of
@@ -104,7 +103,7 @@ normaliseText fs logLine =
                             _        -> original
         _           -> original
   where
-    original = Original $ encodeUtf8 logLine
+    original = Original logLine
 
 --------------------------------------------------------------------------------
 -- | The 'convertMessage' function transforms the actual message to a 'Maybe' 'ParseResult'. If parsing fails,

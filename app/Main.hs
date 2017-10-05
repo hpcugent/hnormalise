@@ -201,8 +201,7 @@ normalisationConduit options config =
     let fs = fields config
     in if oJsonInput options
         then CB.lines $= C.map (normaliseJsonInput fs)
-        else DCT.decode DCT.utf8 $= DCT.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
-
+        else CB.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
 
 --------------------------------------------------------------------------------
 runZeroMQConnection :: Main.Options

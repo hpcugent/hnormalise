@@ -20,7 +20,6 @@ import           Control.Monad (when, void)
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans
 import           Control.Monad.Trans.Resource (ResourceT, MonadResource)
-import           Control.Parallel.Strategies
 import           Data.Conduit
 import qualified Data.Conduit as C
 import           Data.Foldable
@@ -52,7 +51,6 @@ seqHeadMaybe s = case Seq.viewl s of
   a :< _     -> Just a
 
 
--- | Like conduit's `mapM`, but runs in parallel on `getNumCapabilities` threads,
 -- returns outputs in the order of inputs (like `mapM`, no reordering),
 -- and allows defining a bounded size output buffer for elements of type `b` to
 -- maintain high parallelism despite head-of-line blocking.
@@ -106,7 +104,7 @@ seqHeadMaybe s = case Seq.viewl s of
 --   puts :: (MonadIO m) => String -> m () -- for non-interleaved output
 --   puts s = liftIO $ BS8.putStrLn (BS8.pack s)
 --   runConduitRes (CL.sourceList [1..6] .| conduitPooledMapBuffered 4 (\i -> liftIO $ puts (show i ++ " before") >> threadDelay (i * 1000000) >> puts (show i ++ " after") >> return (i*2)) .| CL.consume )
-conduitPooledMapBuffered :: forall m a b . (MonadIO m, MonadResource m, NFData b) => Int -> (a -> b) -> Conduit a m b
+conduitPooledMapBuffered :: forall m a b . (MonadIO m, MonadResource m) => Int -> (a -> b) -> Conduit a m b
 conduitPooledMapBuffered workerOutputBufferSize f = do
   when (workerOutputBufferSize < 1) $
     error $ "conduitPooledMapBuffered requires workerOutputBufferSize < 1, got " ++ show workerOutputBufferSize
@@ -170,7 +168,7 @@ conduitPooledMapBuffered workerOutputBufferSize f = do
                       signal inVarEnqueued
                       -- Important: Force WHNF here so that f gets evaluated inside the
                       -- worker; it's `f`'s job to decide whether to deepseq or not.
-                      let b = let b' = f a in seq b' b' 
+                      let b = let b' = f a in seq b' b'
                       atomicModifyIORef_' outQueueRef (|> workerOutVar)
                       putMVar workerOutVar b
                       loop ((i + 1) `rem` workerOutputBufferSize)

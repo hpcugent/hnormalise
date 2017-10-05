@@ -44,9 +44,6 @@ module HNormalise
 
 --------------------------------------------------------------------------------
 import           Control.Applicative        ((<|>))
-import           Control.Parallel.Strategies
-import           Control.DeepSeq.Generics
-import           Control.Monad.Par
 import           Data.Aeson                 (ToJSON)
 import qualified Data.Aeson                 as Aeson
 import           Data.Attoparsec.Combinator (lookAhead, manyTill)
@@ -75,7 +72,7 @@ data Normalised
     = Transformed !SBS.ByteString
     -- | An 'Original' messge contains the unaltered incoming message as a 'ByteString'
     | Original !SBS.ByteString
-    deriving (Generic, NFData)
+    deriving (Generic)
 
 --------------------------------------------------------------------------------
 -- | The 'normaliseJsonInput' function converts a `ByteString` to a normalised message or keeps the original if

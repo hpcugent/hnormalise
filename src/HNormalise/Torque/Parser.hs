@@ -42,6 +42,7 @@ import           Control.Applicative         ((<|>))
 import           Control.Monad               (join)
 import           Data.Attoparsec.Combinator  (lookAhead, manyTill)
 import           Data.Attoparsec.Text
+import qualified Data.Attoparsec.Text        as AT
 import           Data.Char                   (isDigit, isSpace)
 import           Data.List                   (concatMap, groupBy, sort)
 import qualified Data.Map                    as M
@@ -136,7 +137,7 @@ parseTorqueResourceNodeList = do
         ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
         return $ TSN TorqueJobShortNode { number = number, ppn = ppn }
     else TFN <$> sepBy (do
-        fqdn <- Data.Attoparsec.Text.takeWhile (\c -> c /= ':' && c /= ' ')
+        fqdn <- AT.takeWhile (\c -> c /= ':' && c /= ' ')
         ppn <- maybeOption $ char ':' *> kvNumParser "ppn"
         return TorqueJobFQNode { name = fqdn, ppn = ppn}) (char '+')
 
@@ -238,7 +239,7 @@ parseTorqueHostList :: Parser [TorqueExecHost]
 parseTorqueHostList = do
     string "exec_host="
     hosts <- flip sepBy (char '+') $ do
-        fqdn <- Data.Attoparsec.Text.takeWhile (/= '/')
+        fqdn <- AT.takeWhile (/= '/')
         char '/'
         cores <- parseCores
         return TorqueExecHost { name = fqdn, cores = cores}

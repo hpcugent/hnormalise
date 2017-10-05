@@ -131,7 +131,6 @@ messageSink success failure messageCount frequency = loop
                 loop
             Nothing -> return ()
 
-
 increaseCount (s, f) messageCount frequency = do
     (s', f') <- takeMVar messageCount
     when ((s' + f') `mod` frequency == 0) $ do
@@ -203,8 +202,8 @@ normalisationConduit options config =
     let fs = fields config
     in if oJsonInput options
         then CB.lines $= C.map (normaliseJsonInput fs)
-        --else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-        else DCT.decode DCT.utf8 $= DCT.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
+        --else CB.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
+        else CB.lines $= C.map (normaliseText fs)
 
 --------------------------------------------------------------------------------
 {- runZeroMQConnection :: Main.Options
@@ -251,9 +250,25 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
                         $= mySink messageCount frequency
                         $$ sinkFile testSinkFileName
 -}
+
+passSink messageCount frequency = loop
+  where
+    loop = do
+        v <- await
+        case v of
+            Just s -> do
+                yield s
+                liftIO $ increaseCount (1, 0) messageCount frequency
+                loop
+            Nothing -> return ()
+
 runFromSourceFile options config messageCount verbose' =
     runResourceT $ C.sourceFile "/tmp/hnorm_test_input"
         $= normalisationConduit options config
+        -- $= DCT.decode DCT.utf8 $= DCT.lines $= DCT.encode DCT.utf8   -- 2.2s
+        -- $= DCT.decode DCT.utf8 $= DCT.lines $= DCT.encode DCT.utf8   -- 2.2s
+        -- $= CB.lines $= DCT.decode DCT.utf8 $= DCT.encode DCT.utf8
+        -- $= passSink messageCount 10000
         $= mySink messageCount 10000
         $$ sinkFile "/dev/null" -- "/tmp/hnorm_test_output"
 

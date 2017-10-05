@@ -127,13 +127,6 @@ messageSink success failure messageCount frequency = loop
                 liftIO $ increaseCount (0, 1) messageCount frequency
                 loop
             Nothing -> return ()
-    increaseCount (s, f) =
-        liftIO $ do
-            (s', f') <- takeMVar messageCount
-            when ((s' + f') `mod` frequency == 0) $ do
-                epoch_int <- (read . formatTime defaultTimeLocale "%s" <$> getCurrentTime) :: IO Int
-                printf "%ld - message count: %10d (success: %10d, fail: %10d)\n" epoch_int (s' + f') s' f'
-            putMVar messageCount (s' + s, f' + f)
 
 increaseCount (s, f) messageCount frequency = do
     (s', f') <- takeMVar messageCount
@@ -206,8 +199,7 @@ normalisationConduit options config =
     let fs = fields config
     in if oJsonInput options
         then CB.lines $= C.map (normaliseJsonInput fs)
-        else DCT.decode DCT.utf8 $= DCT.lines $= C.map (normaliseText fs)
-
+        else CB.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
 
 --------------------------------------------------------------------------------
 runZeroMQConnection :: Main.Options
@@ -244,7 +236,6 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
                             $= normalisationConduit options config
                             $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
 
-{-      -- FIXME: This does not work, gives a type error
         Just testSinkFileName ->
             ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do

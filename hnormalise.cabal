@@ -80,7 +80,6 @@ executable hnormalise-0mq
                      , mtl
                      , optparse-applicative
                      , resourcet
-                     , stm-conduit
                      , text
                      , time
                      , unix
@@ -158,7 +157,6 @@ benchmark hnormalise-bench
                      , aeson
                      , attoparsec
                      , criterion
-                     , deepseq
                      , hnormalise
                      , random
                      , text

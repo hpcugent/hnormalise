@@ -167,8 +167,59 @@ Resource_List.cput Resource_List.neednodes Resource_List.nice Resource_List.node
 -- the guesses as to the most common ordering and the mandatory fields is based on 5 years of log data from Torque
 -- 4.x to 6.0
 parseTorqueResourceRequest :: Parser TorqueResourceRequest
-parseTorqueResourceRequest =
-    permute $ TorqueResourceRequest
+parseTorqueResourceRequest = try
+    (do
+        mem <- maybeOption (skipSpace *> string "Resource_List.mem=" *> parseTorqueMemory)
+        advres <- maybeOption (skipSpace *> kvTextParser "Resource_List.advres")
+        naccesspolicy <- maybeOption $ skipSpace *> kvTextParser "Resource_List.naccesspolicy"
+        ncpus <- maybeOption $ skipSpace *> kvNumParser "Resource_List.ncpus"
+        cputime <- maybeOption $ skipSpace *> string "Resource_List.cput=" *> parseTorqueWalltime
+        prologue <- maybeOption $ skipSpace *> kvTextParser "Resource_List.prologue"
+        epilogue <- maybeOption $ skipSpace *> kvTextParser "Resource_List.epilogue"
+        neednodes <- maybeOption $ skipSpace *> string "Resource_List.neednodes=" *> parseTorqueResourceNodeList
+        nice <- maybeOption $ skipSpace *> kvNumParser "Resource_List.nice"
+        nodect <- skipSpace *> kvNumParser "Resource_List.nodect"
+        nodes <- skipSpace *> string "Resource_List.nodes=" *> parseTorqueResourceNodeList
+        select <- maybeOption $ skipSpace *> kvTextParser "Resource_List.select"
+        qos <- maybeOption $ skipSpace *> kvTextParser "Resource_List.qos"
+        other <- maybeOption $ skipSpace *> kvTextParser "Resource_List.other"
+        feature <- maybeOption $ skipSpace *> kvTextParser "Resource_List.feature"
+        host <- maybeOption $ skipSpace *> kvTextParser "Resource_List.host"
+        procs <- maybeOption $ skipSpace *> kvTextParser "Resource_List.procs"
+        nodeset <- maybeOption $ skipSpace *> kvTextParser "Resource_List.nodeset"
+        tpn <- maybeOption $ skipSpace *> kvTextParser "Resource_List.tpn"
+        pmem <- maybeOption $ skipSpace *> string "Resource_List.pmem=" *> parseTorqueMemory
+        vmem <- maybeOption $ skipSpace *> string "Resource_List.vmem=" *> parseTorqueMemory
+        pvmem <- maybeOption $ skipSpace *> string "Resource_List.pvmem=" *> parseTorqueMemory
+        mppmem <- maybeOption $ skipSpace *> string "Resource_List.mppmem=" *> parseTorqueMemory
+        walltime <- skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
+        return TorqueResourceRequest
+            { mem           = mem
+            , advres        = advres
+            , naccesspolicy = naccesspolicy
+            , ncpus         = ncpus
+            , cputime       = cputime
+            , prologue      = prologue
+            , epilogue      = epilogue
+            , neednodes     = neednodes
+            , nice          = nice
+            , nodeCount     = nodect
+            , nodes         = nodes
+            , select        = select
+            , qos           = qos
+            , other         = other
+            , feature       = feature
+            , host          = host
+            , procs         = procs
+            , nodeset       = nodeset
+            , tpn           = tpn
+            , pmem          = pmem
+            , vmem          = vmem
+            , pvmem         = pvmem
+            , mppmem        = mppmem
+            , walltime      = walltime
+            })
+    <|> ( permute $ TorqueResourceRequest
         <$?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.advres"))
         <|?> (Nothing, Just `fmap` (skipSpace *> kvTextParser "Resource_List.naccesspolicy"))
@@ -193,6 +244,7 @@ parseTorqueResourceRequest =
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.pvmem=" *> parseTorqueMemory))
         <|?> (Nothing, Just `fmap` (skipSpace *> string "Resource_List.mppmem=" *> parseTorqueMemory))
         <||> skipSpace *> string "Resource_List.walltime=" *> parseTorqueWalltime
+    )
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueCpuTime' parses the cpu time spent

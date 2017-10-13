@@ -16,6 +16,7 @@ Features:
   including rsyslog, [logstash](http://www.elastic.co/products/logstash), ...
 - sends out original messages to a (different) TCP or ZeroMQ port in case the parsing fails, allowing other services to process the
   information.
+- can process up to 18K Torque log messages/s on a 2.7GHz 2015 Corei5 (mid 2015 MacBook Pro) when streaming from an to a file.
 
 Usage and configuration
 -----------------------
@@ -58,9 +59,11 @@ discarding the rest. We also rely on [permute]() to deal with log lines that may
 no definite ordering. Note that this _will_ slow down the parsing.
 
 
-Caveat: at this point, we do not a priori restrict the possible parsers we unleash on each message. However, if the inbound
-data can be tagged properly, we could reduce the maximal number of parsers tried and avoid extensive backtracking.
-Using ZeroMQ, this could be done by using topics to tag inbound information.
+Caveat: at this point, we do not a priori restrict the possible parsers we
+unleash on each message. However, if the inbound data can be tagged properly,
+we could reduce the maximal number of parsers tried and avoid extensive
+backtracking.  Using ZeroMQ, this could be done by using topics to tag inbound
+information.
 
 ### Adding a new parser
 

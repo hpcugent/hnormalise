@@ -84,19 +84,20 @@ normaliseJsonInput fs logLine =
 --------------------------------------------------------------------------------
 -- | The 'normaliseText' function converts a 'Text' to a normalised message or keeps the original (in 'ByteString')
 -- format if the conversion fails
-normaliseText :: Maybe [(Text, Text)]  -- ^ Output fields
-              -> SBS.ByteString        -- ^ Input
-              -> Normalised            -- ^ Transformed or Original result
+normaliseText :: Maybe [(Text, Text)]                        -- ^ Output fields
+              -> SBS.ByteString                              -- ^ Input
+              -> Either SBS.ByteString NormalisedRsyslog     -- ^ Transformed or Original result
 normaliseText fs logLine =
     let !p = parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine
     in case p of
-        Done _ r    -> Transformed r
+        Done _ r    -> Right r
         Partial c   -> case c empty of
-                            Done _ r -> Transformed r
-                            _        -> original
-        _           -> original
+                            Done _ r -> Right r
+                            _        -> llogline
+        _           -> llogline
   where
-    original = Original logLine
+    llogline = Left logLine
+
 
 --------------------------------------------------------------------------------
 -- | The 'convertMessage' function transforms the actual message to a 'Maybe' 'ParseResult'. If parsing fails,

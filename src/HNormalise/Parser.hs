@@ -91,8 +91,8 @@ getJsonKey (PR_Snoopy _)    = "snoopy"
 -- | The 'parseRsyslogLogstashString' currently is a placeholder function that will convert the incoming rsyslog message
 -- if it is encoded as expected in a plain string format
 -- <%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %syslogtag% - %APP-NAME%: %msg%
-parseRsyslogLogstashString :: Maybe [(Text, Text)]    -- ^ Output fields
-                           -> Parser SBS.ByteString   -- ^ Resulting encoded JSON representation
+parseRsyslogLogstashString :: Maybe [(Text, Text)]     -- ^ Output fields
+                           -> Parser NormalisedRsyslog -- SBS.ByteString   -- ^ Resulting encoded JSON representation
 parseRsyslogLogstashString fs = do
     abspri <- maybeOption $ do
         char '<'
@@ -106,7 +106,7 @@ parseRsyslogLogstashString fs = do
     skipSpace *> char '-' *> skipSpace
     (original, (appname, parsed)) <- match parseMessage
     return $ let jsonkey = getJsonKey parsed
-             in BS.toStrict $ encode NRsyslog
+             in NRsyslog
                     { rsyslog = Rsyslog
                         { msg              = original
                         , timereported     = timereported

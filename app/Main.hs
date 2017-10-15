@@ -194,12 +194,19 @@ zmqInterruptibleSource m s = do
         (liftIO (ZMQ.receive s) >>= yield)
     liftIO $ putStrLn "Done!"
 
+encodingConduit = do
+    v <- await
+    case v of
+        Just (Left l) -> yield (Original l)
+        Just (Right n) -> yield (Transformed $ encodeNormalisedRsyslog n)
+        Nothing -> return ()
+
 --------------------------------------------------------------------------------
 normalisationConduit options config =
     let fs = fields config
     in if oJsonInput options
         then CB.lines $= C.map (normaliseJsonInput fs)
-        else CB.lines $= C.map (normaliseText fs)
+        else CB.lines $= C.map (normaliseText fs) $= encodingConduit
 
 --------------------------------------------------------------------------------
 runZeroMQConnection :: Main.Options
@@ -217,7 +224,7 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
     case oTestFilePath options of
         Nothing -> ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                    ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                    ZMQ.connect s $ printf "tcp://%s:%d" ("localhost" :: T.Text) listenPort
                     verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
 
                     let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)

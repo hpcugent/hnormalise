@@ -89,16 +89,12 @@ normaliseText :: Maybe [(Text, Text)]                        -- ^ Output fields
               -> SBS.ByteString                              -- ^ Input
               -> Either SBS.ByteString NormalisedRsyslog     -- ^ Transformed or Original result
 normaliseText fs logLine =
-    let !p = parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine
-    in case p of
-        Done _ r    -> seq_r r
+    case parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine of
+        Done _ r    -> Right r
         Partial c   -> case c empty of
-                            Done _ r -> seq_r r
-                            _        -> llogline
-        _           -> llogline
-  where
-    seq_r r = let r' = r `deepseq` r in Right r'
-    llogline = Left logLine
+                            Done _ r -> Right r
+                            _        -> Left logLine
+        _           -> Left logLine
 
 
 --------------------------------------------------------------------------------

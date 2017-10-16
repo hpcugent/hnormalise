@@ -73,6 +73,7 @@ executable hnormalise
                      , conduit-combinators
                      , conduit-extra
                      , containers
+                     , deepseq
                      , directory
                      , extra
                      , ip

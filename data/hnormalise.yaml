@@ -23,8 +23,8 @@ input:
     # connect on the other (push) side
         method: "pull"
 
-    # by default, we listen to all hosts
-        host: "*"
+    # by default, we listen to localhost
+        host: "localhost"
 
     # just pick a port
         port: 31338

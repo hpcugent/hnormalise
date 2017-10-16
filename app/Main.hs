@@ -10,6 +10,8 @@ import           Control.Concurrent.Chan
 import           Control.Concurrent.Extra
 import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
 import           Control.Concurrent.QSem
+import           Control.DeepSeq
+import           Control.Exception            (evaluate)
 import           Control.Monad
 import           Control.Monad.Extra
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
@@ -234,16 +236,17 @@ normalisationConduit options config nCount =
     let fs = fields config
     in if oJsonInput options
         then undefined -- CB.lines $= C.map (normaliseJsonInput fs)
-        else CB.lines $= count $= C.map (normaliseText fs)
-  where count = do
+        else CB.lines $= count fs -- $= C.map (normaliseText fs)
+  where count fs = do
             m <- await
             case m of
                 Just m' -> do
-                    v <- liftIO $ takeMVar nCount
-                    when (v `mod` 10000 == 0) $ liftIO $ printf "normalised: %d messages\n" v
-                    liftIO $ putMVar nCount (v+1)
-                    Data.Conduit.yield m'
-                    count
+                    --v <- liftIO $ takeMVar nCount
+                    --when (v `mod` 10000 == 0) $ liftIO $ printf "normalised: %d messages\n" v
+                    --liftIO $ putMVar nCount (v+1)
+                    m'' <- liftIO $ evaluate $ force (normaliseText fs) m'
+                    Data.Conduit.yield m''
+                    count fs
                 Nothing -> return ()
 
 --------------------------------------------------------------------------------
@@ -258,11 +261,12 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
     let listenHost = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig _ z) -> z) >>= (\(ZeroMQPortConfig m h p) -> p)
     let frequency = fromMaybe defaultLoggingFrequency (logging config >>= (\(LoggingConfig f) -> f))
+    nCount <- newMVar (0 :: Int)
 
     case oTestFilePath options of
         Nothing -> ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                    ZMQ.connect s $ printf "tcp://%s:%d" ("localhost" :: T.Text) listenPort
+                    ZMQ.connect s $ printf "tcp://%s:%d" listenHost listenPort
                     verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
 
                     let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
@@ -278,23 +282,20 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
 
-                        nCount <- newMVar (0 :: Int)
 
                         runResourceT $ zmqInterruptibleSource s_interrupted s
                             $= normalisationConduit options config nCount
-                            $$ pipelineC 10000 (messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency)
+                            $$ pipelineC 100 (messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency)
 
-        {-}
         Just testSinkFileName ->
             ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                    ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                    ZMQ.connect s $ printf "tcp://%s:%d" listenHost listenPort
                     verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
                     runResourceT $ zmqInterruptibleSource s_interrupted s
-                        $= normalisationConduit options config
-                        $= mySink messageCount frequency
-                        $$ sinkFile testSinkFileName
-                        -}
+                        $= normalisationConduit options config nCount
+                        $$ pipelineC 100 (let sf = sinkFile testSinkFileName in messageSink sf sf messageCount frequency)
+
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
 -- for the pipeline.

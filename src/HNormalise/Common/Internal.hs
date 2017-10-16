@@ -32,6 +32,7 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE ExistentialQuantification #-}
 
@@ -40,14 +41,18 @@ module HNormalise.Common.Internal
     ) where
 
 --------------------------------------------------------------------------------
-import           Data.Aeson                 (FromJSON, ToJSON, toEncoding,
-                                             toJSON)
+import           Control.DeepSeq  (NFData)
+import           Data.Aeson       (FromJSON, ToJSON, toEncoding, toJSON)
 import           Data.Text
-import           GHC.Generics               (Generic)
-import qualified Net.Types                  as Net
+import           GHC.Generics     (Generic)
+import qualified Net.Types        as Net
 
 --------------------------------------------------------------------------------
 data Host = Hostname Text        -- hostname
           | IPv4 Net.IPv4
-          | IPv6 Net.IPv6
-          deriving (Show, Eq)
+ --         | IPv6 Net.IPv6
+          deriving (Show, Eq, Generic)
+
+instance NFData Net.IPv4
+--instance NFData Net.IPv6
+instance NFData Host

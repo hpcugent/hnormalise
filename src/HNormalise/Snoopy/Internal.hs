@@ -35,16 +35,15 @@
 {-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE OverloadedStrings         #-}
 
 module HNormalise.Snoopy.Internal where
 
 
 --------------------------------------------------------------------------------
-import           Data.Aeson                 (FromJSON, ToJSON, toEncoding,
-                                             toJSON)
+import           Control.DeepSeq  (NFData)
+import           Data.Aeson       (FromJSON, ToJSON, toEncoding, toJSON)
 import           Data.Text
-import           GHC.Generics               (Generic)
+import           GHC.Generics     (Generic)
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Internal
@@ -59,3 +58,5 @@ data Snoopy = Snoopy
     , executable :: !Text
     , command    :: !Text
     } deriving (Show, Eq, Generic)
+
+instance NFData Snoopy

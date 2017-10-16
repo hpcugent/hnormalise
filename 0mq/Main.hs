@@ -195,13 +195,29 @@ zmqInterruptibleSource m s = do
         (liftIO (ZMQ.receive s) >>= yield)
     liftIO $ putStrLn "Done!"
 
+
+encodingConduit = loop
+  where
+    loop = do
+        v <- await
+        case v of
+            Just v -> do
+                Data.Conduit.yield (enc v)
+                loop
+            Nothing -> return ()
+
+enc v = case v of
+    Left l -> Original l
+    Right n -> Transformed $ encodeNormalisedRsyslog n
+
+
 --------------------------------------------------------------------------------
 normalisationConduit options config =
     let fs = fields config
     in if oJsonInput options
         then CB.lines $= C.map (normaliseJsonInput fs)
         --else CB.lines $= conduitPooledMapBuffered 20 (normaliseText fs)
-        else CB.lines $= C.map (normaliseText fs)
+        else CB.lines $= C.map (normaliseText fs) $= encodingConduit
 
 --------------------------------------------------------------------------------
 {- runZeroMQConnection :: Main.Options

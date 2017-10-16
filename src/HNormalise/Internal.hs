@@ -33,12 +33,13 @@
 -}
 
 {-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Internal where
 
 --------------------------------------------------------------------------------
+import           Control.DeepSeq               (NFData)
 import           Data.Aeson                    (FromJSON, ToJSON, toEncoding,
                                                 toJSON)
 import           Data.Text                     (Text)
@@ -59,8 +60,6 @@ import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
 data ParseResult
-    -- | 'Huppel' Result for testing purposes, should you want to check the pipeline works without pushing in actual data
-    = PR_Huppel Huppel
     -- | Represents a parsed 'LmodLoad' message
     | PR_Lmod LmodParseResult
     -- | Represents a parsed 'Shorewall' message
@@ -73,7 +72,6 @@ data ParseResult
 
 --------------------------------------------------------------------------------
 instance ToJSON ParseResult where
-    toEncoding (PR_Huppel v)    = toEncoding v
     toEncoding (PR_Lmod v)      = toEncoding v
     toEncoding (PR_Shorewall v) = toEncoding v
     toEncoding (PR_Snoopy v)    = toEncoding v
@@ -111,3 +109,7 @@ data NormalisedRsyslog = NRsyslog
     , jsonkey    :: Text               -- ^ The key under which the normalised info will appear in the JSON result
     , fields     :: Maybe [(Text, Text)]     -- ^ The fields we need to output when creating the JSON encoding as (key, fieldname)
     } deriving (Show, Generic)
+
+instance NFData ParseResult
+instance NFData Rsyslog
+instance NFData NormalisedRsyslog

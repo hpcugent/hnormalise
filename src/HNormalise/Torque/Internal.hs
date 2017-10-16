@@ -38,6 +38,7 @@
 module HNormalise.Torque.Internal where
 
 --------------------------------------------------------------------------------
+import           Control.DeepSeq  (NFData)
 import           Data.Text
 import           GHC.Generics (Generic)
 
@@ -224,3 +225,22 @@ data TorqueJobRerun = TorqueJobRerun
     , name            :: !TorqueJobName
     , torqueEntryType :: TorqueEntryType
     } deriving (Show, Eq, Generic)
+
+instance NFData TorqueParseResult
+instance NFData TorqueEntryType
+instance NFData TorqueJobShortNode
+instance NFData TorqueJobFQNode
+instance NFData TorqueJobNode
+instance NFData TorqueExecHost
+instance NFData TorqueWalltime
+instance NFData TorqueResourceRequest
+instance NFData TorqueResourceUsage
+instance NFData TorqueJobTime
+instance NFData TorqueJobExit
+instance NFData TorqueJobName
+instance NFData TorqueJobQueue
+instance NFData TorqueJobStart
+instance NFData TorqueRequestor
+instance NFData TorqueJobDelete
+instance NFData TorqueJobAbort
+instance NFData TorqueJobRerun

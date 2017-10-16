@@ -32,11 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
-
-
 module HNormalise.Common.Json where
 
 --------------------------------------------------------------------------------
@@ -55,4 +50,4 @@ instance ToJSON NT.IPv6 where
 instance ToJSON Host where
     toJSON (Hostname h) = toJSON h
     toJSON (IPv4 ip) = toJSON ip
-    toJSON (IPv6 ip) = toJSON ip
+--    toJSON (IPv6 ip) = toJSON ip

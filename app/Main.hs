@@ -1,28 +1,34 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
+import           Control.Concurrent.Chan
+import           Control.Concurrent.Extra
 import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
+import           Control.Concurrent.QSem
 import           Control.Monad
+import           Control.Monad.Extra
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Loops          (whileM_, untilM_)
 import           Control.Monad.Trans          (lift)
-import           Control.Monad.Trans.Resource (runResourceT)
+import           Control.Monad.Trans.Resource (runResourceT, ResourceT)
 import           Data.Aeson
 import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
+import           Data.Conduit.Async
 import           Data.Conduit.Binary          (sinkFile)
 import qualified Data.Conduit.Binary          as CB
 import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
 import qualified Data.Conduit.Text            as DCT
 import qualified Data.Conduit.ZMQ4            as ZMQC
-import           Data.Maybe                   (fromJust, fromMaybe)
+import           Data.Maybe                   (fromJust, isJust, fromMaybe)
 import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as TE
@@ -116,16 +122,17 @@ messageSink success failure messageCount frequency = loop
     loop = do
         v <- await
         case v of
-            Just (Transformed json) -> do
-                yield json $$ success
-                yield (SBS.pack "\n") $$ success
-                liftIO $ increaseCount (1, 0) messageCount frequency
-                loop
-            Just (Original l) -> do
-                yield l $$ failure
-                yield (SBS.pack "\n") $$ failure
-                liftIO $ increaseCount (0, 1) messageCount frequency
-                loop
+            Just n -> case enc n of
+                (Transformed json) -> do
+                    Data.Conduit.yield json $$ success
+                    Data.Conduit.yield (SBS.pack "\n") $$ success
+                    liftIO $ increaseCount (1, 0) messageCount frequency
+                    loop
+                (Original l) -> do
+                    Data.Conduit.yield l $$ failure
+                    Data.Conduit.yield (SBS.pack "\n") $$ failure
+                    liftIO $ increaseCount (0, 1) messageCount frequency
+                    loop
             Nothing -> return ()
 
 increaseCount (s, f) messageCount frequency = do
@@ -144,21 +151,21 @@ mySink messageCount frequency = loop
         v <- await
         case v of
             Just (Transformed json) -> do
-                yield (SBS.pack "success: ")
-                yield json
-                yield (SBS.pack "\n")
+                Data.Conduit.yield (SBS.pack "success: ")
+                Data.Conduit.yield json
+                Data.Conduit.yield (SBS.pack "\n")
                 -- liftIO $ increaseCount (1, 0) messageCount frequency
                 loop
             Just (Original l) -> do
-                yield (SBS.pack "fail - original: ")
-                yield l
-                yield (SBS.pack "\n")
+                Data.Conduit.yield (SBS.pack "fail - original: ")
+                Data.Conduit.yield l
+                Data.Conduit.yield (SBS.pack "\n")
                 --liftIO $ increaseCount (0, 1) messageCount frequency
                 loop
             Nothing -> return ()
 
 --------------------------------------------------------------------------------
-runTCPConnection options config messageCount = do
+{-runTCPConnection options config messageCount = do
     let listenHost = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> h)
     let listenPort = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> p)
     let frequency = fromMaybe defaultLoggingFrequency (logging config >>= (\(LoggingConfig f) -> f))
@@ -174,13 +181,13 @@ runTCPConnection options config messageCount = do
                 runTCPClient (clientSettings successPort successHost) $ \successServer ->
                     runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
                         runResourceT $ appSource appData
-                            $= normalisationConduit options config
-                            $$ messageSink (appSink successServer) (appSink failServer) messageCount frequency
+                            =$=& normalisationConduit options config
+                            =$$& messageSink (appSink successServer) (appSink failServer) messageCount frequency
             Just testSinkFileName -> runResourceT $ appSource appData
-                $= normalisationConduit options config
-                $= mySink messageCount frequency
-                $$ sinkFile testSinkFileName
-
+                =$=& normalisationConduit options config
+                =$=& mySink messageCount frequency
+                $$& sinkFile testSinkFileName
+-}
 -- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
 -- The source is halted when something is put into the MVar, effectively stopping the program from checking
 -- for new incoming messages.
@@ -191,22 +198,53 @@ zmqInterruptibleSource m s = do
             case val of
                 Just _ ->  return False
                 Nothing -> return True)
-        (liftIO (ZMQ.receive s) >>= yield)
+        (liftIO (ZMQ.receive s) >>= Data.Conduit.yield)
     liftIO $ putStrLn "Done!"
 
-encodingConduit = do
-    v <- await
-    case v of
-        Just (Left l) -> yield (Original l)
-        Just (Right n) -> yield (Transformed $ encodeNormalisedRsyslog n)
-        Nothing -> return ()
+pipelineC :: Int -> Consumer o (ResourceT IO) r -> Consumer o (ResourceT IO) r
+pipelineC buffer sink = do
+    sem <- liftIO $ newQSem buffer  -- how many are in flow, to avoid memory leaks
+    chan <- liftIO newChan          -- the items in flow (type o)
+    bar <- liftIO newBarrier        -- the result type (type r)
+    me <- liftIO myThreadId
+    liftIO $ printf "normalising thread has tid %s\n" (show me)
+    liftIO $ flip forkFinally (either (throwTo me) (signalBarrier bar)) $ do
+        t <- myThreadId
+        printf "sinking thread has tid %s\n" (show t)
+        runResourceT . runConduit $
+            whileM (do
+                x <- liftIO $ readChan chan
+                liftIO $ signalQSem sem
+                whenJust x Data.Conduit.yield
+                return $ isJust x) =$=
+            sink
+    awaitForever $ \x -> liftIO $ do
+        waitQSem sem
+        writeChan chan $ Just x
+    liftIO $ writeChan chan Nothing
+    liftIO $ waitBarrier bar
+
+enc v = case v of
+    Left l -> Original l
+    Right n -> Transformed $ encodeNormalisedRsyslog n
+{-# INLINE enc #-}
 
 --------------------------------------------------------------------------------
-normalisationConduit options config =
+normalisationConduit options config nCount =
     let fs = fields config
     in if oJsonInput options
-        then CB.lines $= C.map (normaliseJsonInput fs)
-        else CB.lines $= C.map (normaliseText fs) $= encodingConduit
+        then undefined -- CB.lines $= C.map (normaliseJsonInput fs)
+        else CB.lines $= count $= C.map (normaliseText fs)
+  where count = do
+            m <- await
+            case m of
+                Just m' -> do
+                    v <- liftIO $ takeMVar nCount
+                    when (v `mod` 10000 == 0) $ liftIO $ printf "normalised: %d messages\n" v
+                    liftIO $ putMVar nCount (v+1)
+                    Data.Conduit.yield m'
+                    count
+                Nothing -> return ()
 
 --------------------------------------------------------------------------------
 runZeroMQConnection :: Main.Options
@@ -239,10 +277,14 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
 
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
-                        runResourceT $ zmqInterruptibleSource s_interrupted s
-                            $= normalisationConduit options config
-                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
 
+                        nCount <- newMVar (0 :: Int)
+
+                        runResourceT $ zmqInterruptibleSource s_interrupted s
+                            $= normalisationConduit options config nCount
+                            $$ pipelineC 10000 (messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency)
+
+        {-}
         Just testSinkFileName ->
             ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
@@ -252,6 +294,7 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
                         $= normalisationConduit options config
                         $= mySink messageCount frequency
                         $$ sinkFile testSinkFileName
+                        -}
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
 -- for the pipeline.
@@ -272,7 +315,7 @@ main = do
     -- i.e., both TCP, both ZeroMQ, etc.
     messageCount <- newMVar ((0,0) :: (Int, Int))
     case connectionType config of
-        TCP    -> void $ runTCPConnection options config messageCount
+ --       TCP    -> void $ runTCPConnection options config messageCount
         ZeroMQ -> do
             verbose' "ZeroMQ connections"
             s_interrupted <- newEmptyMVar

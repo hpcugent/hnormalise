@@ -33,6 +33,7 @@
 -}
 
 {-# LANGUAGE DeriveGeneric             #-}
+{-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings         #-}
@@ -51,10 +52,10 @@ SHOREWALL_MSG (?:%{SHOREWALL_TCP}|%{SHOREWALL_UDP}|%{SHOREWALL_ICMP})
     "raw" : "2016-03-29T16:10:49.386951+02:00 gligar03 kernel: - kernel:: Shorewall:ext2fw:REJECT:IN=em3 OUT= MAC=aa:aa:bb:ff:88:bc:bc:15:80:8b:f8:f8:80:00 SRC=78.0.0.1 DST=150.0.0.1 LEN=52 TOS=0x00 PREC=0x00 TTL=117 ID=7564 DF PROTO=TCP SPT=60048 DPT=22 WINDOW=65535 RES=0x00 SYN URGP=0",
 -}
 --------------------------------------------------------------------------------
-import           Data.Aeson                 (FromJSON, ToJSON, toEncoding,
-                                             toJSON)
+import           Control.DeepSeq  (NFData)
+import           Data.Aeson       (FromJSON, ToJSON, toEncoding, toJSON)
 import           Data.Text
-import           GHC.Generics               (Generic)
+import           GHC.Generics     (Generic)
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Internal
@@ -75,3 +76,6 @@ data Shorewall = Shorewall
     , fwspt :: !(Maybe Integer)
     , fwdpt :: !(Maybe Integer)
     } deriving (Show, Eq, Generic)
+
+instance NFData ShorewallProtocol
+instance NFData Shorewall

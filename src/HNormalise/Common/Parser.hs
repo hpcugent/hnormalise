@@ -58,7 +58,7 @@ hostnameParser = sepBy' (takeWhile1 (inClass "a-z0-9-")) (char '.') >>= \hns -> 
 hostnameOrIPParser :: Parser Host
 hostnameOrIPParser = choice
     [ IPv4.parser >>= \ip -> return $ IPv4 ip
-    , IPv6.parser >>= \ip -> return $ IPv6 ip
+--    , IPv6.parser >>= \ip -> return $ IPv6 ip
     , hostnameParser >>= \h -> return $ Hostname h
     ]
 {-# INLINE hostnameOrIPParser #-}

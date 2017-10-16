@@ -42,6 +42,7 @@ module HNormalise
 
 --------------------------------------------------------------------------------
 import           Control.Applicative        ((<|>))
+import           Control.DeepSeq
 import           Data.Aeson                 (ToJSON)
 import qualified Data.Aeson                 as Aeson
 import           Data.Attoparsec.Combinator (lookAhead, manyTill)
@@ -90,12 +91,13 @@ normaliseText :: Maybe [(Text, Text)]                        -- ^ Output fields
 normaliseText fs logLine =
     let !p = parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine
     in case p of
-        Done _ r    -> Right r
+        Done _ r    -> seq_r r
         Partial c   -> case c empty of
-                            Done _ r -> Right r
+                            Done _ r -> seq_r r
                             _        -> llogline
         _           -> llogline
   where
+    seq_r r = let r' = r `deepseq` r in Right r'
     llogline = Left logLine
 
 

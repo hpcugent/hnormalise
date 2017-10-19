@@ -70,16 +70,28 @@ parseLmodModule = do
         , version = version
         }
 
-parseLmodLoad :: Parser (Text, LmodLoad)
+parseLmodLoad :: Parser (Text, LmodParseResult)
 parseLmodLoad = do
     string "lmod::"
     info <- skipSpace *> parseLmodInfo
     userload <- char ',' *> skipSpace *> kvYesNoParser "userload"
     m <- char ',' *> skipSpace *> parseLmodModule
     filename <- char ',' *> skipSpace *> kvTextParser "fn"
-    return ("lmod", LmodLoad
+    return ("lmod", LmodLoadParse LmodLoad
         { info = info
         , userload = userload
         , modul = m
         , filename = filename
+        })
+
+parseLmodCommand :: Parser (Text, LmodParseResult)
+parseLmodCommand = do
+    string "lmod::"
+    info <- skipSpace *> parseLmodInfo
+    command <- char ',' *> skipSpace *> kvTextDelimParser "cmd" ","
+    arguments <- char ',' *> skipSpace *> kvTextParser "args"
+    return ("lmod", LmodCommandParse LmodCommand
+        { info = info
+        , command = command
+        , arguments = arguments
         })

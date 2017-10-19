@@ -67,6 +67,7 @@ parseMessage :: Parser (Text, ParseResult)
 parseMessage =
     let pm parser target = (parser >>= (\(a, v) -> return (a, target v)))
     in     pm parseLmodLoad PR_Lmod
+       <|> pm parseLmodCommand PR_Lmod
        <|> pm parseShorewall PR_Shorewall
        <|> pm parseSnoopy PR_Snoopy
        <|> pm parseTorqueQueue PR_Torque

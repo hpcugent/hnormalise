@@ -34,7 +34,7 @@
 
 Summary: Log normalisation tool
 Name: hnormalise
-Version: 0.4.8.0
+Version: 0.4.9.0
 Release: 1
 
 Group: Applications/System

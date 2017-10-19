@@ -65,7 +65,7 @@ spec = do
 
         it "parse module load" $ do
             let s = "lmod::  username=myuser, cluster=mycluster, jobid=3230905.master.mycluster.mydomain, userload=yes, module=GSL/2.3-intel-2016b, fn=/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b" :: Text
-            s ~> parseLmodLoad `shouldParse` ("lmod", LmodLoad
+            s ~> parseLmodLoad `shouldParse` ("lmod", LmodLoadParse LmodLoad
                 { info = LmodInfo
                     { username = "myuser"
                     , cluster = "mycluster"
@@ -77,4 +77,16 @@ spec = do
                     , version = "2.3-intel-2016b"
                     }
                 , filename = "/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b"
+                })
+
+        it "parse command" $ do
+            let s = "lmod::  username=myuser, cluster=mycluster, jobid=132.mymaster.mycluster.mydomain, cmd=load, args=cluster/othercluster" :: Text
+            s ~> parseLmodCommand `shouldParse` ("lmod", LmodCommandParse LmodCommand
+                { info = LmodInfo
+                    { username = "myuser"
+                    , cluster = "mycluster"
+                    , jobid = "132.mymaster.mycluster.mydomain"
+                    }
+                , command = "load"
+                , arguments = "cluster/othercluster"
                 })

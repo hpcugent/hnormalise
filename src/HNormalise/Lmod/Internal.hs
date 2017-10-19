@@ -76,3 +76,5 @@ data LmodCommand = LmodCommand
 instance NFData LmodModule
 instance NFData LmodInfo
 instance NFData LmodLoad
+instance NFData LmodCommand
+instance NFData LmodParseResult

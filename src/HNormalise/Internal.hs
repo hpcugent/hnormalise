@@ -61,21 +61,21 @@ import           HNormalise.Torque.Json
 --------------------------------------------------------------------------------
 data ParseResult
     -- | Represents a parsed 'LmodLoad' message
-    | PR_Lmod LmodParseResult
+    = PRLmod LmodParseResult
     -- | Represents a parsed 'Shorewall' message
-    | PR_Shorewall Shorewall
+    | PRShorewall Shorewall
     -- | Represents a parsed 'Snoopy' message
-    | PR_Snoopy Snoopy
+    | PRSnoopy Snoopy
     -- | Represents a parsed 'Torque' message
-    | PR_Torque TorqueParseResult
+    | PRTorque TorqueParseResult
     deriving  (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 instance ToJSON ParseResult where
-    toEncoding (PR_Lmod v)      = toEncoding v
-    toEncoding (PR_Shorewall v) = toEncoding v
-    toEncoding (PR_Snoopy v)    = toEncoding v
-    toEncoding (PR_Torque v)    = toEncoding v
+    toEncoding (PRLmod v)      = toEncoding v
+    toEncoding (PRShorewall v) = toEncoding v
+    toEncoding (PRSnoopy v)    = toEncoding v
+    toEncoding (PRTorque v)    = toEncoding v
 
 --------------------------------------------------------------------------------
 data Rsyslog = Rsyslog

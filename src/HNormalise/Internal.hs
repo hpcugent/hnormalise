@@ -48,7 +48,7 @@ import           GHC.Generics                  (Generic)
 --------------------------------------------------------------------------------
 import           HNormalise.Huppel.Internal    (Huppel)
 import           HNormalise.Huppel.Json
-import           HNormalise.Lmod.Internal      (LmodLoad)
+import           HNormalise.Lmod.Internal      (LmodParseResult)
 import           HNormalise.Lmod.Json
 import           HNormalise.Shorewall.Internal (Shorewall)
 import           HNormalise.Shorewall.Json
@@ -62,7 +62,7 @@ data ParseResult
     -- | 'Huppel' Result for testing purposes, should you want to check the pipeline works without pushing in actual data
     = PR_Huppel Huppel
     -- | Represents a parsed 'LmodLoad' message
-    | PR_Lmod LmodLoad
+    | PR_Lmod LmodParseResult
     -- | Represents a parsed 'Shorewall' message
     | PR_Shorewall Shorewall
     -- | Represents a parsed 'Snoopy' message

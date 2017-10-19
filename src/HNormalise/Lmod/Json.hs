@@ -74,3 +74,10 @@ instance ToJSON LmodModule where
             (  "name" .= name
             <> "version" .= version
             )
+
+instance ToJSON LmodCommand where
+    toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON LmodParseResult where
+    toEncoding (LmodLoadParse l) = toEncoding l
+    toEncoding (LmodCommandParse l) = toEncoding l

@@ -44,6 +44,11 @@ import           Data.Text
 import           GHC.Generics (Generic)
 --------------------------------------------------------------------------------
 
+data LmodParseResult
+    = LmodLoadParse LmodLoad
+    | LmodCommandParse LmodCommand
+    deriving (Eq, Show, Generic)
+
 data LmodModule = LmodModule
     { name    :: !Text
     , version :: !Text
@@ -61,3 +66,9 @@ data LmodLoad = LmodLoad
     , modul    :: !LmodModule
     , filename :: !Text
     } deriving (Show, Eq, Generic)
+
+data LmodCommand = LmodCommand
+    { info      :: !LmodInfo
+    , command   :: !Text
+    , arguments :: !Text
+    } deriving (Eq, Show, Generic)

@@ -55,7 +55,7 @@ parseLmodInfo :: Parser LmodInfo
 parseLmodInfo = do
     username <- kvTextDelimParser "username" ","
     cluster <- char ',' *> skipSpace *> kvTextDelimParser "cluster" ","
-    jobid <- char ',' *> skipSpace *> string "jobid=" *> parseTorqueJobName ","
+    jobid <- char ',' *> skipSpace *> string "jobid=" *> maybeOption (parseTorqueJobName ",")
     return LmodInfo
         { username = username
         , cluster = cluster

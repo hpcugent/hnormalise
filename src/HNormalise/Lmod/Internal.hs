@@ -59,7 +59,7 @@ data LmodModule = LmodModule
 data LmodInfo = LmodInfo
     { username :: !Text
     , cluster  :: !Text
-    , jobid    :: !TorqueJobName
+    , jobid    :: !(Maybe TorqueJobName)
     } deriving (Show, Eq, Generic)
 
 data LmodLoad = LmodLoad

@@ -132,11 +132,11 @@ spec = do
     describe "parseTorqueJobName" $ do
         it "parse regular torque job name" $ do
             let s = "123456789.master.mycluster.mydomain;" :: Text
-            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456789, arrayId = Nothing, master = "master", cluster = "mycluster" }
+            s ~> parseTorqueJobName ";" `shouldParse` TorqueJobName { number = 123456789, arrayId = Nothing, master = "master", cluster = "mycluster" }
 
         it "parse array torque job name" $ do
             let s = "123456[789].master.mycluster.mydomain;" :: Text
-            s ~> parseTorqueJobName `shouldParse` TorqueJobName { number = 123456, arrayId = Just 789, master = "master", cluster = "mycluster" }
+            s ~> parseTorqueJobName ";" `shouldParse` TorqueJobName { number = 123456, arrayId = Just 789, master = "master", cluster = "mycluster" }
 
     describe "parseTorqueResourceRequest" $ do
         it "parse mandatory fields in expected order" $ do

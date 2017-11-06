@@ -43,8 +43,8 @@ import           Data.Attoparsec.Text
 import           Data.Char             (isSpace)
 import           Data.Text             (Text)
 import qualified Data.Text             as T
-import qualified Net.IPv4.Text         as IPv4
-import qualified Net.IPv6.Text         as IPv6
+import qualified Net.IPv4              as IPv4
+import qualified Net.IPv6              as IPv6
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Internal
@@ -58,7 +58,7 @@ hostnameParser = sepBy' (takeWhile1 (inClass "a-z0-9-")) (char '.') >>= \hns -> 
 hostnameOrIPParser :: Parser Host
 hostnameOrIPParser = choice
     [ IPv4.parser >>= \ip -> return $ IPv4 ip
---    , IPv6.parser >>= \ip -> return $ IPv6 ip
+    , IPv6.parser >>= \ip -> return $ IPv6 ip
     , hostnameParser >>= \h -> return $ Hostname h
     ]
 {-# INLINE hostnameOrIPParser #-}

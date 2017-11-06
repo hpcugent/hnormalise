@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -32,6 +32,8 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
+{-# LANGUAGE BangPatterns              #-}
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE ExistentialQuantification #-}
 
@@ -40,14 +42,19 @@ module HNormalise.Common.Internal
     ) where
 
 --------------------------------------------------------------------------------
-import           Data.Aeson                 (FromJSON, ToJSON, toEncoding,
-                                             toJSON)
+import           Control.DeepSeq  (NFData, rnf)
+import           Data.Aeson       (FromJSON, ToJSON, toEncoding, toJSON)
 import           Data.Text
-import           GHC.Generics               (Generic)
-import qualified Net.Types                  as Net
+import           GHC.Generics     (Generic)
+import qualified Net.Types        as Net
 
 --------------------------------------------------------------------------------
 data Host = Hostname Text        -- hostname
           | IPv4 Net.IPv4
           | IPv6 Net.IPv6
-          deriving (Show, Eq)
+          deriving (Show, Eq, Generic)
+
+instance NFData Host
+instance NFData Net.IPv4
+instance NFData Net.IPv6 where
+    rnf !_ = ()

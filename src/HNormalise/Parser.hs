@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -66,33 +66,33 @@ rsyslogLogstashTemplate = "<%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %s
 parseMessage :: Parser (Text, ParseResult)
 parseMessage =
     let pm parser target = (parser >>= (\(a, v) -> return (a, target v)))
-    in     pm parseLmodLoad PR_Lmod
-       <|> pm parseLmodCommand PR_Lmod
-       <|> pm parseShorewall PR_Shorewall
-       <|> pm parseSnoopy PR_Snoopy
-       <|> pm parseTorqueQueue PR_Torque
-       <|> pm parseTorqueStart PR_Torque
-       <|> pm parseTorqueDelete PR_Torque
-       <|> pm parseTorqueExit PR_Torque
-       <|> pm parseTorqueAbort PR_Torque
-       <|> pm parseTorqueRerun PR_Torque
+    in     pm parseLmodLoad PRLmod
+       <|> pm parseLmodCommand PRLmod
+       <|> pm parseShorewall PRShorewall
+       <|> pm parseSnoopy PRSnoopy
+       <|> pm parseTorqueQueue PRTorque
+       <|> pm parseTorqueStart PRTorque
+       <|> pm parseTorqueDelete PRTorque
+       <|> pm parseTorqueExit PRTorque
+       <|> pm parseTorqueAbort PRTorque
+       <|> pm parseTorqueRerun PRTorque
 
 --------------------------------------------------------------------------------
 -- | The 'getJsonKey' function return the key under which the normalised message should appear when JSON is produced
 getJsonKey :: ParseResult  -- ^ Wrapped result for which we need to get a key
            -> Text         -- ^ Key for use in the JSON encoding of the result
-getJsonKey (PR_Huppel _)    = "huppel"
-getJsonKey (PR_Lmod _)      = "lmod"
-getJsonKey (PR_Torque _)    = "torque"
-getJsonKey (PR_Shorewall _) = "shorewall"
-getJsonKey (PR_Snoopy _)    = "snoopy"
+--getJsonKey (PR_Huppel _)    = "huppel"
+getJsonKey (PRLmod _)      = "lmod"
+getJsonKey (PRTorque _)    = "torque"
+getJsonKey (PRShorewall _) = "shorewall"
+getJsonKey (PRSnoopy _)    = "snoopy"
 
 --------------------------------------------------------------------------------
 -- | The 'parseRsyslogLogstashString' currently is a placeholder function that will convert the incoming rsyslog message
 -- if it is encoded as expected in a plain string format
 -- <%PRI%>1 %timegenerated:::date-rfc3339% %HOSTNAME% %syslogtag% - %APP-NAME%: %msg%
-parseRsyslogLogstashString :: Maybe [(Text, Text)]    -- ^ Output fields
-                           -> Parser SBS.ByteString   -- ^ Resulting encoded JSON representation
+parseRsyslogLogstashString :: Maybe [(Text, Text)]     -- ^ Output fields
+                           -> Parser NormalisedRsyslog -- SBS.ByteString   -- ^ Resulting encoded JSON representation
 parseRsyslogLogstashString fs = do
     abspri <- maybeOption $ do
         char '<'
@@ -106,7 +106,7 @@ parseRsyslogLogstashString fs = do
     skipSpace *> char '-' *> skipSpace
     (original, (appname, parsed)) <- match parseMessage
     return $ let jsonkey = getJsonKey parsed
-             in BS.toStrict $ encode NRsyslog
+             in NRsyslog
                     { rsyslog = Rsyslog
                         { msg              = original
                         , timereported     = timereported

@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -33,12 +33,13 @@
 -}
 
 {-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Internal where
 
 --------------------------------------------------------------------------------
+import           Control.DeepSeq               (NFData)
 import           Data.Aeson                    (FromJSON, ToJSON, toEncoding,
                                                 toJSON)
 import           Data.Text                     (Text)
@@ -59,25 +60,22 @@ import           HNormalise.Torque.Json
 
 --------------------------------------------------------------------------------
 data ParseResult
-    -- | 'Huppel' Result for testing purposes, should you want to check the pipeline works without pushing in actual data
-    = PR_Huppel Huppel
     -- | Represents a parsed 'LmodLoad' message
-    | PR_Lmod LmodParseResult
+    = PRLmod LmodParseResult
     -- | Represents a parsed 'Shorewall' message
-    | PR_Shorewall Shorewall
+    | PRShorewall Shorewall
     -- | Represents a parsed 'Snoopy' message
-    | PR_Snoopy Snoopy
+    | PRSnoopy Snoopy
     -- | Represents a parsed 'Torque' message
-    | PR_Torque TorqueParseResult
+    | PRTorque TorqueParseResult
     deriving  (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
 instance ToJSON ParseResult where
-    toEncoding (PR_Huppel v)    = toEncoding v
-    toEncoding (PR_Lmod v)      = toEncoding v
-    toEncoding (PR_Shorewall v) = toEncoding v
-    toEncoding (PR_Snoopy v)    = toEncoding v
-    toEncoding (PR_Torque v)    = toEncoding v
+    toEncoding (PRLmod v)      = toEncoding v
+    toEncoding (PRShorewall v) = toEncoding v
+    toEncoding (PRSnoopy v)    = toEncoding v
+    toEncoding (PRTorque v)    = toEncoding v
 
 --------------------------------------------------------------------------------
 data Rsyslog = Rsyslog
@@ -111,3 +109,7 @@ data NormalisedRsyslog = NRsyslog
     , jsonkey    :: Text               -- ^ The key under which the normalised info will appear in the JSON result
     , fields     :: Maybe [(Text, Text)]     -- ^ The fields we need to output when creating the JSON encoding as (key, fieldname)
     } deriving (Show, Generic)
+
+instance NFData ParseResult
+instance NFData Rsyslog
+instance NFData NormalisedRsyslog

@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -32,8 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
 module HNormalise.Json where
@@ -41,6 +39,8 @@ module HNormalise.Json where
 --------------------------------------------------------------------------------
 import           Control.Monad
 import           Data.Aeson
+import qualified Data.ByteString.Char8       as SBS
+import qualified Data.ByteString.Lazy.Char8  as BS
 import qualified Data.HashMap.Lazy   as M
 import           Data.Monoid
 
@@ -92,5 +92,9 @@ instance ToJSON NormalisedRsyslog where
                         <> k .= n
                         )
             Just fs' -> case toJSON r of
-                            Object syslog -> pairs $ foldl (\v (key, fieldname) -> v <> key .= (M.lookupDefault Null fieldname syslog)) (k .= n) fs'
+                            Object syslog -> pairs $ foldl (\v (key, fieldname) -> v <> key .= M.lookupDefault Null fieldname syslog) (k .= n) fs'
                             _ -> pairs (k .= n) -- FIXME: this should never happen
+
+encodeNormalisedRsyslog :: NormalisedRsyslog
+                        -> SBS.ByteString
+encodeNormalisedRsyslog = BS.toStrict . encode

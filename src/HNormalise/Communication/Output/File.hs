@@ -31,47 +31,35 @@
  - (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
+{-# LANGUAGE OverloadedStrings #-}
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
+module HNormalise.Communication.Output.File where
 
-module HNormalise.Shorewall.Json where
-
---------------------------------------------------------------------------------
-import           Control.Monad
-import           Data.Aeson
-import           Data.Monoid
+import qualified Data.ByteString.Char8        as SBS
+import qualified Data.ByteString.Lazy.Char8   as BS
+import           Data.Conduit
 
 --------------------------------------------------------------------------------
-import           HNormalise.Common.Json
-import           HNormalise.Shorewall.Internal
+import           HNormalise.Json              (encodeNormalisedRsyslog)
 
 --------------------------------------------------------------------------------
-instance ToJSON ShorewallProtocol where
-    toJSON TCP = String "TCP"
-    toJSON UDP = String "UDP"
-    toJSON ICMP = String "ICMP"
---------------------------------------------------------------------------------
-instance ToJSON Shorewall where
-    toEncoding (Shorewall fwrule fwtarget fwin fwout fwmac fwsrc fwdst fwproto fwspt fwdpt) =
-        pairs
-            (  "fwrule" .= fwrule
-            <> "fwtarget" .= fwtarget
-            <> "fwin" .= fwin
-            <> case fwout of
-                    Nothing -> mempty
-                    Just f  -> "fwout" .= f
-            <> case fwmac of
-                    Nothing -> mempty
-                    Just m  -> "fwmac" .= m
-            <> "fwsrc" .= fwsrc
-            <> "fwdst" .= fwdst
-            <> "fwproto" .= fwproto
-            <> case fwspt of
-                    Nothing -> mempty
-                    Just p  -> "fwspt" .= p
-            <> case fwdpt of
-                    Nothing -> mempty
-                    Just p  -> "fwdst" .= p
-            )
+-- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure
+-- for testing purposes
+mySink messageCount frequency = loop
+  where
+    loop = do
+        v <- await
+        case v of
+            Just (Right json) -> do
+                yield (SBS.pack "success: ")
+                yield $ encodeNormalisedRsyslog json
+                yield (SBS.pack "\n")
+                -- liftIO $ increaseCount (1, 0) messageCount frequency
+                loop
+            Just (Left l) -> do
+                yield (SBS.pack "fail - original: ")
+                yield l
+                yield (SBS.pack "\n")
+                --liftIO $ increaseCount (0, 1) messageCount frequency
+                loop
+            Nothing -> return ()

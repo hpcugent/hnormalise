@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -43,8 +43,8 @@ import           Data.Attoparsec.Text
 import           Data.Char             (isSpace)
 import           Data.Text             (Text)
 import qualified Data.Text             as T
-import qualified Net.IPv4.Text         as IPv4
-import qualified Net.IPv6.Text         as IPv6
+import qualified Net.IPv4              as IPv4
+import qualified Net.IPv6              as IPv6
 
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Internal

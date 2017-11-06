@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -42,6 +42,7 @@ module HNormalise
 
 --------------------------------------------------------------------------------
 import           Control.Applicative        ((<|>))
+import           Control.DeepSeq
 import           Data.Aeson                 (ToJSON)
 import qualified Data.Aeson                 as Aeson
 import           Data.Attoparsec.Combinator (lookAhead, manyTill)
@@ -84,19 +85,17 @@ normaliseJsonInput fs logLine =
 --------------------------------------------------------------------------------
 -- | The 'normaliseText' function converts a 'Text' to a normalised message or keeps the original (in 'ByteString')
 -- format if the conversion fails
-normaliseText :: Maybe [(Text, Text)]  -- ^ Output fields
-              -> SBS.ByteString        -- ^ Input
-              -> Normalised            -- ^ Transformed or Original result
+normaliseText :: Maybe [(Text, Text)]                        -- ^ Output fields
+              -> SBS.ByteString                              -- ^ Input
+              -> Either SBS.ByteString NormalisedRsyslog     -- ^ Transformed or Original result
 normaliseText fs logLine =
-    let !p = parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine
-    in case p of
-        Done _ r    -> Transformed r
+    case parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine of
+        Done _ r    -> Right r
         Partial c   -> case c empty of
-                            Done _ r -> Transformed r
-                            _        -> original
-        _           -> original
-  where
-    original = Original logLine
+                            Done _ r -> Right r
+                            _        -> Left logLine
+        _           -> Left logLine
+
 
 --------------------------------------------------------------------------------
 -- | The 'convertMessage' function transforms the actual message to a 'Maybe' 'ParseResult'. If parsing fails,

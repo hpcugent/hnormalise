@@ -32,46 +32,32 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module HNormalise.Shorewall.Json where
+module HNormalise.Communication.Input.ZeroMQ
+    ( zmqInterruptibleSource
+    ) where
 
---------------------------------------------------------------------------------
-import           Control.Monad
-import           Data.Aeson
-import           Data.Monoid
 
---------------------------------------------------------------------------------
-import           HNormalise.Common.Json
-import           HNormalise.Shorewall.Internal
+import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
+import           Control.Monad.IO.Class       (MonadIO, liftIO)
+import           Control.Monad.Loops          (whileM_, untilM_)
+import           Data.Conduit
+import qualified System.ZMQ4                  as ZMQ (withContext, withSocket, bind, send, receive, connect, Push(..), Pull(..))
 
 --------------------------------------------------------------------------------
-instance ToJSON ShorewallProtocol where
-    toJSON TCP = String "TCP"
-    toJSON UDP = String "UDP"
-    toJSON ICMP = String "ICMP"
+import HNormalise.Config
+
 --------------------------------------------------------------------------------
-instance ToJSON Shorewall where
-    toEncoding (Shorewall fwrule fwtarget fwin fwout fwmac fwsrc fwdst fwproto fwspt fwdpt) =
-        pairs
-            (  "fwrule" .= fwrule
-            <> "fwtarget" .= fwtarget
-            <> "fwin" .= fwin
-            <> case fwout of
-                    Nothing -> mempty
-                    Just f  -> "fwout" .= f
-            <> case fwmac of
-                    Nothing -> mempty
-                    Just m  -> "fwmac" .= m
-            <> "fwsrc" .= fwsrc
-            <> "fwdst" .= fwdst
-            <> "fwproto" .= fwproto
-            <> case fwspt of
-                    Nothing -> mempty
-                    Just p  -> "fwspt" .= p
-            <> case fwdpt of
-                    Nothing -> mempty
-                    Just p  -> "fwdst" .= p
-            )
+-- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
+-- The source is halted when something is put into the MVar, effectively stopping the program from checking
+-- for new incoming messages.
+zmqInterruptibleSource m s = do
+    whileM_
+        (liftIO $ do
+            val <- tryTakeMVar m
+            case val of
+                Just _ ->  return False
+                Nothing -> return True)
+        (liftIO (ZMQ.receive s) >>= yield)
+    liftIO $ putStrLn "Done!"

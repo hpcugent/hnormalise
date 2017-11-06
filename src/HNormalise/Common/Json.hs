@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -32,11 +32,6 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
-
-
 module HNormalise.Common.Json where
 
 --------------------------------------------------------------------------------
@@ -47,9 +42,6 @@ import           Data.Monoid
 import qualified Net.Types                   as NT
 --------------------------------------------------------------------------------
 import           HNormalise.Common.Internal
-
-instance ToJSON NT.IPv6 where
-    toJSON = String . pack . show
 
 --------------------------------------------------------------------------------
 instance ToJSON Host where

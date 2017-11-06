@@ -1,16 +1,57 @@
+{- hnormalise - a log normalisation library
+ -
+ - Copyright Ghent University (c) 2017
+ -
+ - All rights reserved.
+ -
+ - Redistribution and use in source and binary forms, with or without
+ - modification, are permitted provided that the following conditions are met:
+ -
+ - * Redistributions of source code must retain the above copyright
+ - notice, this list of conditions and the following disclaimer.
+ -
+ - * Redistributions in binary form must reproduce the above
+ - copyright notice, this list of conditions and the following
+ - disclaimer in the documentation and/or other materials provided
+ - with the distribution.
+ -
+ - * Neither the name of Author name here nor the names of other
+ - contributors may be used to endorse or promote products derived
+ - from this software without specific prior written permission.
+ -
+ - THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ - "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ - LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ - A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ - OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ - SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ - LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ - DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ - THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ - (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-}
+
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Main where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative          ((<$>), (<*>))
+import           Control.Concurrent.Chan
+import           Control.Concurrent.Extra
 import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
+import           Control.Concurrent.QSem
+import           Control.DeepSeq
+import           Control.Exception            (evaluate)
 import           Control.Monad
+import           Control.Monad.Extra
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Loops          (whileM_, untilM_)
 import           Control.Monad.Trans          (lift)
-import           Control.Monad.Trans.Resource (runResourceT)
+import           Control.Monad.Trans.Resource (runResourceT, ResourceT)
 import           Data.Aeson
 import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8        as SBS
@@ -22,7 +63,7 @@ import qualified Data.Conduit.Combinators     as C
 import           Data.Conduit.Network
 import qualified Data.Conduit.Text            as DCT
 import qualified Data.Conduit.ZMQ4            as ZMQC
-import           Data.Maybe                   (fromJust, fromMaybe)
+import           Data.Maybe                   (fromJust, isJust, fromMaybe)
 import           Data.Monoid                  ((<>))
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as TE
@@ -36,9 +77,9 @@ import           System.Posix.Signals         (installHandler, Handler(CatchOnce
 import qualified System.ZMQ4                  as ZMQ (withContext, withSocket, bind, send, receive, connect, Push(..), Pull(..))
 import           Text.Printf                  (printf)
 
-import           Debug.Trace
 --------------------------------------------------------------------------------
 import           HNormalise
+import           HNormalise.Communication.Input.ZeroMQ (zmqInterruptibleSource)
 import           HNormalise.Config            ( Config (..)
                                               , ConnectionType(..)
                                               , InputConfig(..)
@@ -116,18 +157,20 @@ messageSink success failure messageCount frequency = loop
     loop = do
         v <- await
         case v of
-            Just (Transformed json) -> do
-                yield json $$ success
-                yield (SBS.pack "\n") $$ success
-                liftIO $ increaseCount (1, 0) messageCount frequency
-                loop
-            Just (Original l) -> do
-                yield l $$ failure
-                yield (SBS.pack "\n") $$ failure
-                liftIO $ increaseCount (0, 1) messageCount frequency
-                loop
+            Just n -> case n of
+                Right json -> do
+                    Data.Conduit.yield (encodeNormalisedRsyslog json) $$ success
+                    Data.Conduit.yield (SBS.pack "\n") $$ success
+                    liftIO $ increaseCount (1, 0) messageCount frequency
+                    loop
+                Left l -> do
+                    Data.Conduit.yield l $$ failure
+                    Data.Conduit.yield (SBS.pack "\n") $$ failure
+                    liftIO $ increaseCount (0, 1) messageCount frequency
+                    loop
             Nothing -> return ()
 
+--------------------------------------------------------------------------------
 increaseCount (s, f) messageCount frequency = do
     (s', f') <- takeMVar messageCount
     when ((s' + f') `mod` frequency == 0) $ do
@@ -136,70 +179,44 @@ increaseCount (s, f) messageCount frequency = do
     putMVar messageCount (s' + s, f' + f)
 
 --------------------------------------------------------------------------------
--- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure
--- for testing purposes
-mySink messageCount frequency = loop
-  where
-    loop = do
-        v <- await
-        case v of
-            Just (Transformed json) -> do
-                yield (SBS.pack "success: ")
-                yield json
-                yield (SBS.pack "\n")
-                -- liftIO $ increaseCount (1, 0) messageCount frequency
-                loop
-            Just (Original l) -> do
-                yield (SBS.pack "fail - original: ")
-                yield l
-                yield (SBS.pack "\n")
-                --liftIO $ increaseCount (0, 1) messageCount frequency
-                loop
-            Nothing -> return ()
-
---------------------------------------------------------------------------------
-runTCPConnection options config messageCount = do
-    let listenHost = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> h)
-    let listenPort = fromJust $ input config >>= (\(InputConfig t _) -> t) >>= (\(TcpPortConfig h p) -> p)
-    let frequency = fromMaybe defaultLoggingFrequency (logging config >>= (\(LoggingConfig f) -> f))
-    runTCPServer (serverSettings listenPort "*") $ \appData -> do
-        let fs = fields config
-        case oTestFilePath options of
-            Nothing -> do
-                let successHost = TE.encodeUtf8 $ fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> s) >>= (\(TcpPortConfig h p) -> h)
-                let successPort = fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> s) >>= (\(TcpPortConfig h p) -> p)
-                let failureHost = TE.encodeUtf8 $ fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> f) >>= (\(TcpPortConfig h p) -> h)
-                let failurePort = fromJust $ output config >>= (\(OutputConfig t _) -> t) >>= (\(TcpOutputConfig s f) -> f) >>= (\(TcpPortConfig h p) -> p)
-
-                runTCPClient (clientSettings successPort successHost) $ \successServer ->
-                    runTCPClient (clientSettings failurePort failureHost) $ \failServer ->
-                        runResourceT $ appSource appData
-                            $= normalisationConduit options config
-                            $$ messageSink (appSink successServer) (appSink failServer) messageCount frequency
-            Just testSinkFileName -> runResourceT $ appSource appData
-                $= normalisationConduit options config
-                $= mySink messageCount frequency
-                $$ sinkFile testSinkFileName
-
--- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
--- The source is halted when something is put into the MVar, effectively stopping the program from checking
--- for new incoming messages.
-zmqInterruptibleSource m s = do
-    whileM_
-        (liftIO $ do
-            val <- tryTakeMVar m
-            case val of
-                Just _ ->  return False
-                Nothing -> return True)
-        (liftIO (ZMQ.receive s) >>= yield)
-    liftIO $ putStrLn "Done!"
+-- The following code was adapted from https://github.com/ndmitchell/hoogle
+pipelineC :: Int -> Consumer o (ResourceT IO) r -> Consumer o (ResourceT IO) r
+pipelineC buffer sink = do
+    sem <- liftIO $ newQSem buffer  -- how many are in flow, to avoid memory leaks
+    chan <- liftIO newChan          -- the items in flow (type o)
+    bar <- liftIO newBarrier        -- the result type (type r)
+    me <- liftIO myThreadId
+    liftIO $ printf "normalising thread has tid %s\n" (show me)
+    liftIO $ flip forkFinally (either (throwTo me) (signalBarrier bar)) $ do
+        t <- myThreadId
+        printf "sinking thread has tid %s\n" (show t)
+        runResourceT . runConduit $
+            whileM (do
+                x <- liftIO $ readChan chan
+                liftIO $ signalQSem sem
+                whenJust x Data.Conduit.yield
+                return $ isJust x) =$=
+            sink
+    awaitForever $ \x -> liftIO $ do
+        waitQSem sem
+        writeChan chan $ Just x
+    liftIO $ writeChan chan Nothing
+    liftIO $ waitBarrier bar
 
 --------------------------------------------------------------------------------
 normalisationConduit options config =
     let fs = fields config
     in if oJsonInput options
-        then CB.lines $= C.map (normaliseJsonInput fs)
-        else CB.lines $= C.map (normaliseText fs)
+        then undefined -- CB.lines $= C.map (normaliseJsonInput fs)
+        else CB.lines $= normalise fs -- $= C.map (normaliseText fs)
+  where normalise fs = do
+            m <- await
+            case m of
+                Just m' -> do
+                    m'' <- liftIO $ evaluate $ force (normaliseText fs) m'
+                    Data.Conduit.yield m''
+                    normalise fs
+                Nothing -> return ()
 
 --------------------------------------------------------------------------------
 runZeroMQConnection :: Main.Options
@@ -217,7 +234,7 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
     case oTestFilePath options of
         Nothing -> ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                    ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                    ZMQ.connect s $ printf "tcp://%s:%d" listenHost listenPort
                     verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
 
                     let successHost = fromJust $ output config >>= (\(OutputConfig _ z) -> z) >>= (\(ZeroMQOutputConfig s f) -> s) >>= (\(ZeroMQPortConfig m h p) -> h)
@@ -232,19 +249,21 @@ runZeroMQConnection options config s_interrupted messageCount verbose' = do
 
                         ZMQ.connect failureSocket $ printf "tcp://%s:%d" failureHost failurePort
                         verbose' $ printf "Pushing failed parses on tcp://%s:%d" failureHost failurePort
+
+
                         runResourceT $ zmqInterruptibleSource s_interrupted s
                             $= normalisationConduit options config
-                            $$ messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency
+                            $$ pipelineC 100 (messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency)
 
         Just testSinkFileName ->
             ZMQ.withContext $ \ctx ->
                 ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                    ZMQ.bind s $ printf "tcp://%s:%d" listenHost listenPort
+                    ZMQ.connect s $ printf "tcp://%s:%d" listenHost listenPort
                     verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
                     runResourceT $ zmqInterruptibleSource s_interrupted s
                         $= normalisationConduit options config
-                        $= mySink messageCount frequency
-                        $$ sinkFile testSinkFileName
+                        $$ pipelineC 100 (let sf = sinkFile testSinkFileName in messageSink sf sf messageCount frequency)
+
 --------------------------------------------------------------------------------
 -- | 'main' starts a TCP server, listening to incoming data and connecting to TCP servers downstream to
 -- for the pipeline.
@@ -265,7 +284,7 @@ main = do
     -- i.e., both TCP, both ZeroMQ, etc.
     messageCount <- newMVar ((0,0) :: (Int, Int))
     case connectionType config of
-        TCP    -> void $ runTCPConnection options config messageCount
+ --       TCP    -> void $ runTCPConnection options config messageCount
         ZeroMQ -> do
             verbose' "ZeroMQ connections"
             s_interrupted <- newEmptyMVar

@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Andy Georges (c) 2017
+ - Copyright Ghent University (c) 2017
  -
  - All rights reserved.
  -
@@ -32,16 +32,16 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE DeriveAnyClass         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings     #-}
 
 module HNormalise.Lmod.Internal where
 
 --------------------------------------------------------------------------------
+import           Control.DeepSeq  (NFData)
 import           Data.Text
-import           GHC.Generics (Generic)
+import           GHC.Generics     (Generic)
 --------------------------------------------------------------------------------
 
 data LmodParseResult
@@ -72,3 +72,9 @@ data LmodCommand = LmodCommand
     , command   :: !Text
     , arguments :: !Text
     } deriving (Eq, Show, Generic)
+
+instance NFData LmodModule
+instance NFData LmodInfo
+instance NFData LmodLoad
+instance NFData LmodCommand
+instance NFData LmodParseResult

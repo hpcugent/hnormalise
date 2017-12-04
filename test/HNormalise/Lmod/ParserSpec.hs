@@ -46,6 +46,7 @@ import           Test.Hspec.Attoparsec
 --------------------------------------------------------------------------------
 import           HNormalise.Lmod.Parser
 import           HNormalise.Lmod.Internal
+import           HNormalise.Torque.Internal
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -53,15 +54,41 @@ main = hspec spec
 
 --------------------------------------------------------------------------------
 spec :: Spec
-spec = do
+spec =
     describe "parseLmodInfo" $ do
         it "parse regular info" $ do
-            let s = "username=someuser, cluster=myspace, jobid=myjobid" :: Text
-            s ~> parseLmodInfo `shouldParse` LmodInfo { username = "someuser" , cluster = "myspace" , jobid = "myjobid" }
+            let s = "username=someuser, cluster=myspace, jobid=11[1].mymaster.mycluster.mydomain" :: Text
+            s ~> parseLmodInfo `shouldParse` LmodInfo
+                { username = "someuser"
+                , cluster = "myspace"
+                , jobid = Just TorqueJobName
+                    { number = 11
+                    , arrayId = Just 1
+                    , master = "mymaster"
+                    , cluster = "mycluster"
+                    }
+                }
 
         it "parse module" $ do
             let s = "module=HNormalise/0.2.0.0-ghc-8.0.2," :: Text
             s ~> parseLmodModule `shouldParse` LmodModule { name = "HNormalise", version = "0.2.0.0-ghc-8.0.2" }
+
+        it "parse module load with empty jobid" $ do
+            let s = "lmod::  username=myuser, cluster=mycluster, jobid=, userload=yes, module=cluster/.mycluster, fn=/etc/modulefiles/vsc/cluster/.banette.lua" :: Text
+            s ~> parseLmodLoad `shouldParse` ("lmod", LmodLoadParse LmodLoad
+                { info = LmodInfo
+                    { username = "myuser"
+                    , cluster = "mycluster"
+                    , jobid = Nothing
+                    }
+                , userload = True
+                , modul = LmodModule
+                    { name = "cluster"
+                    , version = ".mycluster"
+                    }
+                , filename = "/etc/modulefiles/vsc/cluster/.banette.lua"
+                })
+
 
         it "parse module load" $ do
             let s = "lmod::  username=myuser, cluster=mycluster, jobid=3230905.master.mycluster.mydomain, userload=yes, module=GSL/2.3-intel-2016b, fn=/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b" :: Text
@@ -69,7 +96,12 @@ spec = do
                 { info = LmodInfo
                     { username = "myuser"
                     , cluster = "mycluster"
-                    , jobid = "3230905.master.mycluster.mydomain"
+                    , jobid = Just TorqueJobName
+                        { number = 3230905
+                        , arrayId = Nothing
+                        , master = "master"
+                        , cluster = "mycluster"
+                        }
                     }
                 , userload = True
                 , modul = LmodModule
@@ -85,7 +117,12 @@ spec = do
                 { info = LmodInfo
                     { username = "myuser"
                     , cluster = "mycluster"
-                    , jobid = "132.mymaster.mycluster.mydomain"
+                    , jobid = Just TorqueJobName
+                        { number = 132
+                        , arrayId = Nothing
+                        , master = "mymaster"
+                        , cluster = "mycluster"
+                        }
                     }
                 , command = "load"
                 , arguments = "cluster/othercluster"

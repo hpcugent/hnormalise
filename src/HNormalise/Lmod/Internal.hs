@@ -44,6 +44,8 @@ import           Data.Text
 import           GHC.Generics     (Generic)
 --------------------------------------------------------------------------------
 
+import           HNormalise.Torque.Internal (TorqueJobName)
+
 data LmodParseResult
     = LmodLoadParse LmodLoad
     | LmodCommandParse LmodCommand
@@ -57,7 +59,7 @@ data LmodModule = LmodModule
 data LmodInfo = LmodInfo
     { username :: !Text
     , cluster  :: !Text
-    , jobid    :: !Text
+    , jobid    :: !(Maybe TorqueJobName)
     } deriving (Show, Eq, Generic)
 
 data LmodLoad = LmodLoad

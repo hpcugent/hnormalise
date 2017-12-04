@@ -47,6 +47,7 @@ import           Data.Char                   (isDigit, isSpace)
 import           Data.List                   (concatMap, groupBy, sort)
 import qualified Data.Map                    as M
 import           Data.Maybe                  (fromMaybe)
+import           Data.String
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 import           Text.ParserCombinators.Perm (permute, (<$$>), (<$?>), (<|?>),
@@ -105,13 +106,13 @@ parseTorqueMemory = do
 
 --------------------------------------------------------------------------------
 -- | 'parseTorqueJobName' splits the job name in its components, i.e., ID, [ array ID,] master and cluster
-parseTorqueJobName :: Parser TorqueJobName
-parseTorqueJobName = do
+parseTorqueJobName :: String -> Parser TorqueJobName
+parseTorqueJobName sep = do
     n <- decimal
     a <- parseArrayId
     m <- char '.' *> takeTill (== '.')
     c <- char '.' *> takeTill (== '.')
-    manyTill anyChar (lookAhead ";") *> char ';'
+    takeTill (`elem` sep)
     return TorqueJobName { number = n, arrayId = a, master = m, cluster = c}
   where
     parseArrayId :: Parser (Maybe Integer)
@@ -344,7 +345,8 @@ parseCommonAccountingInfo :: Parser
     , Integer
     , Integer)
 parseCommonAccountingInfo = do
-    name <- parseTorqueJobName
+    name <- parseTorqueJobName ";"
+    char ';'
     user <- kvTextParser "user"
     group <- skipSpace *> kvTextParser "group"
     account <- skipSpace *> maybeOption (kvTextParser "account")
@@ -417,7 +419,8 @@ parseTorqueExit = do
 parseTorqueDelete :: Parser (Text, TorqueParseResult)
 parseTorqueDelete = do
     torqueDatestamp <- parseTorqueAccountingDatestamp ";D;"
-    name <- parseTorqueJobName
+    name <- parseTorqueJobName ";"
+    char ';'
     requestor <- parseTorqueRequestor
 
     return ("torque", TorqueDelete TorqueJobDelete
@@ -432,7 +435,8 @@ parseTorqueDelete = do
 parseTorqueAbort :: Parser (Text, TorqueParseResult)
 parseTorqueAbort = do
     torqueDatestamp <- parseTorqueAccountingDatestamp ";A;"
-    name <- parseTorqueJobName
+    name <- parseTorqueJobName ";"
+    char ';'
 
     return ("torque", TorqueAbort TorqueJobAbort
         { torqueDatestamp = torqueDatestamp
@@ -445,7 +449,8 @@ parseTorqueAbort = do
 parseTorqueRerun :: Parser (Text, TorqueParseResult)
 parseTorqueRerun = do
     torqueDatestamp <- parseTorqueAccountingDatestamp ";R;"
-    name <- parseTorqueJobName
+    name <- parseTorqueJobName ";"
+    char ';'
 
     return ("torque", TorqueRerun TorqueJobRerun
         { torqueDatestamp = torqueDatestamp
@@ -459,7 +464,8 @@ parseTorqueRerun = do
 parseTorqueQueue :: Parser (Text, TorqueParseResult)
 parseTorqueQueue = do
     torqueDatestamp <- parseTorqueAccountingDatestamp ";Q;"
-    name <- parseTorqueJobName
+    name <- parseTorqueJobName ";"
+    char ';'
     queue <- kvTextParser "queue"
 
     return ("torque", TorqueQueue TorqueJobQueue

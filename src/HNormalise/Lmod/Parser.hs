@@ -48,13 +48,14 @@ import           Data.Text                  (Text)
 
 import           HNormalise.Common.Parser
 import           HNormalise.Lmod.Internal
+import           HNormalise.Torque.Parser   (parseTorqueJobName)
 --------------------------------------------------------------------------------
 
 parseLmodInfo :: Parser LmodInfo
 parseLmodInfo = do
     username <- kvTextDelimParser "username" ","
     cluster <- char ',' *> skipSpace *> kvTextDelimParser "cluster" ","
-    jobid <- char ',' *> skipSpace *> kvTextDelimParser "jobid" ","
+    jobid <- char ',' *> skipSpace *> string "jobid=" *> maybeOption (parseTorqueJobName ",")
     return LmodInfo
         { username = username
         , cluster = cluster

@@ -45,20 +45,14 @@ import           Data.Monoid
 --------------------------------------------------------------------------------
 
 import           HNormalise.Lmod.Internal
+import           HNormalise.Torque.Json
 --------------------------------------------------------------------------------
 
 
 instance ToJSON LmodInfo where
-    --toEncoding = genericToEncoding defaultOptions
-    toEncoding (LmodInfo username cluster jobid) =
-        pairs
-            (  "username" .= username
-            <> "cluster" .= cluster
-            <> "jobid" .= jobid
-            )
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON LmodLoad where
-    --toEncoding = genericToEncoding defaultOptions
     toEncoding (LmodLoad info userload modul filename) =
         pairs
             (  "info" .= info
@@ -68,12 +62,7 @@ instance ToJSON LmodLoad where
             )
 
 instance ToJSON LmodModule where
-    --toEncoding = genericToEncoding defaultOptions
-    toEncoding (LmodModule name version) =
-        pairs
-            (  "name" .= name
-            <> "version" .= version
-            )
+    toEncoding = genericToEncoding defaultOptions
 
 instance ToJSON LmodCommand where
     toEncoding = genericToEncoding defaultOptions

@@ -56,7 +56,8 @@ import           Control.Monad    (mplus)
 import           Data.Aeson       (defaultOptions)
 import           Data.Aeson.TH    (deriveJSON)
 import qualified Data.ByteString  as B
-import           Data.Monoid      ((<>))
+import           Data.Maybe       (isJust)
+import           Data.Semigroup      ((<>))
 import           Data.Text        (Text)
 import qualified Data.Yaml        as Y
 import           System.Directory
@@ -68,6 +69,7 @@ data ConnectionType = TCP
                     | ZeroMQ
                     deriving (Eq, Ord, Show)
 
+-- | `connectionType` defaults to TCP
 connectionType :: Config -> ConnectionType
 connectionType c =
     case input c >>= \(InputConfig t z) -> t of
@@ -88,12 +90,13 @@ data TcpPortConfig = TcpPortConfig
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-instance Monoid TcpPortConfig where
-    mempty = TcpPortConfig Nothing Nothing
-    mappend (TcpPortConfig hl pl) (TcpPortConfig hr pr) = TcpPortConfig
+instance Semigroup TcpPortConfig where
+    (<>) (TcpPortConfig hl pl) (TcpPortConfig hr pr) = TcpPortConfig
         { host = hl `mplus` hr
         , port = pl `mplus` pr
         }
+instance Monoid TcpPortConfig where
+    mempty = TcpPortConfig Nothing Nothing
 
 --------------------------------------------------------------------------------
 data TcpOutputConfig = TcpOutputConfig
@@ -102,12 +105,13 @@ data TcpOutputConfig = TcpOutputConfig
     } deriving Show
 
 --------------------------------------------------------------------------------
-instance Monoid TcpOutputConfig where
-    mempty = TcpOutputConfig Nothing Nothing
-    mappend (TcpOutputConfig sl fl) (TcpOutputConfig sr fr) = TcpOutputConfig
+instance Semigroup TcpOutputConfig where
+    (<>) (TcpOutputConfig sl fl) (TcpOutputConfig sr fr) = TcpOutputConfig
         { success = sl `mplus` sr
         , failure = fl `mplus` fr
         }
+instance Monoid TcpOutputConfig where
+    mempty = TcpOutputConfig Nothing Nothing
 
 --------------------------------------------------------------------------------
 data ZeroMQPortConfig = ZeroMQPortConfig
@@ -117,13 +121,14 @@ data ZeroMQPortConfig = ZeroMQPortConfig
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-instance Monoid ZeroMQPortConfig where
-    mempty = ZeroMQPortConfig Nothing Nothing Nothing
-    mappend (ZeroMQPortConfig ml hl pl) (ZeroMQPortConfig mr hr pr) = ZeroMQPortConfig
+instance Semigroup ZeroMQPortConfig where
+    (<>) (ZeroMQPortConfig ml hl pl) (ZeroMQPortConfig mr hr pr) = ZeroMQPortConfig
         { method = ml `mplus` mr
         , host   = hl `mplus` hr
         , port   = pl `mplus` pr
         }
+instance Monoid ZeroMQPortConfig where
+    mempty = ZeroMQPortConfig Nothing Nothing Nothing
 
 --------------------------------------------------------------------------------
 data ZeroMQOutputConfig = ZeroMQOutputConfig
@@ -132,12 +137,13 @@ data ZeroMQOutputConfig = ZeroMQOutputConfig
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-instance Monoid ZeroMQOutputConfig where
-    mempty = ZeroMQOutputConfig Nothing Nothing
-    mappend (ZeroMQOutputConfig sl fl) (ZeroMQOutputConfig sr fr) = ZeroMQOutputConfig
+instance Semigroup ZeroMQOutputConfig where
+    (<>) (ZeroMQOutputConfig sl fl) (ZeroMQOutputConfig sr fr) = ZeroMQOutputConfig
         { success = sl `mplus` sr
         , failure = fl `mplus` fr
         }
+instance Monoid ZeroMQOutputConfig where
+    mempty = ZeroMQOutputConfig Nothing Nothing
 
 --------------------------------------------------------------------------------
 data InputConfig = InputConfig
@@ -146,12 +152,13 @@ data InputConfig = InputConfig
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-instance Monoid InputConfig where
-    mempty = InputConfig Nothing Nothing
-    mappend (InputConfig tl zl) (InputConfig tr zr) = InputConfig
+instance Semigroup InputConfig where
+    (<>) (InputConfig tl zl) (InputConfig tr zr) = InputConfig
         { tcp    = tl `mplus` tr
         , zeromq = zl `mplus` zr
         }
+instance Monoid InputConfig where
+    mempty = InputConfig Nothing Nothing
 
 --------------------------------------------------------------------------------
 data OutputConfig = OutputConfig
@@ -160,12 +167,13 @@ data OutputConfig = OutputConfig
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-instance Monoid OutputConfig where
-    mempty = OutputConfig Nothing Nothing
-    mappend (OutputConfig tl zl) (OutputConfig tr zr) = OutputConfig
+instance Semigroup OutputConfig where
+    (<>) (OutputConfig tl zl) (OutputConfig tr zr) = OutputConfig
         { tcp    = tl `mplus` tr
         , zeromq = zl `mplus` zr
         }
+instance Monoid OutputConfig where
+    mempty = OutputConfig Nothing Nothing
 
 
 --------------------------------------------------------------------------------
@@ -198,14 +206,15 @@ data Config = Config
     } deriving (Show)
 
 --------------------------------------------------------------------------------
-instance Monoid Config where
-    mempty = Config Nothing Nothing Nothing Nothing
-    mappend l r = Config
+instance Semigroup Config where
+    (<>) l r = Config
         { logging = logging l `mplus` logging r
         , input  = input l  `mplus` input r
         , output = output l `mplus` output r
         , fields = fields l `mplus` fields r
         }
+instance Monoid Config where
+    mempty = Config Nothing Nothing Nothing Nothing
 
 defaultConfig = Config
     { logging = Just LoggingConfig { frequency = Just defaultLoggingFrequency }

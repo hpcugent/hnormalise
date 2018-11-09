@@ -1,5 +1,5 @@
 name:                hnormalise
-version:             0.5.1.0
+version:             0.5.2.0
 synopsis:            Log message normalisation tool producing structured JSON messages
 description:         Log message normalisation tool producing structured JSON messages
 homepage:            https://github.com/itkovian/hnormalise#readme
@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Andy Georges
 maintainer:          itkovian@gmail.com
-copyright:           2017 Ghent University
+copyright:           2017-2018 Ghent University
 category:            Command line
 build-type:          Simple
 extra-source-files:  README.md

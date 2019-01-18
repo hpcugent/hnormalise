@@ -56,6 +56,7 @@ import           Control.Monad    (mplus)
 import           Data.Aeson       (defaultOptions)
 import           Data.Aeson.TH    (deriveJSON)
 import qualified Data.ByteString  as B
+import           Data.Maybe       (isJust)
 import           Data.Semigroup      ((<>))
 import           Data.Text        (Text)
 import qualified Data.Yaml        as Y
@@ -68,6 +69,7 @@ data ConnectionType = TCP
                     | ZeroMQ
                     deriving (Eq, Ord, Show)
 
+-- | `connectionType` defaults to TCP
 connectionType :: Config -> ConnectionType
 connectionType c =
     case input c >>= \(InputConfig t z) -> t of

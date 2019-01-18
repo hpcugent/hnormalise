@@ -15,9 +15,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-#resolver: lts-9.6
-resolver: lts-12.4
-# resolver: nightly-2017-10-02
+resolver: nightly-2018-11-07
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -43,7 +41,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
   - permute-1.0
-  - ip-1.3.0
+  - ip-1.4.1
     #  - record-0.3.2
     #  - template-haskell-compat-v0208-0.1.1
   - zeromq4-conduit-0.1.0.0

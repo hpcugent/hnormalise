@@ -55,6 +55,3 @@ data Host = Hostname Text        -- hostname
           deriving (Show, Eq, Generic)
 
 instance NFData Host
-instance NFData Net.IPv4
-instance NFData Net.IPv6 where
-    rnf !_ = ()

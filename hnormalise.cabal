@@ -168,6 +168,7 @@ benchmark hnormalise-bench
                      , aeson
                      , attoparsec
                      , criterion
+                     , deepseq
                      , hnormalise
                      , random
                      , text

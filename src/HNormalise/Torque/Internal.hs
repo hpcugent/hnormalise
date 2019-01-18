@@ -78,7 +78,7 @@ data TorqueJobFQNode = TorqueJobFQNode
 
 --------------------------------------------------------------------------------
 data TorqueJobNode = TSN TorqueJobShortNode
-                   | TFN [TorqueJobFQNode]
+                   | TFN TorqueJobFQNode
                    deriving (Show, Eq, Generic)
 
 --------------------------------------------------------------------------------
@@ -107,10 +107,10 @@ data TorqueResourceRequest = TorqueResourceRequest
     , cputime       :: !(Maybe TorqueWalltime)
     , prologue      :: !(Maybe Text)
     , epilogue      :: !(Maybe Text)
-    , neednodes     :: !(Maybe TorqueJobNode)
+    , neednodes     :: !(Maybe [TorqueJobNode])
     , nice          :: !(Maybe Int)
     , nodeCount     :: !Int
-    , nodes         :: !TorqueJobNode
+    , nodes         :: ![TorqueJobNode]
     , select        :: !(Maybe Text)
     , qos           :: !(Maybe Text)
     , other         :: !(Maybe Text)

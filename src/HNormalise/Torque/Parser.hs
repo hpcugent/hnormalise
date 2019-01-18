@@ -130,17 +130,17 @@ parseTorqueJobName sep = do
 --------------------------------------------------------------------------------
 -- | 'parseTorqueResourceNodeList' parses a list of FQDN nodes and their ppn or a nodecount and its ppn
 -- FIXME: Add support for resource lists of the form Resource_List.neednodes=3:ppn=8+1:ppn=1
-parseTorqueResourceNodeList :: Parser TorqueJobNode
-parseTorqueResourceNodeList = do
+parseTorqueResourceNodeList :: Parser [TorqueJobNode]
+parseTorqueResourceNodeList = flip sepBy (char '+') $ do
     c <- peekChar'
     if Data.Char.isDigit c then do
         number <- decimal
         ppn <- maybeOption $ char ':' *> string "ppn=" *> decimal
         return $ TSN TorqueJobShortNode { number = number, ppn = ppn }
-    else TFN <$> sepBy (do
+    else do
         fqdn <- AT.takeWhile (\c -> c /= ':' && c /= ' ')
         ppn <- maybeOption $ char ':' *> kvNumParser "ppn"
-        return TorqueJobFQNode { name = fqdn, ppn = ppn}) (char '+')
+        return $ TFN TorqueJobFQNode { name = fqdn, ppn = ppn}
 
 --------------------------------------------------------------------------------
 {- Examples found in the 2016 logs

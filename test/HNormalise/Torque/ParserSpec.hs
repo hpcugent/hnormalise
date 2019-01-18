@@ -138,6 +138,14 @@ spec = do
             let s = "123456[789].master.mycluster.mydomain;" :: Text
             s ~> parseTorqueJobName ";" `shouldParse` TorqueJobName { number = 123456, arrayId = Just 789, master = "master", cluster = "mycluster" }
 
+    describe "parseTorqueResourceNodeList" $ do
+        it "parse combination of digit with ppn and digit without ppn (nodes=2:ppn=3+4)" $ do
+            let s = "1:ppn=2+2" :: Text
+            s ~> parseTorqueResourceNodeList `shouldParse`
+                [ TSN TorqueJobShortNode { number = 1, ppn = Just 2 }
+                , TSN TorqueJobShortNode { number = 2, ppn = Nothing }
+                ]
+
     describe "parseTorqueResourceRequest" $ do
         it "parse mandatory fields in expected order" $ do
             let s = "Resource_List.neednodes=1:ppn=1 Resource_List.nodect=1 Resource_List.nodes=1:ppn=1 Resource_List.walltime=01:00:00" :: Text
@@ -149,10 +157,10 @@ spec = do
                 , cputime = Nothing
                 , prologue = Nothing
                 , epilogue = Nothing
-                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = Just $ [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , select        = Nothing
                 , qos           = Nothing
                 , other = Nothing
@@ -178,10 +186,10 @@ spec = do
                 , cputime = Nothing
                 , prologue = Nothing
                 , epilogue = Nothing
-                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = Just $ [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , select        = Nothing
                 , qos           = Nothing
                 , other = Nothing
@@ -207,10 +215,10 @@ spec = do
                 , cputime = Nothing
                 , prologue = Nothing
                 , epilogue = Nothing
-                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = Just $ [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , select        = Nothing
                 , qos           = Nothing
                 , other = Nothing
@@ -236,10 +244,10 @@ spec = do
                 , cputime = Nothing
                 , prologue = Nothing
                 , epilogue = Nothing
-                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = Just $ [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , select        = Nothing
                 , qos           = Nothing
                 , other = Nothing
@@ -265,10 +273,10 @@ spec = do
                 , cputime = Nothing
                 , prologue = Nothing
                 , epilogue = Nothing
-                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , neednodes     = Just $ [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , nice          = Nothing
                 , nodeCount     = 1
-                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 1 }
+                , nodes         = [TSN TorqueJobShortNode { number = 1, ppn = Just 1 }]
                 , select        = Nothing
                 , qos           = Just "someqos"
                 , other = Nothing
@@ -294,10 +302,10 @@ spec = do
                 , cputime = Nothing
                 , prologue = Nothing
                 , epilogue = Nothing
-                , neednodes     = Just $ TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
+                , neednodes     = Just $ [TSN TorqueJobShortNode { number = 1, ppn = Just 16 }]
                 , nice          = Just 0
                 , nodeCount     = 1
-                , nodes         = TSN TorqueJobShortNode { number = 1, ppn = Just 16 }
+                , nodes         = [TSN TorqueJobShortNode { number = 1, ppn = Just 16 }]
                 , select        = Nothing
                 , qos           = Nothing
                 , other = Nothing
@@ -322,10 +330,10 @@ spec = do
                 , cputime = Nothing
                 , prologue = Nothing
                 , epilogue = Nothing
-                , neednodes = Just $ TFN [TorqueJobFQNode {name = "somenode.somecluster.somedomain", ppn = Nothing}]
+                , neednodes = Just $ [TFN TorqueJobFQNode {name = "somenode.somecluster.somedomain", ppn = Nothing}]
                 , nice = Just 0
                 , nodeCount = 1
-                , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
+                , nodes = [TSN (TorqueJobShortNode {number = 1, ppn = Nothing})]
                 , select = Nothing
                 , qos = Nothing
                 , other = Nothing
@@ -353,7 +361,7 @@ spec = do
                 , neednodes = Nothing
                 , nice = Just 0
                 , nodeCount = 1
-                , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Just 8})
+                , nodes = [TSN (TorqueJobShortNode {number = 1, ppn = Just 8})]
                 , select = Nothing
                 , qos = Nothing
                 , other = Nothing
@@ -440,24 +448,24 @@ spec = do
                     , cputime = Nothing
                     , prologue = Nothing
                     , epilogue = Nothing
-                    , neednodes = Just $ TFN
-                        [ TorqueJobFQNode
+                    , neednodes = Just $ 
+                        [ TFN TorqueJobFQNode
                             { name = "node2801.somecluster.somedomain"
                             , ppn  = Just 2
                             }
-                        , TorqueJobFQNode
+                        , TFN TorqueJobFQNode
                             { name = "node2803.somecluster.somedomain"
                             , ppn  = Just 2
                             }
                         ]
                     , nice      = Just 0
                     , nodeCount = 2
-                    , nodes = TFN
-                        [ TorqueJobFQNode
+                    , nodes = 
+                        [ TFN TorqueJobFQNode
                             { name = "node2801.somecluster.somedomain"
                             , ppn  = Just 2
                             }
-                        , TorqueJobFQNode
+                        , TFN TorqueJobFQNode
                             { name = "node2803.somecluster.somedomain"
                             , ppn  = Just 2
                             }
@@ -522,16 +530,16 @@ spec = do
                     , cputime = Nothing
                     , prologue = Nothing
                     , epilogue = Nothing
-                    , neednodes = Just $ TSN TorqueJobShortNode
+                    , neednodes = Just $ [TSN TorqueJobShortNode
                         { number = 1
                         , ppn = Just 16
-                        }
+                        }]
                     , nice = Just 0
                     , nodeCount = 1
-                    , nodes = TSN TorqueJobShortNode
+                    , nodes = [TSN TorqueJobShortNode
                         { number = 1
                         , ppn = Just 16
-                        }
+                        }]
                     , select = Nothing
                     , qos = Nothing
                     , other = Nothing
@@ -588,10 +596,10 @@ spec = do
                     , cputime = Just TorqueWalltime {days = 0, hours = 72, minutes = 0, seconds = 0}
                     , prologue = Nothing
                     , epilogue = Nothing
-                    , neednodes = Just $ TSN TorqueJobShortNode {number = 1, ppn = Just 16}
+                    , neednodes = Just $ [TSN TorqueJobShortNode {number = 1, ppn = Just 16}]
                     , nice = Just 0
                     , nodeCount = 1
-                    , nodes = TSN TorqueJobShortNode {number = 1, ppn = Just 16}
+                    , nodes = [TSN TorqueJobShortNode {number = 1, ppn = Just 16}]
                     , select = Nothing
                     , qos = Nothing
                     , other = Nothing
@@ -645,10 +653,10 @@ spec = do
                     , cputime = Nothing
                     , prologue = Nothing
                     , epilogue = Nothing
-                    , neednodes = Just $ TSN TorqueJobShortNode {number = 2, ppn = Just 20}
+                    , neednodes = Just $ [TSN TorqueJobShortNode {number = 2, ppn = Just 20}]
                     , nice = Just 0
                     , nodeCount = 2
-                    , nodes = TSN TorqueJobShortNode {number = 2, ppn = Just 20}
+                    , nodes = [TSN TorqueJobShortNode {number = 2, ppn = Just 20}]
                     , select = Nothing
                     , qos = Nothing
                     , other = Nothing
@@ -766,18 +774,18 @@ spec = do
                     , cputime = Nothing
                     , prologue = Nothing
                     , epilogue = Nothing
-                    , neednodes = Just $ TSN
+                    , neednodes = Just $ [TSN
                         TorqueJobShortNode
                             { number = 1
                             , ppn  = Just 1
-                            }
+                            }]
                     , nice      = Just 0
                     , nodeCount = 1
-                    , nodes = TSN
+                    , nodes = [TSN
                         TorqueJobShortNode
                             { number = 1
                             , ppn  = Just 1
-                            }
+                            }]
                     , select        = Nothing
                     , qos           = Nothing
                     , other = Nothing
@@ -815,10 +823,10 @@ spec = do
                     , cputime = Nothing
                     , prologue = Nothing
                     , epilogue = Nothing
-                    , neednodes = Just $ TFN [TorqueJobFQNode {name = "node047.cvos.cluster", ppn = Nothing}]
+                    , neednodes = Just $ [TFN TorqueJobFQNode {name = "node047.cvos.cluster", ppn = Nothing}]
                     , nice = Just 0
                     , nodeCount = 1
-                    , nodes = TSN (TorqueJobShortNode {number = 1, ppn = Nothing})
+                    , nodes = [TSN (TorqueJobShortNode {number = 1, ppn = Nothing})]
                     , select = Nothing
                     , qos = Nothing
                     , other = Nothing

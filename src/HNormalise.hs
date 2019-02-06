@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Ghent University (c) 2017
+ - Copyright Ghent University (c) 2017-2019
  -
  - All rights reserved.
  -

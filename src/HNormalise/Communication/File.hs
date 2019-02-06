@@ -33,7 +33,7 @@
 -}
 {-# LANGUAGE OverloadedStrings #-}
 
-module HNormalise.Communication.Output.File where
+module HNormalise.Communication.File where
 
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS

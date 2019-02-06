@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Ghent University (c) 2017
+ - Copyright Ghent University (c) 2018
  -
  - All rights reserved.
  -
@@ -32,32 +32,17 @@
  - OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
+
 {-# LANGUAGE OverloadedStrings #-}
 
-module HNormalise.Communication.Input.ZeroMQ
-    ( zmqInterruptibleSource
+module HNormalise.Communication.Kafka
+    ( kafkaInterruptibleSource
     ) where
 
-
-import           Control.Concurrent.MVar      (modifyMVar_, newMVar, newEmptyMVar, putMVar, readMVar, tryTakeMVar, withMVar, takeMVar, MVar)
-import           Control.Monad.IO.Class       (MonadIO, liftIO)
-import           Control.Monad.Loops          (whileM_, untilM_)
-import           Data.Conduit
-import qualified System.ZMQ4                  as ZMQ (withContext, withSocket, bind, send, receive, connect, Push(..), Pull(..))
+--------------------------------------------------------------------------------
+import           HNormalise.Config
 
 --------------------------------------------------------------------------------
-import HNormalise.Config
+kafkaInterruptibleSource = undefined
 
---------------------------------------------------------------------------------
--- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
--- The source is halted when something is put into the MVar, effectively stopping the program from checking
--- for new incoming messages.
-zmqInterruptibleSource m s = do
-    whileM_
-        (liftIO $ do
-            val <- tryTakeMVar m
-            case val of
-                Just _ ->  return False
-                Nothing -> return True)
-        (liftIO (ZMQ.receive s) >>= yield)
-    liftIO $ putStrLn "Done!"
+

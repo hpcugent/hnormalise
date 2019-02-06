@@ -1,6 +1,6 @@
 {- hnormalise - a log normalisation library
  -
- - Copyright Ghent University (c) 2017
+ - Copyright Ghent University (c) 2017-2019
  -
  - All rights reserved.
  -
@@ -57,7 +57,7 @@ import           Data.Aeson       (defaultOptions)
 import           Data.Aeson.TH    (deriveJSON)
 import qualified Data.ByteString  as B
 import           Data.Maybe       (isJust)
-import           Data.Semigroup      ((<>))
+import           Data.Semigroup   ((<>))
 import           Data.Text        (Text)
 import qualified Data.Yaml        as Y
 import           System.Directory

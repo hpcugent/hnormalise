@@ -1,6 +1,6 @@
 # hnormalise - a log normalisation library
 #
-# Copyright Andy Georges (c) 2017
+# Copyright Andy Georges (c) 2017-2019
 #
 # All rights reserved.
 #
@@ -34,7 +34,7 @@
 
 Summary: Log normalisation tool
 Name: hnormalise
-Version: 0.5.2.0
+Version: 0.5.4.0
 Release: 1
 
 Group: Applications/System

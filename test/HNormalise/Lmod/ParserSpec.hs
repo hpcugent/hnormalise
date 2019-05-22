@@ -61,7 +61,7 @@ spec =
             s ~> parseLmodInfo `shouldParse` LmodInfo
                 { username = "someuser"
                 , cluster = "myspace"
-                , jobid = Just TorqueJobName
+                , jobid = Just $ LmodTorqueJobId $ TorqueJobName
                     { number = 11
                     , arrayId = Just 1
                     , master = "mymaster"
@@ -90,13 +90,13 @@ spec =
                 })
 
 
-        it "parse module load" $ do
+        it "parse module load from torque job" $ do
             let s = "lmod::  username=myuser, cluster=mycluster, jobid=3230905.master.mycluster.mydomain, userload=yes, module=GSL/2.3-intel-2016b, fn=/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b" :: Text
             s ~> parseLmodLoad `shouldParse` ("lmod", LmodLoadParse LmodLoad
                 { info = LmodInfo
                     { username = "myuser"
                     , cluster = "mycluster"
-                    , jobid = Just TorqueJobName
+                    , jobid = Just $ LmodTorqueJobId $ TorqueJobName
                         { number = 3230905
                         , arrayId = Nothing
                         , master = "master"
@@ -111,13 +111,30 @@ spec =
                 , filename = "/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b"
                 })
 
+        it "parse module load from slurm job" $ do
+            let s = "lmod::  username=myuser, cluster=mycluster, jobid=3230905, userload=yes, module=GSL/2.3-intel-2016b, fn=/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b" :: Text
+            s ~> parseLmodLoad `shouldParse` ("lmod", LmodLoadParse LmodLoad
+                { info = LmodInfo
+                    { username = "myuser"
+                    , cluster = "mycluster"
+                    , jobid = Just $ LmodSlurmJobId { number = 3230905 }
+                    }
+                , userload = True
+                , modul = LmodModule
+                    { name = "GSL"
+                    , version = "2.3-intel-2016b"
+                    }
+                , filename = "/apps/gent/CO7/sandybridge/modules/all/GSL/2.3-intel-2016b"
+                })
+
+
         it "parse command" $ do
             let s = "lmod::  username=myuser, cluster=mycluster, jobid=132.mymaster.mycluster.mydomain, cmd=load, args=cluster/othercluster" :: Text
             s ~> parseLmodCommand `shouldParse` ("lmod", LmodCommandParse LmodCommand
                 { info = LmodInfo
                     { username = "myuser"
                     , cluster = "mycluster"
-                    , jobid = Just TorqueJobName
+                    , jobid = Just $ LmodTorqueJobId $ TorqueJobName
                         { number = 132
                         , arrayId = Nothing
                         , master = "mymaster"

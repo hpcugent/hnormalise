@@ -51,11 +51,26 @@ import           HNormalise.Lmod.Internal
 import           HNormalise.Torque.Parser   (parseTorqueJobName)
 --------------------------------------------------------------------------------
 
+parseLmodJobId :: Parser LmodJobId 
+parseLmodJobId = 
+        parseLmodTorqueJobId
+    <|> parseLmodSlurmJobId
+
+parseLmodSlurmJobId :: Parser LmodJobId
+parseLmodSlurmJobId = do
+    i <- decimal
+    return (LmodSlurmJobId { number = i } )
+
+parseLmodTorqueJobId :: Parser LmodJobId
+parseLmodTorqueJobId = do
+    j <- parseTorqueJobName ","
+    return (LmodTorqueJobId j)
+
 parseLmodInfo :: Parser LmodInfo
 parseLmodInfo = do
     username <- kvTextDelimParser "username" ","
     cluster <- char ',' *> skipSpace *> kvTextDelimParser "cluster" ","
-    jobid <- char ',' *> skipSpace *> string "jobid=" *> maybeOption (parseTorqueJobName ",")
+    jobid <- char ',' *> skipSpace *> string "jobid=" *> maybeOption parseLmodJobId
     return LmodInfo
         { username = username
         , cluster = cluster

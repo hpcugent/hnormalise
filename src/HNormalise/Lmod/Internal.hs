@@ -56,10 +56,14 @@ data LmodModule = LmodModule
     , version :: !Text
     } deriving (Show, Eq, Generic)
 
+data LmodJobId = LmodSlurmJobId { number:: !Int }
+               | LmodTorqueJobId TorqueJobName
+    deriving (Show, Eq, Generic)
+
 data LmodInfo = LmodInfo
     { username :: !Text
     , cluster  :: !Text
-    , jobid    :: !(Maybe TorqueJobName)
+    , jobid    :: !(Maybe LmodJobId)
     } deriving (Show, Eq, Generic)
 
 data LmodLoad = LmodLoad
@@ -80,3 +84,4 @@ instance NFData LmodInfo
 instance NFData LmodLoad
 instance NFData LmodCommand
 instance NFData LmodParseResult
+instance NFData LmodJobId

@@ -70,3 +70,7 @@ instance ToJSON LmodCommand where
 instance ToJSON LmodParseResult where
     toEncoding (LmodLoadParse l) = toEncoding l
     toEncoding (LmodCommandParse l) = toEncoding l
+
+instance ToJSON LmodJobId where
+    toEncoding (LmodSlurmJobId i) = toEncoding i
+    toEncoding (LmodTorqueJobId t) = toEncoding t

@@ -44,6 +44,7 @@ import           Test.Hspec
 import           Test.Hspec.Attoparsec
 
 --------------------------------------------------------------------------------
+import           HNormalise.Common.Parser   (maybeOption)
 import           HNormalise.Torque.Internal
 import           HNormalise.Torque.Parser
 
@@ -137,6 +138,10 @@ spec = do
         it "parse array torque job name" $ do
             let s = "123456[789].master.mycluster.mydomain;" :: Text
             s ~> parseTorqueJobName ";" `shouldParse` TorqueJobName { number = 123456, arrayId = Just 789, master = "master", cluster = "mycluster" }
+
+        it "parse id only torque job name" $ do
+            let s = "123456;" :: Text
+            s ~> maybeOption (parseTorqueJobName ";") `shouldParse` Nothing
 
     describe "parseTorqueResourceNodeList" $ do
         it "parse combination of digit with ppn and digit without ppn (nodes=2:ppn=3+4)" $ do

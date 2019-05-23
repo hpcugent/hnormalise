@@ -35,13 +35,15 @@
 
 module HNormalise.Communication.File where
 
+import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import qualified Data.ByteString.Char8        as SBS
 import qualified Data.ByteString.Lazy.Char8   as BS
 import           Data.Conduit
+import           Text.Printf                  (printf)
 
 --------------------------------------------------------------------------------
 import           HNormalise.Json              (encodeNormalisedRsyslog)
-
+import           HNormalise.Util              (increaseCount)
 --------------------------------------------------------------------------------
 -- | 'mySink' yields the results downstream with the addition of a string mentioning success or failure
 -- for testing purposes
@@ -54,12 +56,12 @@ mySink messageCount frequency = loop
                 yield (SBS.pack "success: ")
                 yield $ encodeNormalisedRsyslog json
                 yield (SBS.pack "\n")
-                -- liftIO $ increaseCount (1, 0) messageCount frequency
+                liftIO $ increaseCount (1, 0) messageCount frequency
                 loop
             Just (Left l) -> do
                 yield (SBS.pack "fail - original: ")
                 yield l
                 yield (SBS.pack "\n")
-                --liftIO $ increaseCount (0, 1) messageCount frequency
+                liftIO $ increaseCount (0, 1) messageCount frequency
                 loop
             Nothing -> return ()

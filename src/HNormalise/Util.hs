@@ -40,6 +40,7 @@ module HNormalise.Util
     ( messageSink
     , normalisationConduit
     , pipelineC
+    , increaseCount
     ) where
 
 --------------------------------------------------------------------------------
@@ -63,6 +64,7 @@ import           Data.Time
 import           Data.Time.Format
 import           Text.Printf                  (printf)
 
+import           System.IO                    (hFlush, stdout)
 --------------------------------------------------------------------------------
 import           HNormalise
 import           HNormalise.Json
@@ -76,14 +78,14 @@ messageSink success failure messageCount frequency = loop
         case v of
             Just n -> case n of
                 Right json -> do
+                    liftIO $ increaseCount (1, 0) messageCount frequency
                     Data.Conduit.yield (encodeNormalisedRsyslog json) $$ success
                     Data.Conduit.yield (SBS.pack "\n") $$ success
-                    liftIO $ increaseCount (1, 0) messageCount frequency
                     loop
                 Left l -> do
+                    liftIO $ increaseCount (0, 1) messageCount frequency
                     Data.Conduit.yield l $$ failure
                     Data.Conduit.yield (SBS.pack "\n") $$ failure
-                    liftIO $ increaseCount (0, 1) messageCount frequency
                     loop
             Nothing -> return ()
 

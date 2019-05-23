@@ -7,7 +7,7 @@
 # plain TCP will be used.
 #
 logging:
-    frequency: 10000
+    frequency: 100000
 input:
     # --------------------------------------------------
     # input on a normal TCP port
@@ -24,7 +24,7 @@ input:
         method: "pull"
 
     # by default, we listen to localhost
-        host: "localhost"
+        host: "lo"
 
     # just pick a port
         port: 31338

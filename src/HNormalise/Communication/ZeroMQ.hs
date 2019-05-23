@@ -62,7 +62,6 @@ import           HNormalise.Config            (ZeroMQOutputConfig (..),
 import           HNormalise.Util
 import           HNormalise.Verbose
 
-
 --------------------------------------------------------------------------------
 -- | 'zmqInterruptibleSource' converts a regular 0mq recieve operation on a socket into a conduit source
 -- The source is halted when something is put into the MVar, effectively stopping the program from checking
@@ -72,7 +71,7 @@ zmqInterruptibleSource m s = do
         (liftIO $ do
             val <- tryTakeMVar m
             case val of
-                Just _  ->  return False
+                Just _  -> return False
                 Nothing -> return True)
         (liftIO (ZMQ.receive s) >>= yield)
     liftIO $ putStrLn "Done!"
@@ -95,7 +94,7 @@ runZeroMQConnection fields frequency (ZeroMQPortConfig _ listenHost listenPort) 
 
     ZMQ.withContext $ \ctx ->
         ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-            ZMQ.connect s $ printf "tcp://%s:%d" (fromJust listenHost) (fromJust listenPort)
+            ZMQ.bind s $ printf "tcp://%s:%d" (fromJust listenHost) (fromJust listenPort)
             verbose' $ printf "Listening on tcp://%s:%d" (fromJust listenHost) (fromJust listenPort)
 
             ZMQ.withSocket ctx ZMQ.Push $ \successSocket ->
@@ -110,14 +109,3 @@ runZeroMQConnection fields frequency (ZeroMQPortConfig _ listenHost listenPort) 
                         $= normalisationConduit fields
                         $$ pipelineC 100 (messageSink (ZMQC.zmqSink successSocket []) (ZMQC.zmqSink failureSocket []) messageCount frequency)
 
-
-{- FIXME: This is the sink to a file code and should be put in another runwrapper.
-        Just testSinkFileName ->
-            ZMQ.withContext $ \ctx ->
-                ZMQ.withSocket ctx ZMQ.Pull $ \s -> do
-                    ZMQ.connect s $ printf "tcp://%s:%d" listenHost listenPort
-                    verbose' $ printf "Listening on tcp://%s:%d" listenHost listenPort
-                    runResourceT $ zmqInterruptibleSource s_interrupted s
-                        $= normalisationConduit options config
-                        $$ pipelineC 100 (let sf = sinkFile testSinkFileName in messageSink sf sf messageCount frequency)
--}

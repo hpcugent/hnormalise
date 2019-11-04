@@ -34,7 +34,7 @@
 
 Summary: Log normalisation tool
 Name: hnormalise
-Version: 0.5.6.0
+Version: 0.5.6.1
 Release: 1
 
 Group: Applications/System
@@ -85,6 +85,6 @@ systemctl daemon-reload
 
 %changelog
 * Mon Aug 13 2018 Andy Georges <itkovian@gmail.com>
-- Move to GHC 8.4.x with Semigroup support 
+- Move to GHC 8.4.x with Semigroup support
 * Mon May 29 2017 Andy Georges <itkovian@gmail.com>
 - Created spec file

@@ -41,7 +41,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
   - permute-1.0
-  - ip-1.6.0
+  - ip-1.5.1
     #  - record-0.3.2
     #  - template-haskell-compat-v0208-0.1.1
   - zeromq4-conduit-0.1.0.0

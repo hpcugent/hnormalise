@@ -50,7 +50,8 @@ import           Data.Attoparsec.Text
 import qualified Data.ByteString.Char8      as SBS
 import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Text                  (Text, empty)
-import           Data.Text.Encoding         (encodeUtf8, decodeUtf8)
+import           Data.Text.Encoding         (encodeUtf8, decodeUtf8With)
+import           Data.Text.Encoding.Error   (lenientDecode)
 import           Data.Text.Lazy             (toStrict)
 
 --------------------------------------------------------------------------------
@@ -89,7 +90,7 @@ normaliseText :: Maybe [(Text, Text)]                        -- ^ Output fields
               -> SBS.ByteString                              -- ^ Input
               -> Either SBS.ByteString NormalisedRsyslog     -- ^ Transformed or Original result
 normaliseText fs logLine =
-    case parse (parseRsyslogLogstashString fs) $ decodeUtf8 logLine of
+    case parse (parseRsyslogLogstashString fs) $ decodeUtf8With lenientDecode logLine of
         Done _ r    -> Right r
         Partial c   -> case c empty of
                             Done _ r -> Right r

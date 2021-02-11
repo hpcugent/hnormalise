@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=$(stack query | grep version| cut -d"'" -f2)
+VERSION=$(stack query | grep version| cut -d"'" -f2 | cut -d":" -f2 | sed 's/ //')
 TARBALL_DIR=hnormalise-${VERSION}
 
 mkdir -p ~/rpmbuild/SOURCES
